@@ -110,7 +110,7 @@ const GymDashboard = ({
           className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
           onClick={onAllMembersClick}
         >
-          <FaUsers /> All Member
+          <FaUsers /> All Members
         </button>
         <button
           className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
