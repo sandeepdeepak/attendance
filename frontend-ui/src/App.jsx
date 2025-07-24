@@ -3,6 +3,7 @@ import "./App.css";
 import GymDashboard from "./pages/GymDashboard/GymDashboard";
 import FaceRecognition from "./pages/FaceRecognition/FaceRecognition";
 import AddMember from "./pages/AddMember/AddMember";
+import AllMembers from "./pages/AllMembers/AllMembers";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -23,6 +24,10 @@ function App() {
     setCurrentPage("addMember");
   };
 
+  const handleAllMembersClick = () => {
+    setCurrentPage("allMembers");
+  };
+
   const handleBackClick = () => {
     setCurrentPage("dashboard");
   };
@@ -34,6 +39,7 @@ function App() {
           <GymDashboard
             onFaceRecognitionClick={handleFaceRecognitionClick}
             onAddMemberClick={handleAddMemberClick}
+            onAllMembersClick={handleAllMembersClick}
           />
         );
       case "faceRecognition":
@@ -45,9 +51,15 @@ function App() {
         );
       case "addMember":
         return <AddMember onBackClick={handleBackClick} />;
+      case "allMembers":
+        return <AllMembers onBackClick={handleBackClick} />;
       default:
         return (
-          <GymDashboard onFaceRecognitionClick={handleFaceRecognitionClick} />
+          <GymDashboard
+            onFaceRecognitionClick={handleFaceRecognitionClick}
+            onAddMemberClick={handleAddMemberClick}
+            onAllMembersClick={handleAllMembersClick}
+          />
         );
     }
   };

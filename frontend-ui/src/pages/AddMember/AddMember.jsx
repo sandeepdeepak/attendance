@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { FaArrowLeft, FaCalendar } from "react-icons/fa";
 import "./AddMember.css";
 import Webcam from "react-webcam";
@@ -54,18 +54,52 @@ const AddMember = ({ onBackClick }) => {
     startCapture();
   };
 
-  const handleSaveMember = () => {
-    // Here you would typically send the data to an API
-    const memberData = {
-      ...formData,
-      faceImage: capturedImage,
-    };
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
-    console.log("Saving member data:", memberData);
+  const handleSaveMember = useCallback(async () => {
+    if (!formData.fullName || !formData.phoneNumber || !capturedImage) {
+      return;
+    }
 
-    // After saving, go back to dashboard
-    onBackClick();
-  };
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      // Convert base64 image to blob
+      const imageResponse = await fetch(capturedImage);
+      const imageBlob = await imageResponse.blob();
+
+      // Create form data
+      const formDataToSend = new FormData();
+      formDataToSend.append("fullName", formData.fullName);
+      formDataToSend.append("phoneNumber", formData.phoneNumber);
+      formDataToSend.append("startDate", formData.startDate);
+      formDataToSend.append("faceImage", imageBlob, "face.jpg");
+
+      // Send data to API
+      const response = await fetch("http://localhost:7777/api/members", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save member");
+      }
+
+      const result = await response.json();
+      console.log("Member saved successfully:", result);
+
+      // After saving, go back to dashboard
+      onBackClick();
+    } catch (error) {
+      console.error("Error saving member:", error);
+      setSaveError(error.message || "Failed to save member");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [formData, capturedImage, onBackClick]);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
@@ -183,13 +217,25 @@ const AddMember = ({ onBackClick }) => {
         </div>
       </div>
 
+      {/* Error message */}
+      {saveError && (
+        <div className="bg-red-900 text-white p-4 rounded-lg mb-4">
+          <p className="text-center">{saveError}</p>
+        </div>
+      )}
+
       {/* Save Button */}
       <button
         className="bg-white text-black py-4 rounded-lg text-xl font-semibold mt-auto"
         onClick={handleSaveMember}
-        disabled={!formData.fullName || !formData.phoneNumber || !capturedImage}
+        disabled={
+          !formData.fullName ||
+          !formData.phoneNumber ||
+          !capturedImage ||
+          isSaving
+        }
       >
-        Save Member
+        {isSaving ? "Saving..." : "Save Member"}
       </button>
     </div>
   );

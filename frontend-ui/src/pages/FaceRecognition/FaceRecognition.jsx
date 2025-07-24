@@ -133,11 +133,13 @@ const FaceRecognition = ({ onBackClick }) => {
               <p className="text-lg">Match Found</p>
             </div>
             <p className="text-xl font-bold">
-              Welcome {searchResult.id.toUpperCase()}
+              {searchResult.member
+                ? `Welcome ${searchResult.member.fullName}`
+                : `Welcome ${searchResult.id}`}
             </p>
-            {/* <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400">
               Confidence: {Math.round(searchResult.similarity)}%
-            </p> */}
+            </p>
           </div>
         );
       } else {

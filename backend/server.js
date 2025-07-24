@@ -9,15 +9,73 @@ const {
   CreateCollectionCommand,
   IndexFacesCommand,
 } = require("@aws-sdk/client-rekognition");
+const {
+  DynamoDBClient,
+  CreateTableCommand,
+  ListTablesCommand,
+} = require("@aws-sdk/client-dynamodb");
+const {
+  DynamoDBDocumentClient,
+  PutCommand,
+  GetCommand,
+  QueryCommand,
+  ScanCommand,
+} = require("@aws-sdk/lib-dynamodb");
 
 const app = express();
 const port = 7777;
-const rekClient = new RekognitionClient({ region: "us-east-1" });
+const region = "us-east-1";
+const rekClient = new RekognitionClient({ region });
+const dynamoClient = new DynamoDBClient({ region });
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const upload = multer({ storage: multer.memoryStorage() });
+
+// DynamoDB table name
+const MEMBERS_TABLE = "GymMembers";
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Initialize DynamoDB table if it doesn't exist
+async function initializeDynamoDB() {
+  try {
+    // Check if table exists
+    const listTablesResponse = await dynamoClient.send(
+      new ListTablesCommand({})
+    );
+    const tableExists = listTablesResponse.TableNames.includes(MEMBERS_TABLE);
+
+    if (!tableExists) {
+      // Create the table if it doesn't exist
+      const createTableParams = {
+        TableName: MEMBERS_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+          { AttributeName: "phoneNumber", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "id", AttributeType: "S" },
+          { AttributeName: "phoneNumber", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(new CreateTableCommand(createTableParams));
+      console.log(`Created table: ${MEMBERS_TABLE}`);
+    } else {
+      console.log(`Table ${MEMBERS_TABLE} already exists`);
+    }
+  } catch (error) {
+    console.error("Error initializing DynamoDB:", error);
+  }
+}
+
+// Initialize DynamoDB on server start
+initializeDynamoDB().catch(console.error);
 
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err);
@@ -66,11 +124,56 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
   try {
     const data = await rekClient.send(cmd);
     if (data.FaceMatches.length) {
-      res.json({
-        match: true,
-        similarity: data.FaceMatches[0].Similarity,
-        id: data.FaceMatches[0].Face.ExternalImageId,
-      });
+      const memberId = data.FaceMatches[0].Face.ExternalImageId;
+      const similarity = data.FaceMatches[0].Similarity;
+
+      // Fetch member details from DynamoDB
+      try {
+        // Scan the table to find the member with the matching ID
+        // We use scan here because we don't know the phoneNumber (which is part of the composite key)
+        const scanParams = {
+          TableName: MEMBERS_TABLE,
+          FilterExpression: "id = :id",
+          ExpressionAttributeValues: {
+            ":id": memberId,
+          },
+        };
+
+        const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+        if (scanResult.Items && scanResult.Items.length > 0) {
+          const memberDetails = scanResult.Items[0];
+
+          // Return member details along with match information
+          res.json({
+            match: true,
+            similarity: similarity,
+            id: memberId,
+            member: {
+              fullName: memberDetails.fullName,
+              phoneNumber: memberDetails.phoneNumber,
+              startDate: memberDetails.startDate,
+              createdAt: memberDetails.createdAt,
+            },
+          });
+        } else {
+          // Member ID found in Rekognition but not in DynamoDB
+          res.json({
+            match: true,
+            similarity: similarity,
+            id: memberId,
+            error: "Member details not found in database",
+          });
+        }
+      } catch (dbError) {
+        console.error("Error fetching member details:", dbError);
+        res.json({
+          match: true,
+          similarity: similarity,
+          id: memberId,
+          error: "Failed to fetch member details",
+        });
+      }
     } else {
       res.json({ match: false });
     }
@@ -118,6 +221,113 @@ app.post("/api/index-face", upload.single("image"), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "IndexFaces failed" });
+  }
+});
+
+// Add a new member to DynamoDB and index their face
+app.post("/api/members", upload.single("faceImage"), async (req, res) => {
+  try {
+    const { fullName, phoneNumber, startDate } = req.body;
+    const faceImage = req.file?.buffer;
+
+    if (!fullName || !phoneNumber || !startDate || !faceImage) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "fullName, phoneNumber, startDate, faceImage",
+      });
+    }
+
+    // Generate a unique ID for the member
+    const memberId = `member_${Date.now()}`;
+
+    // First, index the face in the Rekognition collection
+    const indexParams = {
+      CollectionId: "my-face-collection",
+      Image: { Bytes: faceImage },
+      ExternalImageId: memberId,
+      DetectionAttributes: [],
+      MaxFaces: 1,
+      QualityFilter: "AUTO",
+    };
+
+    const indexResult = await rekClient.send(
+      new IndexFacesCommand(indexParams)
+    );
+
+    if (indexResult.FaceRecords.length === 0) {
+      return res.status(400).json({ error: "No face detected in the image" });
+    }
+
+    const faceId = indexResult.FaceRecords[0].Face.FaceId;
+
+    // Then, save the member data to DynamoDB
+    const memberItem = {
+      id: memberId,
+      fullName,
+      phoneNumber,
+      startDate,
+      faceId,
+      createdAt: new Date().toISOString(),
+      active: true,
+    };
+
+    const putParams = {
+      TableName: MEMBERS_TABLE,
+      Item: memberItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(201).json({
+      message: "Member added successfully",
+      member: memberItem,
+    });
+  } catch (error) {
+    console.error("Error adding member:", error);
+    res.status(500).json({ error: "Failed to add member" });
+  }
+});
+
+// Get all members
+app.get("/api/members", async (req, res) => {
+  try {
+    const params = {
+      TableName: MEMBERS_TABLE,
+    };
+
+    const result = await docClient.send(new ScanCommand(params));
+
+    res.json({
+      members: result.Items || [],
+    });
+  } catch (error) {
+    console.error("Error getting members:", error);
+    res.status(500).json({ error: "Failed to get members" });
+  }
+});
+
+// Get a specific member by ID
+app.get("/api/members/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const params = {
+      TableName: MEMBERS_TABLE,
+      Key: { id },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    res.json({
+      member: result.Item,
+    });
+  } catch (error) {
+    console.error("Error getting member:", error);
+    res.status(500).json({ error: "Failed to get member" });
   }
 });
 
