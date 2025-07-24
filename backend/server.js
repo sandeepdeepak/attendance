@@ -31,7 +31,7 @@ const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const upload = multer({ storage: multer.memoryStorage() });
 
 // DynamoDB table name
-const MEMBERS_TABLE = "GymMembers";
+const MEMBERS_TABLE = "members";
 
 app.use(cors());
 app.use(express.json());
