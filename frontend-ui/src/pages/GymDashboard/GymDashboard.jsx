@@ -8,7 +8,7 @@ import {
   FaRegUser,
 } from "react-icons/fa";
 import "./GymDashboard.css";
-const GymDashboard = ({ onFaceRecognitionClick }) => {
+const GymDashboard = ({ onFaceRecognitionClick, onAddMemberClick }) => {
   const stats = [
     {
       icon: <FaCalendarCheck size={30} />,
@@ -53,11 +53,14 @@ const GymDashboard = ({ onFaceRecognitionClick }) => {
       </div>
 
       <div className="flex flex-col bg items-center gap-4 mt-5">
-        <button className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60">
+        <button
+          className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
+          onClick={onAddMemberClick}
+        >
           <FaPlus /> Add Member
         </button>
         <button className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60">
-          <FaUsers /> All Member
+          <FaUsers /> All Members (60)
         </button>
         <button
           className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
