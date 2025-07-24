@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FaArrowLeft, FaCheck, FaTimes } from "react-icons/fa";
 import "./FaceRecognition.css";
 import Webcam from "react-webcam";
@@ -12,6 +12,7 @@ const FaceRecognition = ({ onBackClick }) => {
   const [searchResult, setSearchResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [showResultTimer, setShowResultTimer] = useState(null);
   const webcamRef = useRef(null);
 
   // Start countdown when component mounts
@@ -57,7 +58,16 @@ const FaceRecognition = ({ onBackClick }) => {
         if (axios) {
           // Make API call if axios is available
           response = await axios.post("http://localhost:7777/api/search", form);
-          setSearchResult(response.data);
+          const result = response.data;
+          setSearchResult(result);
+
+          // If there's a match, set a timer to return to dashboard
+          if (result.match) {
+            const timer = setTimeout(() => {
+              onBackClick(); // Return to dashboard after 2 seconds
+            }, 2000);
+            setShowResultTimer(timer);
+          }
         } else {
           // Simulate API response if axios is not available
           console.log(
@@ -69,7 +79,7 @@ const FaceRecognition = ({ onBackClick }) => {
           await new Promise((resolve) => setTimeout(resolve, 1500));
 
           // Mock response
-          setSearchResult({
+          const mockResult = {
             success: true,
             match: true,
             person: {
@@ -77,7 +87,14 @@ const FaceRecognition = ({ onBackClick }) => {
               id: "12345",
               confidence: 0.92,
             },
-          });
+          };
+          setSearchResult(mockResult);
+
+          // Set a timer to return to dashboard after 2 seconds
+          const timer = setTimeout(() => {
+            onBackClick(); // Return to dashboard
+          }, 2000);
+          setShowResultTimer(timer);
         }
       } catch (error) {
         console.error("Error searching face:", error);
@@ -88,13 +105,28 @@ const FaceRecognition = ({ onBackClick }) => {
     }
   };
 
-  const handleRetake = () => {
+  // Clear timer when component unmounts or when retaking
+  useEffect(() => {
+    return () => {
+      if (showResultTimer) {
+        clearTimeout(showResultTimer);
+      }
+    };
+  }, [showResultTimer]);
+
+  const handleRetake = useCallback(() => {
+    // Clear any existing timer
+    if (showResultTimer) {
+      clearTimeout(showResultTimer);
+      setShowResultTimer(null);
+    }
+
     setCapturedImage(null);
     setSearchResult(null);
     setSearchError(null);
     setCountdown(3);
     setIsCapturing(true);
-  };
+  }, [showResultTimer]);
 
   // Render search results
   const renderSearchResults = () => {
@@ -126,6 +158,19 @@ const FaceRecognition = ({ onBackClick }) => {
 
     if (searchResult) {
       if (searchResult.match) {
+        // Get attendance information if available
+        const attendanceInfo = searchResult.attendance;
+        const isEntry = attendanceInfo && attendanceInfo.type === "ENTRY";
+        const isExit = attendanceInfo && attendanceInfo.type === "EXIT";
+
+        // Format timestamp if available
+        const formattedTime = attendanceInfo
+          ? new Date(attendanceInfo.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+
         return (
           <div className="mt-4 text-center">
             <div className="flex items-center justify-center text-green-500 mb-2">
@@ -137,9 +182,31 @@ const FaceRecognition = ({ onBackClick }) => {
                 ? `Welcome ${searchResult.member.fullName}`
                 : `Welcome ${searchResult.id}`}
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 mb-2">
               Confidence: {Math.round(searchResult.similarity)}%
             </p>
+
+            {/* Display attendance information */}
+            {attendanceInfo && (
+              <div
+                className={`mt-3 p-3 rounded-lg ${
+                  isEntry
+                    ? "bg-green-800"
+                    : isExit
+                    ? "bg-blue-800"
+                    : "bg-purple-800"
+                }`}
+              >
+                <p className="text-lg font-bold">
+                  {isEntry
+                    ? "✓ Entry Recorded"
+                    : isExit
+                    ? "✓ Exit Recorded"
+                    : "✓ Attendance Recorded"}
+                </p>
+                <p className="text-sm">{formattedTime}</p>
+              </div>
+            )}
           </div>
         );
       } else {

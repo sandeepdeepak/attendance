@@ -31,25 +31,29 @@ const dynamoClient = new DynamoDBClient({ region });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const upload = multer({ storage: multer.memoryStorage() });
 
-// DynamoDB table name
+// DynamoDB table names
 const MEMBERS_TABLE = "members";
+const ATTENDANCE_TABLE = "attendance";
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize DynamoDB table if it doesn't exist
+// Initialize DynamoDB tables if they don't exist
 async function initializeDynamoDB() {
   try {
-    // Check if table exists
+    // Check if tables exist
     const listTablesResponse = await dynamoClient.send(
       new ListTablesCommand({})
     );
-    const tableExists = listTablesResponse.TableNames.includes(MEMBERS_TABLE);
+    const memberTableExists =
+      listTablesResponse.TableNames.includes(MEMBERS_TABLE);
+    const attendanceTableExists =
+      listTablesResponse.TableNames.includes(ATTENDANCE_TABLE);
 
-    if (!tableExists) {
-      // Create the table if it doesn't exist
-      const createTableParams = {
+    // Create members table if it doesn't exist
+    if (!memberTableExists) {
+      const createMemberTableParams = {
         TableName: MEMBERS_TABLE,
         KeySchema: [
           { AttributeName: "id", KeyType: "HASH" }, // Partition key
@@ -65,10 +69,36 @@ async function initializeDynamoDB() {
         },
       };
 
-      await dynamoClient.send(new CreateTableCommand(createTableParams));
+      await dynamoClient.send(new CreateTableCommand(createMemberTableParams));
       console.log(`Created table: ${MEMBERS_TABLE}`);
     } else {
       console.log(`Table ${MEMBERS_TABLE} already exists`);
+    }
+
+    // Create attendance table if it doesn't exist
+    if (!attendanceTableExists) {
+      const createAttendanceTableParams = {
+        TableName: ATTENDANCE_TABLE,
+        KeySchema: [
+          { AttributeName: "memberId", KeyType: "HASH" }, // Partition key
+          { AttributeName: "timestamp", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "memberId", AttributeType: "S" },
+          { AttributeName: "timestamp", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createAttendanceTableParams)
+      );
+      console.log(`Created table: ${ATTENDANCE_TABLE}`);
+    } else {
+      console.log(`Table ${ATTENDANCE_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -112,6 +142,12 @@ app.post(
   }
 );
 
+// Helper function to get today's date in YYYY-MM-DD format
+function getTodayDateString() {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+}
+
 // SearchFacesByImage route (requires a pre-created collection)
 app.post("/api/search", upload.single("image"), async (req, res) => {
   const img = req.file.buffer;
@@ -127,6 +163,7 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
     if (data.FaceMatches.length) {
       const memberId = data.FaceMatches[0].Face.ExternalImageId;
       const similarity = data.FaceMatches[0].Similarity;
+      const currentTimestamp = new Date().toISOString();
 
       // Fetch member details from DynamoDB
       try {
@@ -145,7 +182,72 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
         if (scanResult.Items && scanResult.Items.length > 0) {
           const memberDetails = scanResult.Items[0];
 
-          // Return member details along with match information
+          // Check if the member has already checked in today
+          const todayDate = getTodayDateString();
+
+          // Query attendance records for today
+          const attendanceQueryParams = {
+            TableName: ATTENDANCE_TABLE,
+            KeyConditionExpression: "memberId = :memberId",
+            FilterExpression: "begins_with(timestamp, :today)",
+            ExpressionAttributeValues: {
+              ":memberId": memberId,
+              ":today": todayDate,
+            },
+          };
+
+          const attendanceResult = await docClient.send(
+            new ScanCommand({
+              TableName: ATTENDANCE_TABLE,
+              FilterExpression:
+                "memberId = :memberId AND begins_with(#ts, :today)",
+              ExpressionAttributeValues: {
+                ":memberId": memberId,
+                ":today": todayDate,
+              },
+              ExpressionAttributeNames: {
+                "#ts": "timestamp",
+              },
+            })
+          );
+
+          let attendanceType = "ENTRY";
+          let attendanceMessage = "Entry recorded successfully";
+
+          // If there's already an entry for today but no exit, this is an exit
+          if (
+            attendanceResult.Items &&
+            attendanceResult.Items.length === 1 &&
+            attendanceResult.Items[0].type === "ENTRY"
+          ) {
+            attendanceType = "EXIT";
+            attendanceMessage = "Exit recorded successfully";
+          }
+          // If there are already both entry and exit records for today, this is a new entry
+          else if (
+            attendanceResult.Items &&
+            attendanceResult.Items.length >= 2
+          ) {
+            attendanceType = "ENTRY";
+            attendanceMessage = "New entry recorded";
+          }
+
+          // Record the attendance
+          const attendanceItem = {
+            memberId: memberId,
+            timestamp: currentTimestamp,
+            type: attendanceType,
+            date: todayDate,
+          };
+
+          const putAttendanceParams = {
+            TableName: ATTENDANCE_TABLE,
+            Item: attendanceItem,
+          };
+
+          await docClient.send(new PutCommand(putAttendanceParams));
+
+          // Return member details along with match and attendance information
           res.json({
             match: true,
             similarity: similarity,
@@ -155,6 +257,11 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
               phoneNumber: memberDetails.phoneNumber,
               startDate: memberDetails.startDate,
               createdAt: memberDetails.createdAt,
+            },
+            attendance: {
+              type: attendanceType,
+              timestamp: currentTimestamp,
+              message: attendanceMessage,
             },
           });
         } else {
@@ -181,6 +288,48 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "SearchFacesByImage failed" });
+  }
+});
+
+// Get attendance records for a specific member
+app.get("/api/attendance/:memberId", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const { date } = req.query; // Optional date filter in YYYY-MM-DD format
+
+    let scanParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+      },
+    };
+
+    // Add date filter if provided
+    if (date) {
+      scanParams.FilterExpression += " AND begins_with(#ts, :date)";
+      scanParams.ExpressionAttributeValues[":date"] = date;
+      scanParams.ExpressionAttributeNames = {
+        "#ts": "timestamp",
+      };
+    }
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // Sort by timestamp
+    const sortedRecords = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        )
+      : [];
+
+    res.json({
+      memberId,
+      records: sortedRecords,
+    });
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    res.status(500).json({ error: "Failed to get attendance records" });
   }
 });
 
