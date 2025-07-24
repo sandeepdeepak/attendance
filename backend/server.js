@@ -20,6 +20,7 @@ const {
   GetCommand,
   QueryCommand,
   ScanCommand,
+  DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
 
 const app = express();
@@ -328,6 +329,79 @@ app.get("/api/members/:id", async (req, res) => {
   } catch (error) {
     console.error("Error getting member:", error);
     res.status(500).json({ error: "Failed to get member" });
+  }
+});
+
+// Delete all faces from a collection
+app.delete("/api/faces", async (req, res) => {
+  try {
+    const { collectionId = "my-face-collection" } = req.query;
+
+    // Import the DeleteFacesCommand
+    const {
+      ListFacesCommand,
+      DeleteFacesCommand,
+    } = require("@aws-sdk/client-rekognition");
+
+    // First, list all faces in the collection
+    const listFacesParams = {
+      CollectionId: collectionId,
+      MaxResults: 4096, // Maximum allowed by the API
+    };
+
+    const listFacesResult = await rekClient.send(
+      new ListFacesCommand(listFacesParams)
+    );
+
+    if (listFacesResult.Faces && listFacesResult.Faces.length > 0) {
+      // Extract face IDs
+      const faceIds = listFacesResult.Faces.map((face) => face.FaceId);
+
+      // Delete the faces
+      const deleteFacesParams = {
+        CollectionId: collectionId,
+        FaceIds: faceIds,
+      };
+
+      const deleteFacesResult = await rekClient.send(
+        new DeleteFacesCommand(deleteFacesParams)
+      );
+
+      // Also delete the corresponding entries from DynamoDB
+      // Note: This is a simple implementation that deletes all members
+      // In a production environment, you might want to be more selective
+      const scanParams = {
+        TableName: MEMBERS_TABLE,
+      };
+
+      const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+      if (scanResult.Items && scanResult.Items.length > 0) {
+        // Delete each member
+        for (const member of scanResult.Items) {
+          const deleteParams = {
+            TableName: MEMBERS_TABLE,
+            Key: {
+              id: member.id,
+              phoneNumber: member.phoneNumber,
+            },
+          };
+
+          await docClient.send(new DeleteCommand(deleteParams));
+        }
+      }
+
+      res.json({
+        message: "All faces deleted successfully",
+        deletedFaces: deleteFacesResult.DeletedFaces.length,
+        deletedMembers: scanResult.Items ? scanResult.Items.length : 0,
+      });
+    } else {
+      res.json({ message: "No faces found in the collection" });
+    }
+  } catch (error) {
+    console.error("Error deleting faces:", error);
+    res.status(500).json({ error: "Failed to delete faces" });
   }
 });
 

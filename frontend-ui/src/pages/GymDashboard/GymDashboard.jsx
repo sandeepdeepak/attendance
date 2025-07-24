@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FaCalendarCheck,
   FaUsers,
@@ -6,6 +6,7 @@ import {
   FaUserPlus,
   FaPlus,
   FaRegUser,
+  FaTrash,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 const GymDashboard = ({
@@ -13,6 +14,44 @@ const GymDashboard = ({
   onAddMemberClick,
   onAllMembersClick,
 }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+
+  const handleDeleteAllFaces = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete all faces? This action cannot be undone."
+      )
+    ) {
+      try {
+        setIsDeleting(true);
+        setDeleteSuccess(null);
+        setDeleteError(null);
+
+        const response = await fetch("http://localhost:7777/api/faces", {
+          method: "DELETE",
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          setDeleteSuccess(
+            `Successfully deleted ${result.deletedFaces || 0} faces and ${
+              result.deletedMembers || 0
+            } members.`
+          );
+        } else {
+          setDeleteError(result.error || "Failed to delete faces");
+        }
+      } catch (error) {
+        console.error("Error deleting faces:", error);
+        setDeleteError("Failed to connect to server");
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
   const stats = [
     {
       icon: <FaCalendarCheck size={30} />,
@@ -75,7 +114,26 @@ const GymDashboard = ({
         >
           <FaRegUser /> Go to face recognition
         </button>
+        {/* <button
+          className="flex items-center justify-center gap-2 bg-red-600 px-6 py-3 rounded-2xl text-white w-60"
+          onClick={handleDeleteAllFaces}
+          disabled={isDeleting}
+        >
+          <FaTrash /> {isDeleting ? "Deleting..." : "Delete All Faces"}
+        </button> */}
       </div>
+
+      {/* Success/Error Messages */}
+      {deleteSuccess && (
+        <div className="mt-4 p-3 bg-green-800 text-white rounded-lg">
+          {deleteSuccess}
+        </div>
+      )}
+      {deleteError && (
+        <div className="mt-4 p-3 bg-red-800 text-white rounded-lg">
+          {deleteError}
+        </div>
+      )}
     </div>
   );
 };
