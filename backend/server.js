@@ -333,6 +333,109 @@ app.get("/api/attendance/:memberId", async (req, res) => {
   }
 });
 
+// Get dashboard statistics
+app.get("/api/dashboard/stats", async (req, res) => {
+  try {
+    const todayDate = getTodayDateString();
+
+    // 1. Get today's attendance count (unique members who checked in today)
+    const todayAttendanceParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "begins_with(#ts, :today)",
+      ExpressionAttributeValues: {
+        ":today": todayDate,
+      },
+      ExpressionAttributeNames: {
+        "#ts": "timestamp",
+      },
+    };
+
+    const todayAttendanceResult = await docClient.send(
+      new ScanCommand(todayAttendanceParams)
+    );
+
+    // Count unique members who attended today
+    const uniqueAttendees = new Set();
+    if (todayAttendanceResult.Items) {
+      todayAttendanceResult.Items.forEach((item) => {
+        uniqueAttendees.add(item.memberId);
+      });
+    }
+    const todaysAttendance = uniqueAttendees.size;
+
+    // 2. Get members currently inside (entered but not exited)
+    const membersInside = new Set();
+
+    // Get all members
+    const allMembersResult = await docClient.send(
+      new ScanCommand({
+        TableName: MEMBERS_TABLE,
+      })
+    );
+
+    const allMembers = allMembersResult.Items || [];
+
+    // For each member, check their attendance records for today
+    for (const member of allMembers) {
+      const memberAttendanceParams = {
+        TableName: ATTENDANCE_TABLE,
+        FilterExpression: "memberId = :memberId AND begins_with(#ts, :today)",
+        ExpressionAttributeValues: {
+          ":memberId": member.id,
+          ":today": todayDate,
+        },
+        ExpressionAttributeNames: {
+          "#ts": "timestamp",
+        },
+      };
+
+      const memberAttendanceResult = await docClient.send(
+        new ScanCommand(memberAttendanceParams)
+      );
+
+      if (
+        memberAttendanceResult.Items &&
+        memberAttendanceResult.Items.length > 0
+      ) {
+        // Sort by timestamp to get the latest record
+        const sortedRecords = memberAttendanceResult.Items.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+
+        // If the latest record is an ENTRY, the member is inside
+        if (sortedRecords[0].type === "ENTRY") {
+          membersInside.add(member.id);
+        }
+      }
+    }
+
+    // 3. Get missed check-ins (members who didn't check in today)
+    const missedCheckIns = allMembers.length - uniqueAttendees.size;
+
+    // 4. Get new members (joined in the last 7 days)
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const oneWeekAgoStr = oneWeekAgo.toISOString();
+
+    let newJoineesCount = 0;
+    for (const member of allMembers) {
+      if (member.createdAt && member.createdAt > oneWeekAgoStr) {
+        newJoineesCount++;
+      }
+    }
+
+    res.json({
+      todaysAttendance,
+      membersInside: membersInside.size,
+      missedCheckIns,
+      newJoinees: newJoineesCount,
+    });
+  } catch (error) {
+    console.error("Error getting dashboard stats:", error);
+    res.status(500).json({ error: "Failed to get dashboard statistics" });
+  }
+});
+
 app.post("/api/create-collection", async (req, res) => {
   console.log(req.body);
   const collectionId = req.body.collectionId; // e.g. 'my-face-collection'
