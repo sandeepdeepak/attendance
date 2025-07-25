@@ -685,6 +685,11 @@ app.delete("/api/faces", async (req, res) => {
   }
 });
 
+// Simple hello endpoint
+app.get("/api/hello", (req, res) => {
+  res.json({ message: "hello" });
+});
+
 app.listen(port, () =>
   console.log(`Backend running on http://localhost:${port}`)
 );
