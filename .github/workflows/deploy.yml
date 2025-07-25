@@ -50,4 +50,4 @@ jobs:
             sudo cp -r frontend/dist/* /usr/share/nginx/html/
             ls
             cd backend && npm install
-            pm2 restart all || pm2 start app.js
+            pm2 restart all || pm2 start server.js
