@@ -6,28 +6,32 @@ on:
 
 jobs:
   deploy:
-    name: Deploy App
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH key
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy code to EC2
+      - name: Sync files to EC2
         run: |
-          rsync -avz --exclude=".git" --exclude="node_modules" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}
+          rsync -avz --exclude=".git" --exclude="node_modules" ./ \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}
 
-      - name: Build frontend & restart backend
+      - name: Build frontend and restart backend on EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd ${{ secrets.EC2_PATH }}
+          HOST=${{ secrets.EC2_HOST }}
+          USER=${{ secrets.EC2_USER }}
+          PATH_ON_EC2=${{ secrets.EC2_PATH }}
+
+          ssh $USER@$HOST <<EOF
+            cd $PATH_ON_EC2
             cd frontend && npm install && npm run build && cd ..
             sudo cp -r frontend/build/* /usr/share/nginx/html/
             cd backend && npm install
