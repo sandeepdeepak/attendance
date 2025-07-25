@@ -36,4 +36,3 @@ jobs:
             sudo cp -r frontend/build/* /usr/share/nginx/html/
             cd backend && npm install
             pm2 restart all || pm2 start app.js
-EOF
