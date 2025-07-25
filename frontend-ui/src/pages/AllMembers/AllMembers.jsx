@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaArrowLeft, FaUser } from "react-icons/fa";
 import "./AllMembers.css";
 
-const AllMembers = ({ onBackClick }) => {
+const AllMembers = ({ onBackClick, onMemberClick }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,12 +61,19 @@ const AllMembers = ({ onBackClick }) => {
         ) : (
           <div className="space-y-6">
             {members.map((member) => (
-              <div key={member.id} className="flex items-center">
+              <div
+                key={member.id}
+                className="flex items-center cursor-pointer hover:bg-gray-800 p-3 rounded-lg transition-colors"
+                onClick={() => onMemberClick(member.id)}
+              >
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
                   <FaUser size={32} className="text-gray-400" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-medium">{member.fullName}</h2>
+                  <p className="text-gray-400 text-left">
+                    {member.phoneNumber}
+                  </p>
                 </div>
               </div>
             ))}

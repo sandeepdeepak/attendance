@@ -4,10 +4,12 @@ import GymDashboard from "./pages/GymDashboard/GymDashboard";
 import FaceRecognition from "./pages/FaceRecognition/FaceRecognition";
 import AddMember from "./pages/AddMember/AddMember";
 import AllMembers from "./pages/AllMembers/AllMembers";
+import MemberDetails from "./pages/MemberDetails/MemberDetails";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [faceRecognitionKey, setFaceRecognitionKey] = useState(0);
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
 
   // Reset the key when navigating to face recognition to force remount
   useEffect(() => {
@@ -29,7 +31,16 @@ function App() {
   };
 
   const handleBackClick = () => {
-    setCurrentPage("dashboard");
+    if (currentPage === "memberDetails") {
+      setCurrentPage("allMembers");
+    } else {
+      setCurrentPage("dashboard");
+    }
+  };
+
+  const handleMemberClick = (memberId) => {
+    setSelectedMemberId(memberId);
+    setCurrentPage("memberDetails");
   };
 
   const renderCurrentPage = () => {
@@ -52,7 +63,19 @@ function App() {
       case "addMember":
         return <AddMember onBackClick={handleBackClick} />;
       case "allMembers":
-        return <AllMembers onBackClick={handleBackClick} />;
+        return (
+          <AllMembers
+            onBackClick={handleBackClick}
+            onMemberClick={handleMemberClick}
+          />
+        );
+      case "memberDetails":
+        return (
+          <MemberDetails
+            memberId={selectedMemberId}
+            onBackClick={handleBackClick}
+          />
+        );
       default:
         return (
           <GymDashboard

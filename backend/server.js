@@ -564,19 +564,25 @@ app.get("/api/members/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const params = {
+    // Use scan with filter expression instead of GetCommand
+    // because we need to query by just the id (partition key)
+    // but our table has a composite key (id + phoneNumber)
+    const scanParams = {
       TableName: MEMBERS_TABLE,
-      Key: { id },
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
     };
 
-    const result = await docClient.send(new GetCommand(params));
+    const result = await docClient.send(new ScanCommand(scanParams));
 
-    if (!result.Item) {
+    if (!result.Items || result.Items.length === 0) {
       return res.status(404).json({ error: "Member not found" });
     }
 
     res.json({
-      member: result.Item,
+      member: result.Items[0],
     });
   } catch (error) {
     console.error("Error getting member:", error);
