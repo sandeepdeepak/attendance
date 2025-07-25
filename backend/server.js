@@ -35,9 +35,31 @@ const upload = multer({ storage: multer.memoryStorage() });
 const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
 
-app.use(cors());
+// Configure CORS with specific options
+app.use(
+  cors({
+    origin: "*", // Allow all origins, or specify with: ['http://localhost:3000', 'https://yourdomain.com']
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    credentials: true, // Allow cookies to be sent with requests
+    maxAge: 86400, // Cache preflight request results for 24 hours (in seconds)
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add CORS headers to all responses as a backup
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", true);
+  next();
+});
 
 // Initialize DynamoDB tables if they don't exist
 async function initializeDynamoDB() {
