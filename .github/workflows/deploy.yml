@@ -30,10 +30,22 @@ jobs:
           USER=${{ secrets.EC2_USER }}
           PATH_ON_EC2=${{ secrets.EC2_PATH }}
 
-          ssh $USER@$HOST <<'EOF'
-            cd $PATH_ON_EC2
-            cd frontend && npm install && npm run build && cd ..
-            sudo cp -r frontend/build/* /usr/share/nginx/html/
-            cd backend && npm install
-            pm2 restart all || pm2 start app.js
+          ssh $USER@$HOST <<EOF
+          set -e
+          cd $PATH_ON_EC2
+
+          cd frontend
+          npm ci
+          npm run build
+          sudo cp -r build/* /usr/share/nginx/html/
+          cd ..
+
+          cd backend
+          npm ci
+
+          if pm2 describe my-app > /dev/null; then
+            pm2 restart my-app
+          else
+            pm2 start app.js --name my-app
+          fi
 EOF
