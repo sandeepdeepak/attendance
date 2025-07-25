@@ -32,6 +32,7 @@ jobs:
 
           ssh $USER@$HOST <<'EOF'
             cd $PATH_ON_EC2
+            ls
             cd frontend && npm install && npm run build && cd ..
             sudo cp -r frontend/build/* /usr/share/nginx/html/
             cd backend && npm install
