@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { FaArrowLeft, FaCalendar } from "react-icons/fa";
 import "./AddMember.css";
 import Webcam from "react-webcam";
+import { API_URL } from "../../config";
 
 const AddMember = ({ onBackClick }) => {
   const [formData, setFormData] = useState({
@@ -78,7 +79,7 @@ const AddMember = ({ onBackClick }) => {
       formDataToSend.append("faceImage", imageBlob, "face.jpg");
 
       // Send data to API
-      const response = await fetch("http://localhost:7777/api/members", {
+      const response = await fetch(`${API_URL}/api/members`, {
         method: "POST",
         body: formDataToSend,
       });

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FaArrowLeft, FaCheck, FaTimes } from "react-icons/fa";
 import "./FaceRecognition.css";
 import Webcam from "react-webcam";
-
 import axios from "axios";
+import { API_URL } from "../../config";
 
 const FaceRecognition = ({ onBackClick }) => {
   const [capturedImage, setCapturedImage] = useState(null);
@@ -57,7 +57,7 @@ const FaceRecognition = ({ onBackClick }) => {
 
         if (axios) {
           // Make API call if axios is available
-          response = await axios.post("http://localhost:7777/api/search", form);
+          response = await axios.post(`${API_URL}/api/search`, form);
           const result = response.data;
           setSearchResult(result);
 

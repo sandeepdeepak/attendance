@@ -9,6 +9,8 @@ import {
   FaRegUser,
 } from "react-icons/fa";
 import "./GymDashboard.css";
+import { API_URL } from "../../config";
+
 const GymDashboard = ({
   onFaceRecognitionClick,
   onAddMemberClick,
@@ -27,9 +29,7 @@ const GymDashboard = ({
     const fetchDashboardStats = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(
-          "http://localhost:7777/api/dashboard/stats"
-        );
+        const response = await axios.get(`${API_URL}/api/dashboard/stats`);
         if (response.data) {
           setDashboardStats(response.data);
         }

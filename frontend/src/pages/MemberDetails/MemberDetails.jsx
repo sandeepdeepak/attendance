@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
 import "./MemberDetails.css";
+import { API_URL } from "../../config";
 
 const MemberDetails = ({ memberId, onBackClick }) => {
   const [member, setMember] = useState(null);
@@ -18,7 +19,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
 
         // Fetch member details
         const memberResponse = await axios.get(
-          `http://localhost:7777/api/members/${memberId}`
+          `${API_URL}/api/members/${memberId}`
         );
 
         if (memberResponse.data && memberResponse.data.member) {
@@ -27,7 +28,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
 
         // Fetch attendance records
         const attendanceResponse = await axios.get(
-          `http://localhost:7777/api/attendance/${memberId}`
+          `${API_URL}/api/attendance/${memberId}`
         );
 
         if (attendanceResponse.data && attendanceResponse.data.records) {

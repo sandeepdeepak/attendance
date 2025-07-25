@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaArrowLeft, FaUser } from "react-icons/fa";
 import "./AllMembers.css";
+import { API_URL } from "../../config";
 
 const AllMembers = ({ onBackClick, onMemberClick }) => {
   const [members, setMembers] = useState([]);
@@ -13,7 +14,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("http://localhost:7777/api/members");
+        const response = await fetch(`${API_URL}/api/members`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch members");
@@ -59,7 +60,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
             <p className="text-xl">No members found</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-1">
             {members.map((member) => (
               <div
                 key={member.id}
@@ -70,7 +71,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
                   <FaUser size={32} className="text-gray-400" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-medium">{member.fullName}</h2>
+                  <h2 className="text-xl font-medium">{member.fullName}</h2>
                   <p className="text-gray-400 text-left">
                     {member.phoneNumber}
                   </p>
