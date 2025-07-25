@@ -35,6 +35,7 @@ jobs:
             ls
             cd attendance
             cd frontend && npm install && npm run build && cd ..
-            sudo cp -r frontend/build/* /usr/share/nginx/html/
+            sudo cp -r frontend/dist/* /usr/share/nginx/html/
+            ls
             cd backend && npm install
             pm2 restart all || pm2 start app.js
