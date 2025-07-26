@@ -278,6 +278,8 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
               fullName: memberDetails.fullName,
               phoneNumber: memberDetails.phoneNumber,
               startDate: memberDetails.startDate,
+              dateOfBirth: memberDetails.dateOfBirth,
+              gender: memberDetails.gender,
               createdAt: memberDetails.createdAt,
             },
             attendance: {
@@ -502,13 +504,21 @@ app.post("/api/index-face", upload.single("image"), async (req, res) => {
 // Add a new member to DynamoDB and index their face
 app.post("/api/members", upload.single("faceImage"), async (req, res) => {
   try {
-    const { fullName, phoneNumber, startDate } = req.body;
+    const { fullName, phoneNumber, startDate, dateOfBirth, gender } = req.body;
     const faceImage = req.file?.buffer;
 
-    if (!fullName || !phoneNumber || !startDate || !faceImage) {
+    if (
+      !fullName ||
+      !phoneNumber ||
+      !startDate ||
+      !dateOfBirth ||
+      !gender ||
+      !faceImage
+    ) {
       return res.status(400).json({
         error: "Missing required fields",
-        required: "fullName, phoneNumber, startDate, faceImage",
+        required:
+          "fullName, phoneNumber, startDate, dateOfBirth, gender, faceImage",
       });
     }
 
@@ -541,6 +551,8 @@ app.post("/api/members", upload.single("faceImage"), async (req, res) => {
       fullName,
       phoneNumber,
       startDate,
+      dateOfBirth,
+      gender,
       faceId,
       createdAt: new Date().toISOString(),
       active: true,

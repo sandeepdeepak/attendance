@@ -1,1 +1,81 @@
-@import "tailwindcss";
+/* AddMember.css */
+
+/* Custom styling for select dropdown */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select select {
+  display: none; /* Hide original SELECT element */
+}
+
+.select-selected {
+  background-color: #111;
+  border-radius: 0.5rem;
+}
+
+/* Style the arrow inside the select element */
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 50%;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%) rotate(45deg);
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transition: transform 0.3s;
+  text-align: left;
+}
+
+/* Point the arrow upwards when the select box is open */
+.select-arrow-active:after {
+  transform: translateY(-50%) rotate(-135deg);
+}
+
+/* Style the items (options) */
+.select-items {
+  position: absolute;
+  background-color: #111;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  border-radius: 0.5rem;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+/* Style items (options) */
+.select-items div {
+  color: #ffffff;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.25rem;
+  border-bottom: 1px solid #222;
+  text-align: left;
+}
+
+/* Style item when hovering */
+.select-items div:hover,
+.same-as-selected {
+  background-color: #222;
+}
+
+/* Hide the items when the select box is closed */
+.select-hide {
+  display: none;
+}
+
+/* Style the selected item */
+.select-selected {
+  color: #ffffff;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 1.25rem;
+  text-align: left;
+}

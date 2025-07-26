@@ -40,7 +40,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <div className="text-4xl font-bold ml-4">
+        <div className="text-3xl font-bold ml-4">
           All members {members.length > 0 ? `(${members.length})` : ""}{" "}
         </div>
       </div>
@@ -71,7 +71,9 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
                   <FaUser size={32} className="text-gray-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-medium">{member.fullName}</h2>
+                  <h2 className="text-xl font-medium text-left">
+                    {member.fullName}
+                  </h2>
                   <p className="text-gray-400 text-left">
                     {member.phoneNumber}
                   </p>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { FaArrowLeft, FaCalendar } from "react-icons/fa";
 import "./AddMember.css";
 import Webcam from "react-webcam";
@@ -9,15 +9,40 @@ const AddMember = ({ onBackClick }) => {
     fullName: "",
     phoneNumber: "",
     startDate: new Date().toISOString().split("T")[0], // Default to today's date
+    dateOfBirth: "", // New field for date of birth
+    gender: "male", // Default gender
   });
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
   const webcamRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsGenderDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleCustomSelectChange = (name, value) => {
     setFormData({
       ...formData,
       [name]: value,
@@ -76,6 +101,8 @@ const AddMember = ({ onBackClick }) => {
       formDataToSend.append("fullName", formData.fullName);
       formDataToSend.append("phoneNumber", formData.phoneNumber);
       formDataToSend.append("startDate", formData.startDate);
+      formDataToSend.append("dateOfBirth", formData.dateOfBirth);
+      formDataToSend.append("gender", formData.gender);
       formDataToSend.append("faceImage", imageBlob, "face.jpg");
 
       // Send data to API
@@ -144,6 +171,63 @@ const AddMember = ({ onBackClick }) => {
 
         <div className="flex flex-col">
           <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Gender
+          </label>
+          <div className="custom-select" ref={dropdownRef}>
+            {/* Hidden select element to maintain form state */}
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleInputChange}
+              style={{ display: "none" }}
+            >
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+
+            {/* Custom dropdown UI */}
+            <div
+              className={`select-selected ${
+                isGenderDropdownOpen ? "select-arrow-active" : ""
+              }`}
+              onClick={() => setIsGenderDropdownOpen(!isGenderDropdownOpen)}
+            >
+              {formData.gender.charAt(0).toUpperCase() +
+                formData.gender.slice(1)}
+            </div>
+
+            <div
+              className={`select-items ${
+                isGenderDropdownOpen ? "" : "select-hide"
+              }`}
+            >
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("gender", "male");
+                  setIsGenderDropdownOpen(false);
+                }}
+                className={formData.gender === "male" ? "same-as-selected" : ""}
+              >
+                Male
+              </div>
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("gender", "female");
+                  setIsGenderDropdownOpen(false);
+                }}
+                className={
+                  formData.gender === "female" ? "same-as-selected" : ""
+                }
+              >
+                Female
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
             Start Date
           </label>
           <div className="relative">
@@ -153,6 +237,26 @@ const AddMember = ({ onBackClick }) => {
               value={formData.startDate}
               onChange={handleInputChange}
               className="bg-[#111] text-white p-4 rounded-lg w-full"
+            />
+            <FaCalendar
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Date of Birth
+          </label>
+          <div className="relative">
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              className="bg-[#111] text-white p-4 rounded-lg w-full"
+              required
             />
             <FaCalendar
               className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -232,6 +336,7 @@ const AddMember = ({ onBackClick }) => {
         disabled={
           !formData.fullName ||
           !formData.phoneNumber ||
+          !formData.dateOfBirth ||
           !capturedImage ||
           isSaving
         }

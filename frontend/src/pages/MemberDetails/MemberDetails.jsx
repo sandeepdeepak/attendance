@@ -47,7 +47,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     }
   }, [memberId]);
 
-  // Calculate age from startDate (assuming it's a birth date)
+  // Calculate age from date of birth
   const calculateAge = (birthDate) => {
     if (!birthDate) return "N/A";
     const today = new Date();
@@ -61,6 +61,13 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       age--;
     }
     return age;
+  };
+
+  // Format date for display (YYYY-MM-DD to DD/MM/YYYY)
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
   };
 
   // Generate calendar days for the current month with proper day of week alignment
@@ -205,11 +212,29 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
           <p className="text-gray-400">Age</p>
-          <p className="text-xl">{calculateAge(member.startDate)}</p>
+          <p className="text-xl">
+            {calculateAge(member.dateOfBirth || member.startDate)}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-400">Date of Birth</p>
+          <p className="text-xl">{formatDate(member.dateOfBirth)}</p>
+        </div>
+        <div>
+          <p className="text-gray-400">Gender</p>
+          <p className="text-xl">
+            {member.gender
+              ? member.gender.charAt(0).toUpperCase() + member.gender.slice(1)
+              : "N/A"}
+          </p>
         </div>
         <div>
           <p className="text-gray-400">Mobile number</p>
           <p className="text-xl">{member.phoneNumber}</p>
+        </div>
+        <div>
+          <p className="text-gray-400">Membership Start</p>
+          <p className="text-xl">{formatDate(member.startDate)}</p>
         </div>
         <div>
           <p className="text-gray-400">Plan</p>
