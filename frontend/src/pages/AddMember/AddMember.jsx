@@ -11,20 +11,32 @@ const AddMember = ({ onBackClick }) => {
     startDate: new Date().toISOString().split("T")[0], // Default to today's date
     dateOfBirth: "", // New field for date of birth
     gender: "male", // Default gender
+    membershipPlan: "1 Month", // Default membership plan
   });
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
+  const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false);
   const webcamRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const genderDropdownRef = useRef(null);
+  const planDropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        genderDropdownRef.current &&
+        !genderDropdownRef.current.contains(event.target)
+      ) {
         setIsGenderDropdownOpen(false);
+      }
+      if (
+        planDropdownRef.current &&
+        !planDropdownRef.current.contains(event.target)
+      ) {
+        setIsPlanDropdownOpen(false);
       }
     }
 
@@ -103,6 +115,7 @@ const AddMember = ({ onBackClick }) => {
       formDataToSend.append("startDate", formData.startDate);
       formDataToSend.append("dateOfBirth", formData.dateOfBirth);
       formDataToSend.append("gender", formData.gender);
+      formDataToSend.append("membershipPlan", formData.membershipPlan);
       formDataToSend.append("faceImage", imageBlob, "face.jpg");
 
       // Send data to API
@@ -173,7 +186,7 @@ const AddMember = ({ onBackClick }) => {
           <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
             Gender
           </label>
-          <div className="custom-select" ref={dropdownRef}>
+          <div className="custom-select" ref={genderDropdownRef}>
             {/* Hidden select element to maintain form state */}
             <select
               name="gender"
@@ -228,25 +241,6 @@ const AddMember = ({ onBackClick }) => {
 
         <div className="flex flex-col">
           <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Start Date
-          </label>
-          <div className="relative">
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleInputChange}
-              className="bg-[#111] text-white p-4 rounded-lg w-full"
-            />
-            <FaCalendar
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
             Date of Birth
           </label>
           <div className="relative">
@@ -257,6 +251,114 @@ const AddMember = ({ onBackClick }) => {
               onChange={handleInputChange}
               className="bg-[#111] text-white p-4 rounded-lg w-full"
               required
+            />
+            <FaCalendar
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Membership Plan
+          </label>
+          <div className="custom-select" ref={planDropdownRef}>
+            {/* Hidden select element to maintain form state */}
+            <select
+              name="membershipPlan"
+              value={formData.membershipPlan}
+              onChange={handleInputChange}
+              style={{ display: "none" }}
+            >
+              <option value="1 Month">1 Month</option>
+              <option value="3 Months">3 Months</option>
+              <option value="6 Months">6 Months</option>
+              <option value="12 Months">12 Months</option>
+            </select>
+
+            {/* Custom dropdown UI */}
+            <div
+              className={`select-selected ${
+                isPlanDropdownOpen ? "select-arrow-active" : ""
+              }`}
+              onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
+            >
+              {formData.membershipPlan}
+            </div>
+
+            <div
+              className={`select-items ${
+                isPlanDropdownOpen ? "" : "select-hide"
+              }`}
+            >
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("membershipPlan", "1 Month");
+                  setIsPlanDropdownOpen(false);
+                }}
+                className={
+                  formData.membershipPlan === "1 Month"
+                    ? "same-as-selected"
+                    : ""
+                }
+              >
+                1 Month
+              </div>
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("membershipPlan", "3 Months");
+                  setIsPlanDropdownOpen(false);
+                }}
+                className={
+                  formData.membershipPlan === "3 Months"
+                    ? "same-as-selected"
+                    : ""
+                }
+              >
+                3 Months
+              </div>
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("membershipPlan", "6 Months");
+                  setIsPlanDropdownOpen(false);
+                }}
+                className={
+                  formData.membershipPlan === "6 Months"
+                    ? "same-as-selected"
+                    : ""
+                }
+              >
+                6 Months
+              </div>
+              <div
+                onClick={() => {
+                  handleCustomSelectChange("membershipPlan", "12 Months");
+                  setIsPlanDropdownOpen(false);
+                }}
+                className={
+                  formData.membershipPlan === "12 Months"
+                    ? "same-as-selected"
+                    : ""
+                }
+              >
+                12 Months
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Plan Start Date
+          </label>
+          <div className="relative">
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleInputChange}
+              className="bg-[#111] text-white p-4 rounded-lg w-full"
             />
             <FaCalendar
               className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"

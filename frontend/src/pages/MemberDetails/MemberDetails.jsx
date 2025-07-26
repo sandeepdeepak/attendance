@@ -209,40 +209,45 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       </div>
 
       {/* Member details */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-2 gap-2 mb-6 ms-2">
         <div>
-          <p className="text-gray-400">Age</p>
-          <p className="text-xl">
+          <p className="text-gray-400 text-left">Age</p>
+          <p className="text-left">
             {calculateAge(member.dateOfBirth || member.startDate)}
           </p>
         </div>
         <div>
-          <p className="text-gray-400">Date of Birth</p>
-          <p className="text-xl">{formatDate(member.dateOfBirth)}</p>
+          <p className="text-gray-400 text-left">Date of Birth</p>
+          <p className="text-left">{formatDate(member.dateOfBirth)}</p>
         </div>
         <div>
-          <p className="text-gray-400">Gender</p>
-          <p className="text-xl">
+          <p className="text-gray-400 text-left">Gender</p>
+          <p className="text-left">
             {member.gender
               ? member.gender.charAt(0).toUpperCase() + member.gender.slice(1)
               : "N/A"}
           </p>
         </div>
         <div>
-          <p className="text-gray-400">Mobile number</p>
-          <p className="text-xl">{member.phoneNumber}</p>
+          <p className="text-gray-400 text-left">Mobile number</p>
+          <p className="text-left">{member.phoneNumber}</p>
         </div>
         <div>
-          <p className="text-gray-400">Membership Start</p>
-          <p className="text-xl">{formatDate(member.startDate)}</p>
+          <p className="text-gray-400 text-left">Membership Start</p>
+          <p className="text-left">
+            {formatDate(member.startDate)}{" "}
+            {`(${member.membershipPlan})` || "1 Month"}
+          </p>
         </div>
+        {/* <div>
+          <p className="text-gray-400 text-left">Plan</p>
+          <p className="text-left">
+            {member.membershipPlan || "1 Month"}
+          </p>
+        </div> */}
         <div>
-          <p className="text-gray-400">Plan</p>
-          <p className="text-xl">1 Month</p>
-        </div>
-        <div>
-          <p className="text-gray-400">Membership Ends In</p>
-          <p className="text-xl">24 days</p>
+          <p className="text-gray-400 text-left">Membership Ends In</p>
+          <p className="text-left">24 days</p>
         </div>
       </div>
 
@@ -311,11 +316,11 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       {/* Attendance statistics */}
       <div className="flex justify-between">
         <div>
-          <p className="text-gray-400">Total Days</p>
+          <p className="text-gray-400 text-left">Total Days</p>
           <p className="text-xl">{stats.totalDays}</p>
         </div>
         <div>
-          <p className="text-gray-400">Attended</p>
+          <p className="text-gray-400 text-left">Attended</p>
           <p className="text-xl">{stats.attendedDays}</p>
         </div>
       </div>
