@@ -170,6 +170,29 @@ function getTodayDateString() {
   return today.toISOString().split("T")[0];
 }
 
+// Helper function to check if membership has expired
+function checkMembershipExpired(startDate, membershipPlan) {
+  if (!startDate || !membershipPlan) return false;
+
+  const start = new Date(startDate);
+  const today = new Date();
+
+  // Calculate end date based on membership plan
+  const planMonths = {
+    "1 Month": 1,
+    "3 Months": 3,
+    "6 Months": 6,
+    "12 Months": 12,
+  };
+
+  const months = planMonths[membershipPlan] || 1;
+  const endDate = new Date(start);
+  endDate.setMonth(endDate.getMonth() + months);
+
+  // Compare end date with today
+  return today > endDate;
+}
+
 // SearchFacesByImage route (requires a pre-created collection)
 app.post("/api/search", upload.single("image"), async (req, res) => {
   const img = req.file.buffer;
@@ -203,6 +226,32 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
 
         if (scanResult.Items && scanResult.Items.length > 0) {
           const memberDetails = scanResult.Items[0];
+
+          // Check if membership has expired
+          const isMembershipExpired = checkMembershipExpired(
+            memberDetails.startDate,
+            memberDetails.membershipPlan
+          );
+
+          if (isMembershipExpired) {
+            // Return member details but with expired status and no attendance recording
+            return res.json({
+              match: true,
+              similarity: similarity,
+              id: memberId,
+              member: {
+                fullName: memberDetails.fullName,
+                phoneNumber: memberDetails.phoneNumber,
+                startDate: memberDetails.startDate,
+                dateOfBirth: memberDetails.dateOfBirth,
+                gender: memberDetails.gender,
+                membershipPlan: memberDetails.membershipPlan,
+                createdAt: memberDetails.createdAt,
+              },
+              membershipExpired: true,
+              message: "Membership has expired. Please renew to continue.",
+            });
+          }
 
           // Check if the member has already checked in today
           const todayDate = getTodayDateString();

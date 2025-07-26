@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FaArrowLeft, FaCheck, FaTimes } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaCheck,
+  FaTimes,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import "./FaceRecognition.css";
 import Webcam from "react-webcam";
 import axios from "axios";
@@ -13,6 +18,7 @@ const FaceRecognition = ({ onBackClick }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [showResultTimer, setShowResultTimer] = useState(null);
+  const [membershipExpired, setMembershipExpired] = useState(false);
   const webcamRef = useRef(null);
 
   // Start countdown when component mounts
@@ -61,8 +67,23 @@ const FaceRecognition = ({ onBackClick }) => {
           const result = response.data;
           setSearchResult(result);
 
-          // If there's a match, set a timer to return to dashboard
-          if (result.match) {
+          // Check if membership has expired
+          if (result.match && result.member) {
+            const isExpired = checkMembershipExpired(
+              result.member.startDate,
+              result.member.membershipPlan
+            );
+            setMembershipExpired(isExpired);
+
+            // Only set timer to return if membership is not expired
+            if (!isExpired) {
+              const timer = setTimeout(() => {
+                onBackClick(); // Return to dashboard after 2 seconds
+              }, 2000);
+              setShowResultTimer(timer);
+            }
+          } else if (result.match) {
+            // If there's a match but no member details, set timer to return
             const timer = setTimeout(() => {
               onBackClick(); // Return to dashboard after 2 seconds
             }, 2000);
@@ -103,6 +124,29 @@ const FaceRecognition = ({ onBackClick }) => {
         setIsSearching(false);
       }
     }
+  };
+
+  // Calculate if membership has expired
+  const checkMembershipExpired = (startDate, membershipPlan) => {
+    if (!startDate || !membershipPlan) return false;
+
+    const start = new Date(startDate);
+    const today = new Date();
+
+    // Calculate end date based on membership plan
+    const planMonths = {
+      "1 Month": 1,
+      "3 Months": 3,
+      "6 Months": 6,
+      "12 Months": 12,
+    };
+
+    const months = planMonths[membershipPlan] || 1;
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + months);
+
+    // Compare end date with today
+    return today > endDate;
   };
 
   // Clear timer when component unmounts or when retaking
@@ -158,6 +202,34 @@ const FaceRecognition = ({ onBackClick }) => {
 
     if (searchResult) {
       if (searchResult.match) {
+        // Check if membership has expired
+        if (membershipExpired) {
+          return (
+            <div className="mt-4 text-center">
+              <div className="flex items-center justify-center text-yellow-500 mb-2">
+                <FaExclamationTriangle size={24} className="mr-2" />
+                <p className="text-lg">Membership Expired</p>
+              </div>
+              <p className="text-xl font-bold">
+                {searchResult.member
+                  ? `Hello ${searchResult.member.fullName}`
+                  : `Hello ${searchResult.id}`}
+              </p>
+              <div className="mt-3 p-3 rounded-lg bg-red-800">
+                <p className="text-lg font-bold">Entry Denied</p>
+                <p className="text-sm">Your membership has expired.</p>
+                <p className="text-sm">Please renew your membership.</p>
+              </div>
+              <button
+                onClick={handleRetake}
+                className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
+              >
+                OK
+              </button>
+            </div>
+          );
+        }
+
         // Get attendance information if available
         const attendanceInfo = searchResult.attendance;
         const isEntry = attendanceInfo && attendanceInfo.type === "ENTRY";
