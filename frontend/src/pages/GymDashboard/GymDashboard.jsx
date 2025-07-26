@@ -103,7 +103,7 @@ const GymDashboard = ({
     fetchDashboardStats();
 
     // Refresh stats every 30 seconds
-    const intervalId = setInterval(fetchDashboardStats, 30000);
+    const intervalId = setInterval(fetchDashboardStats, 120 * 1000);
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
@@ -157,7 +157,7 @@ const GymDashboard = ({
           {showNotifications && (
             <div
               ref={notificationCardRef}
-              className="absolute top-10 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-80 z-10"
+              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-75 z-10"
             >
               <h3 className="font-bold text-white mb-3 text-left ms-2">
                 Expiring Memberships
@@ -215,7 +215,7 @@ const GymDashboard = ({
           {showSupportCard && (
             <div
               ref={supportCardRef}
-              className="absolute top-10 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
+              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
             >
               <div className="flex items-center mb-3">
                 <div className="bg-gray-700 rounded-full p-2 mr-3">
