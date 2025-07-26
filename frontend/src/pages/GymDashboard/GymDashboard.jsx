@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   FaCalendarCheck,
@@ -7,6 +7,9 @@ import {
   FaUserPlus,
   FaPlus,
   FaRegUser,
+  FaHeadset,
+  FaPhone,
+  FaUser,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -23,6 +26,25 @@ const GymDashboard = ({
     newJoinees: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [showSupportCard, setShowSupportCard] = useState(false);
+  const supportCardRef = useRef(null);
+
+  // Close support card when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        supportCardRef.current &&
+        !supportCardRef.current.contains(event.target)
+      ) {
+        setShowSupportCard(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Fetch dashboard statistics when component mounts
   useEffect(() => {
@@ -74,7 +96,42 @@ const GymDashboard = ({
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8 gap-2">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8 gap-2 relative">
+      {/* Support Icon */}
+      <div className="absolute top-4 right-4">
+        <button
+          className="text-white p-2 rounded-full hover:bg-gray-800 transition-colors"
+          onClick={() => setShowSupportCard(!showSupportCard)}
+          title="Support"
+        >
+          <FaHeadset size={24} />
+        </button>
+
+        {/* Support Card */}
+        {showSupportCard && (
+          <div
+            ref={supportCardRef}
+            className="absolute top-12 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
+          >
+            <div className="flex items-center mb-3">
+              <div className="bg-gray-700 rounded-full p-2 mr-3">
+                <FaUser size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Sandeep</h3>
+                <div className="flex items-center text-gray-300 text-sm">
+                  <FaPhone className="mr-1" size={12} />
+                  <span>8056759212</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm">
+              Contact for technical support and assistance
+            </p>
+          </div>
+        )}
+      </div>
+
       <div>
         <h1 className="text-4xl font-bold mb-2"> Attendance</h1>
         <p className="text-gray-400 mb-6 text-lg">using face scan</p>
