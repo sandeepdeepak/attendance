@@ -466,22 +466,18 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap justify-center gap-4 mb-8">
+      <div className="flex flex-wrap justify-start gap-4 mb-8">
         <div className="flex items-center">
-          <div className="w-6 h-6 bg-green-800 rounded mr-2"></div>
+          <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
           <span>Attended</span>
         </div>
         <div className="flex items-center">
-          <div className="w-6 h-6 bg-red-800 rounded mr-2"></div>
+          <div className="w-4 h-4 bg-red-800 rounded mr-1"></div>
           <span>Not Attended</span>
         </div>
         <div className="flex items-center">
-          <div className="w-6 h-6 bg-blue-800 rounded mr-2"></div>
-          <span>Future Membership Days</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-6 h-6 bg-gray-700 rounded mr-2"></div>
-          <span>Outside Membership</span>
+          <div className="w-4 h-4 bg-blue-800 rounded mr-1"></div>
+          <span>Membership</span>
         </div>
       </div>
 

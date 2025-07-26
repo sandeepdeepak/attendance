@@ -124,7 +124,7 @@ const GymDashboard = ({
               </div>
             </div>
             <p className="text-gray-400 text-sm">
-              Contact for technical support and assistance
+              Contact for technical support
             </p>
           </div>
         )}
