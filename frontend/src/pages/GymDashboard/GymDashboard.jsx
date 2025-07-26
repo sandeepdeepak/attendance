@@ -159,7 +159,7 @@ const GymDashboard = ({
               ref={notificationCardRef}
               className="absolute top-10 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-80 z-10"
             >
-              <h3 className="font-bold text-white mb-3">
+              <h3 className="font-bold text-white mb-3 text-left ms-2">
                 Expiring Memberships
               </h3>
               {expiringMembers.length > 0 ? (
