@@ -10,7 +10,7 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { API_URL } from "../../config";
 
-const FaceRecognition = ({ onBackClick }) => {
+const FaceRecognition = ({ onBackClick, onMemberClick }) => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(true);
@@ -68,11 +68,20 @@ const FaceRecognition = ({ onBackClick }) => {
           setSearchResult(result);
 
           // Check if membership has expired
-          if (result.match && result.member) {
-            const isExpired = checkMembershipExpired(
-              result.member.startDate,
-              result.member.membershipPlan
-            );
+          let isExpired = false;
+
+          if (result.match) {
+            // Check if the API response already indicates expired membership
+            if (result.membershipExpired) {
+              isExpired = true;
+            } else if (result.member && result.membership) {
+              // If not explicitly marked as expired, check using the membership data
+              const today = new Date();
+              const endDate = new Date(result.membership.endDate);
+              isExpired = today > endDate;
+            }
+
+            // Set the state for UI rendering
             setMembershipExpired(isExpired);
 
             // Only set timer to return if membership is not expired
@@ -220,12 +229,22 @@ const FaceRecognition = ({ onBackClick }) => {
                 <p className="text-sm">Your membership has expired.</p>
                 <p className="text-sm">Please renew your membership.</p>
               </div>
-              <button
-                onClick={handleRetake}
-                className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
-              >
-                OK
-              </button>
+              <div className="mt-4 flex justify-center gap-3">
+                <button
+                  onClick={handleRetake}
+                  className="bg-white text-black px-4 py-2 rounded-lg"
+                >
+                  OK
+                </button>
+                {/* {searchResult.id && (
+                  <button
+                    onClick={() => onMemberClick(searchResult.id)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    Extend Membership
+                  </button>
+                )} */}
+              </div>
             </div>
           );
         }

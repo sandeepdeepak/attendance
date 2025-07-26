@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { FaArrowLeft } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { FaArrowLeft, FaCalendar } from "react-icons/fa";
 import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
@@ -10,6 +10,32 @@ const MemberDetails = ({ memberId, onBackClick }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [extendFormData, setExtendFormData] = useState({
+    startDate: new Date().toISOString().split("T")[0],
+    planType: "1 Month",
+  });
+  const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false);
+  const [isExtending, setIsExtending] = useState(false);
+  const [membershipHistory, setMembershipHistory] = useState([]);
+  const planDropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        planDropdownRef.current &&
+        !planDropdownRef.current.contains(event.target)
+      ) {
+        setIsPlanDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchMemberDetails = async () => {
@@ -24,6 +50,15 @@ const MemberDetails = ({ memberId, onBackClick }) => {
 
         if (memberResponse.data && memberResponse.data.member) {
           setMember(memberResponse.data.member);
+        }
+
+        // Fetch membership history
+        const membershipResponse = await axios.get(
+          `${API_URL}/api/memberships/${memberId}`
+        );
+
+        if (membershipResponse.data && membershipResponse.data.memberships) {
+          setMembershipHistory(membershipResponse.data.memberships);
         }
 
         // Fetch attendance records
@@ -72,42 +107,35 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
   };
 
-  // Calculate membership end date based on start date and plan
-  const calculateMembershipEndDate = (startDate, membershipPlan) => {
-    if (!startDate) return null;
+  // Get active membership details
+  const getActiveMembership = () => {
+    if (!membershipHistory || membershipHistory.length === 0) return null;
 
-    const start = new Date(startDate);
-    const planMonths = {
-      "1 Month": 1,
-      "3 Months": 3,
-      "6 Months": 6,
-      "12 Months": 12,
-    };
+    // Find active membership
+    const activeMembership = membershipHistory.find((m) => m.isActive === true);
+    if (activeMembership) return activeMembership;
 
-    // Default to 1 month if plan is not specified or not recognized
-    const months =
-      membershipPlan && planMonths[membershipPlan]
-        ? planMonths[membershipPlan]
-        : 1;
+    // If no active membership found, return the most recent one
+    return membershipHistory[0]; // Already sorted by createdAt desc
+  };
 
-    // Create a new date by adding the appropriate number of months
-    const endDate = new Date(start);
-    endDate.setMonth(endDate.getMonth() + months);
+  // Calculate membership end date
+  const calculateMembershipEndDate = () => {
+    const activeMembership = getActiveMembership();
+    if (!activeMembership) return null;
 
-    return endDate;
+    return new Date(activeMembership.endDate);
   };
 
   // Calculate days remaining until membership ends
-  const calculateDaysRemaining = (endDate) => {
+  const calculateDaysRemaining = () => {
+    const endDate = calculateMembershipEndDate();
     if (!endDate) return "N/A";
 
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time part for accurate day calculation
 
-    const end = new Date(endDate);
-    end.setHours(0, 0, 0, 0);
-
-    const diffTime = end - today;
+    const diffTime = endDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
@@ -214,7 +242,8 @@ const MemberDetails = ({ memberId, onBackClick }) => {
 
   // Check if a date is within the membership period
   const isWithinMembershipPeriod = (date) => {
-    if (!member || !member.startDate) return false;
+    const activeMembership = getActiveMembership();
+    if (!activeMembership) return false;
 
     // Get date strings in YYYY-MM-DD format
     const month = date.getMonth() + 1; // Months are 0-indexed in JS
@@ -222,19 +251,9 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       2,
       "0"
     )}-${String(date.getDate()).padStart(2, "0")}`;
-    const startDateStr = member.startDate.split("T")[0];
 
-    const endDate = calculateMembershipEndDate(
-      member.startDate,
-      member.membershipPlan
-    );
-    if (!endDate) return false;
-
-    const endMonth = endDate.getMonth() + 1; // Months are 0-indexed in JS
-    const endDateStr = `${endDate.getFullYear()}-${String(endMonth).padStart(
-      2,
-      "0"
-    )}-${String(endDate.getDate()).padStart(2, "0")}`;
+    const startDateStr = activeMembership.startDate;
+    const endDateStr = activeMembership.endDate;
 
     // Compare date strings
     return dateStr >= startDateStr && dateStr <= endDateStr;
@@ -342,6 +361,56 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     );
   }
 
+  const handleExtendMembership = async () => {
+    if (!member || !extendFormData.startDate || !extendFormData.planType) {
+      return;
+    }
+
+    setIsExtending(true);
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/memberships/${memberId}/extend`,
+        extendFormData
+      );
+
+      if (response.data) {
+        // Update member data with new membership details
+        setMember({
+          ...member,
+          startDate: extendFormData.startDate,
+          membershipPlan: extendFormData.planType,
+        });
+
+        // Add new membership to history
+        setMembershipHistory([response.data.membership, ...membershipHistory]);
+
+        // Close the modal
+        setShowExtendModal(false);
+      }
+    } catch (error) {
+      console.error("Error extending membership:", error);
+      alert("Failed to extend membership. Please try again.");
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setExtendFormData({
+      ...extendFormData,
+      [name]: value,
+    });
+  };
+
+  const handleCustomSelectChange = (name, value) => {
+    setExtendFormData({
+      ...extendFormData,
+      [name]: value,
+    });
+  };
+
   if (!member) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
@@ -356,6 +425,13 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     );
   }
 
+  // Check if membership is expired
+  const membershipEndDate = calculateMembershipEndDate(
+    member.startDate,
+    member.membershipPlan
+  );
+  const isExpired = membershipEndDate ? new Date() > membershipEndDate : false;
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
       {/* Header with back button and member name */}
@@ -366,13 +442,143 @@ const MemberDetails = ({ memberId, onBackClick }) => {
         <h1 className="text-4xl font-bold">{member.fullName}</h1>
       </div>
 
+      {/* Membership Extension Modal */}
+      {showExtendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Extend Membership</h2>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">Start Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  name="startDate"
+                  value={extendFormData.startDate}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 text-white p-3 rounded-lg w-full"
+                />
+                <FaCalendar
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-400 mb-2">
+                Membership Plan
+              </label>
+              <div className="custom-select" ref={planDropdownRef}>
+                {/* Hidden select element to maintain form state */}
+                <select
+                  name="planType"
+                  value={extendFormData.planType}
+                  onChange={handleInputChange}
+                  style={{ display: "none" }}
+                >
+                  <option value="1 Month">1 Month</option>
+                  <option value="3 Months">3 Months</option>
+                  <option value="6 Months">6 Months</option>
+                  <option value="12 Months">12 Months</option>
+                </select>
+
+                {/* Custom dropdown UI */}
+                <div
+                  className={`select-selected bg-gray-700 ${
+                    isPlanDropdownOpen ? "select-arrow-active" : ""
+                  }`}
+                  onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
+                >
+                  {extendFormData.planType}
+                </div>
+
+                <div
+                  className={`select-items bg-gray-700 ${
+                    isPlanDropdownOpen ? "" : "select-hide"
+                  }`}
+                >
+                  <div
+                    onClick={() => {
+                      handleCustomSelectChange("planType", "1 Month");
+                      setIsPlanDropdownOpen(false);
+                    }}
+                    className={
+                      extendFormData.planType === "1 Month"
+                        ? "same-as-selected"
+                        : ""
+                    }
+                  >
+                    1 Month
+                  </div>
+                  <div
+                    onClick={() => {
+                      handleCustomSelectChange("planType", "3 Months");
+                      setIsPlanDropdownOpen(false);
+                    }}
+                    className={
+                      extendFormData.planType === "3 Months"
+                        ? "same-as-selected"
+                        : ""
+                    }
+                  >
+                    3 Months
+                  </div>
+                  <div
+                    onClick={() => {
+                      handleCustomSelectChange("planType", "6 Months");
+                      setIsPlanDropdownOpen(false);
+                    }}
+                    className={
+                      extendFormData.planType === "6 Months"
+                        ? "same-as-selected"
+                        : ""
+                    }
+                  >
+                    6 Months
+                  </div>
+                  <div
+                    onClick={() => {
+                      handleCustomSelectChange("planType", "12 Months");
+                      setIsPlanDropdownOpen(false);
+                    }}
+                    className={
+                      extendFormData.planType === "12 Months"
+                        ? "same-as-selected"
+                        : ""
+                    }
+                  >
+                    12 Months
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg"
+                onClick={() => setShowExtendModal(false)}
+                disabled={isExtending}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                onClick={handleExtendMembership}
+                disabled={isExtending}
+              >
+                {isExtending ? "Extending..." : "Extend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Member details */}
       <div className="grid grid-cols-2 gap-2 mb-6 ms-2">
         <div>
           <p className="text-gray-400 text-left">Age</p>
-          <p className="text-left">
-            {calculateAge(member.dateOfBirth || member.startDate)}
-          </p>
+          <p className="text-left">{calculateAge(member.dateOfBirth)}</p>
         </div>
         <div>
           <p className="text-gray-400 text-left">Date of Birth</p>
@@ -393,24 +599,24 @@ const MemberDetails = ({ memberId, onBackClick }) => {
         <div>
           <p className="text-gray-400 text-left">Membership Start</p>
           <p className="text-left">
-            {formatDate(member.startDate)}{" "}
-            {`(${member.membershipPlan})` || "1 Month"}
+            {getActiveMembership()
+              ? `${formatDate(getActiveMembership().startDate)} (${
+                  getActiveMembership().planType
+                })`
+              : "No active membership"}
           </p>
         </div>
-        {/* <div>
-          <p className="text-gray-400 text-left">Plan</p>
-          <p className="text-left">
-            {member.membershipPlan || "1 Month"}
-          </p>
-        </div> */}
         <div>
           <p className="text-gray-400 text-left">Membership Ends In</p>
-          <p className="text-left">
-            {calculateDaysRemaining(
-              calculateMembershipEndDate(
-                member.startDate,
-                member.membershipPlan
-              )
+          <p className={`text-left ${isExpired ? "text-red-500" : ""}`}>
+            {calculateDaysRemaining()}
+            {isExpired && (
+              <button
+                className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded"
+                onClick={() => setShowExtendModal(true)}
+              >
+                Extend
+              </button>
             )}
           </p>
         </div>
@@ -480,6 +686,33 @@ const MemberDetails = ({ memberId, onBackClick }) => {
           <span>Membership</span>
         </div>
       </div>
+
+      {/* Membership History */}
+      {membershipHistory.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-3">Membership History</h2>
+          <div className="bg-gray-800 rounded-lg p-4">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-2">Start Date</th>
+                  <th className="text-left py-2">End Date</th>
+                  <th className="text-left py-2">Plan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {membershipHistory.map((membership) => (
+                  <tr key={membership.id} className="border-b border-gray-700">
+                    <td className="py-2">{formatDate(membership.startDate)}</td>
+                    <td className="py-2">{formatDate(membership.endDate)}</td>
+                    <td className="py-2">{membership.planType}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Attendance statistics */}
       <div className="flex justify-between">

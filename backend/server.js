@@ -34,6 +34,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // DynamoDB table names
 const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
+const MEMBERSHIPS_TABLE = "memberships";
 
 // Configure CORS with specific options
 app.use(
@@ -72,6 +73,8 @@ async function initializeDynamoDB() {
       listTablesResponse.TableNames.includes(MEMBERS_TABLE);
     const attendanceTableExists =
       listTablesResponse.TableNames.includes(ATTENDANCE_TABLE);
+    const membershipsTableExists =
+      listTablesResponse.TableNames.includes(MEMBERSHIPS_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -121,6 +124,32 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${ATTENDANCE_TABLE}`);
     } else {
       console.log(`Table ${ATTENDANCE_TABLE} already exists`);
+    }
+
+    // Create memberships table if it doesn't exist
+    if (!membershipsTableExists) {
+      const createMembershipsTableParams = {
+        TableName: MEMBERSHIPS_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+          { AttributeName: "memberId", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "id", AttributeType: "S" },
+          { AttributeName: "memberId", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createMembershipsTableParams)
+      );
+      console.log(`Created table: ${MEMBERSHIPS_TABLE}`);
+    } else {
+      console.log(`Table ${MEMBERSHIPS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -227,11 +256,37 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
         if (scanResult.Items && scanResult.Items.length > 0) {
           const memberDetails = scanResult.Items[0];
 
-          // Check if membership has expired
-          const isMembershipExpired = checkMembershipExpired(
-            memberDetails.startDate,
-            memberDetails.membershipPlan
+          // Get active membership details
+          const membershipScanParams = {
+            TableName: MEMBERSHIPS_TABLE,
+            FilterExpression: "memberId = :memberId AND isActive = :isActive",
+            ExpressionAttributeValues: {
+              ":memberId": memberId,
+              ":isActive": true,
+            },
+          };
+
+          const membershipResult = await docClient.send(
+            new ScanCommand(membershipScanParams)
           );
+
+          // Check if there's an active membership
+          let activeMembership = null;
+          let isMembershipExpired = true;
+
+          if (membershipResult.Items && membershipResult.Items.length > 0) {
+            // Sort by createdAt in descending order (newest first)
+            const sortedMemberships = membershipResult.Items.sort(
+              (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            );
+
+            activeMembership = sortedMemberships[0];
+
+            // Check if the membership is expired
+            const today = new Date();
+            const endDate = new Date(activeMembership.endDate);
+            isMembershipExpired = today > endDate;
+          }
 
           if (isMembershipExpired) {
             // Return member details but with expired status and no attendance recording
@@ -242,12 +297,11 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
               member: {
                 fullName: memberDetails.fullName,
                 phoneNumber: memberDetails.phoneNumber,
-                startDate: memberDetails.startDate,
                 dateOfBirth: memberDetails.dateOfBirth,
                 gender: memberDetails.gender,
-                membershipPlan: memberDetails.membershipPlan,
                 createdAt: memberDetails.createdAt,
               },
+              membership: activeMembership,
               membershipExpired: true,
               message: "Membership has expired. Please renew to continue.",
             });
@@ -326,12 +380,11 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
             member: {
               fullName: memberDetails.fullName,
               phoneNumber: memberDetails.phoneNumber,
-              startDate: memberDetails.startDate,
               dateOfBirth: memberDetails.dateOfBirth,
               gender: memberDetails.gender,
-              membershipPlan: memberDetails.membershipPlan,
               createdAt: memberDetails.createdAt,
             },
+            membership: activeMembership,
             attendance: {
               type: attendanceType,
               timestamp: currentTimestamp,
@@ -603,15 +656,13 @@ app.post("/api/members", upload.single("faceImage"), async (req, res) => {
 
     const faceId = indexResult.FaceRecords[0].Face.FaceId;
 
-    // Then, save the member data to DynamoDB
+    // Then, save the member data to DynamoDB (without membership details)
     const memberItem = {
       id: memberId,
       fullName,
       phoneNumber,
-      startDate,
       dateOfBirth,
       gender,
-      membershipPlan,
       faceId,
       createdAt: new Date().toISOString(),
       active: true,
@@ -624,9 +675,43 @@ app.post("/api/members", upload.single("faceImage"), async (req, res) => {
 
     await docClient.send(new PutCommand(putParams));
 
+    // Create initial membership record
+    const membershipId = `membership_${Date.now()}`;
+
+    // Calculate end date based on plan type
+    const start = new Date(startDate);
+    const planMonths = {
+      "1 Month": 1,
+      "3 Months": 3,
+      "6 Months": 6,
+      "12 Months": 12,
+    };
+    const months = planMonths[membershipPlan] || 1;
+
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + months);
+
+    const membershipItem = {
+      id: membershipId,
+      memberId,
+      startDate,
+      endDate: endDate.toISOString().split("T")[0],
+      planType: membershipPlan,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    };
+
+    const putMembershipParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      Item: membershipItem,
+    };
+
+    await docClient.send(new PutCommand(putMembershipParams));
+
     res.status(201).json({
       message: "Member added successfully",
       member: memberItem,
+      membership: membershipItem,
     });
   } catch (error) {
     console.error("Error adding member:", error);
@@ -757,6 +842,34 @@ app.delete("/api/members/:id", async (req, res) => {
       }
     }
 
+    // Delete all membership records for this member
+    const membershipScanParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": id,
+      },
+    };
+
+    const membershipResult = await docClient.send(
+      new ScanCommand(membershipScanParams)
+    );
+
+    if (membershipResult.Items && membershipResult.Items.length > 0) {
+      // Delete each membership record
+      for (const record of membershipResult.Items) {
+        const deleteMembershipParams = {
+          TableName: MEMBERSHIPS_TABLE,
+          Key: {
+            id: record.id,
+            memberId: record.memberId,
+          },
+        };
+
+        await docClient.send(new DeleteCommand(deleteMembershipParams));
+      }
+    }
+
     res.json({
       message: "Member deleted successfully",
       deletedMember: member,
@@ -837,6 +950,248 @@ app.delete("/api/faces", async (req, res) => {
   } catch (error) {
     console.error("Error deleting faces:", error);
     res.status(500).json({ error: "Failed to delete faces" });
+  }
+});
+
+// Create a new membership record
+app.post("/api/memberships", async (req, res) => {
+  try {
+    const { memberId, startDate, planType } = req.body;
+
+    if (!memberId || !startDate || !planType) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, startDate, planType",
+      });
+    }
+
+    // Calculate end date based on plan type
+    const start = new Date(startDate);
+    const planMonths = {
+      "1 Month": 1,
+      "3 Months": 3,
+      "6 Months": 6,
+      "12 Months": 12,
+    };
+    const months = planMonths[planType] || 1;
+
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + months);
+
+    // Generate a unique ID for the membership
+    const membershipId = `membership_${Date.now()}`;
+
+    // Create the membership record
+    const membershipItem = {
+      id: membershipId,
+      memberId,
+      startDate,
+      endDate: endDate.toISOString().split("T")[0],
+      planType,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    };
+
+    const putParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      Item: membershipItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // Check if the member exists
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (!scanResult.Items || scanResult.Items.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    // Mark previous memberships as inactive
+    const previousMembershipsParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "memberId = :memberId AND id <> :id",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+        ":id": membershipId,
+      },
+    };
+
+    const previousMemberships = await docClient.send(
+      new ScanCommand(previousMembershipsParams)
+    );
+
+    if (previousMemberships.Items && previousMemberships.Items.length > 0) {
+      for (const prevMembership of previousMemberships.Items) {
+        const updatePrevMembershipParams = {
+          TableName: MEMBERSHIPS_TABLE,
+          Key: {
+            id: prevMembership.id,
+            memberId: prevMembership.memberId,
+          },
+          Item: {
+            ...prevMembership,
+            isActive: false,
+          },
+        };
+
+        await docClient.send(new PutCommand(updatePrevMembershipParams));
+      }
+    }
+
+    res.status(201).json({
+      message: "Membership created successfully",
+      membership: membershipItem,
+    });
+  } catch (error) {
+    console.error("Error creating membership:", error);
+    res.status(500).json({ error: "Failed to create membership" });
+  }
+});
+
+// Get all membership records for a member
+app.get("/api/memberships/:memberId", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+    // Scan the memberships table for records with this memberId
+    const scanParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // Sort by createdAt in descending order (newest first)
+    const sortedMemberships = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      : [];
+
+    res.json({
+      memberId,
+      memberships: sortedMemberships,
+    });
+  } catch (error) {
+    console.error("Error getting memberships:", error);
+    res.status(500).json({ error: "Failed to get memberships" });
+  }
+});
+
+// Extend a member's membership
+app.post("/api/memberships/:memberId/extend", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const { startDate, planType } = req.body;
+
+    if (!startDate || !planType) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "startDate, planType",
+      });
+    }
+
+    // First, check if the member exists
+    const memberScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const memberScanResult = await docClient.send(
+      new ScanCommand(memberScanParams)
+    );
+
+    if (!memberScanResult.Items || memberScanResult.Items.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    // Calculate end date based on plan type
+    const start = new Date(startDate);
+    const planMonths = {
+      "1 Month": 1,
+      "3 Months": 3,
+      "6 Months": 6,
+      "12 Months": 12,
+    };
+    const months = planMonths[planType] || 1;
+
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + months);
+
+    // Generate a unique ID for the membership
+    const membershipId = `membership_${Date.now()}`;
+
+    // Create the new membership record
+    const membershipItem = {
+      id: membershipId,
+      memberId,
+      startDate,
+      endDate: endDate.toISOString().split("T")[0],
+      planType,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    };
+
+    const putMembershipParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      Item: membershipItem,
+    };
+
+    await docClient.send(new PutCommand(putMembershipParams));
+
+    // Mark previous memberships as inactive
+    const previousMembershipsParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "memberId = :memberId AND id <> :id",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+        ":id": membershipId,
+      },
+    };
+
+    const previousMemberships = await docClient.send(
+      new ScanCommand(previousMembershipsParams)
+    );
+
+    if (previousMemberships.Items && previousMemberships.Items.length > 0) {
+      for (const prevMembership of previousMemberships.Items) {
+        const updatePrevMembershipParams = {
+          TableName: MEMBERSHIPS_TABLE,
+          Key: {
+            id: prevMembership.id,
+            memberId: prevMembership.memberId,
+          },
+          Item: {
+            ...prevMembership,
+            isActive: false,
+          },
+        };
+
+        await docClient.send(new PutCommand(updatePrevMembershipParams));
+      }
+    }
+
+    res.json({
+      message: "Membership extended successfully",
+      membership: membershipItem,
+    });
+  } catch (error) {
+    console.error("Error extending membership:", error);
+    res.status(500).json({ error: "Failed to extend membership" });
   }
 });
 

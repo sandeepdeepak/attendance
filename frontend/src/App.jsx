@@ -58,6 +58,7 @@ function App() {
           <FaceRecognition
             key={faceRecognitionKey}
             onBackClick={handleBackClick}
+            onMemberClick={handleMemberClick}
           />
         );
       case "addMember":
