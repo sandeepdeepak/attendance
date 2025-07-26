@@ -51,6 +51,7 @@ function App() {
             onFaceRecognitionClick={handleFaceRecognitionClick}
             onAddMemberClick={handleAddMemberClick}
             onAllMembersClick={handleAllMembersClick}
+            onMemberClick={handleMemberClick}
           />
         );
       case "faceRecognition":
@@ -83,6 +84,7 @@ function App() {
             onFaceRecognitionClick={handleFaceRecognitionClick}
             onAddMemberClick={handleAddMemberClick}
             onAllMembersClick={handleAllMembersClick}
+            onMemberClick={handleMemberClick}
           />
         );
     }

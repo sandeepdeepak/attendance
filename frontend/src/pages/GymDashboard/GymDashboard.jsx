@@ -9,6 +9,7 @@ import {
   FaRegUser,
   FaHeadset,
   FaUser,
+  FaBell,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -17,6 +18,7 @@ const GymDashboard = ({
   onFaceRecognitionClick,
   onAddMemberClick,
   onAllMembersClick,
+  onMemberClick,
 }) => {
   const [dashboardStats, setDashboardStats] = useState({
     todaysAttendance: 0,
@@ -26,16 +28,29 @@ const GymDashboard = ({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [showSupportCard, setShowSupportCard] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [expiringMembers, setExpiringMembers] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
   const supportCardRef = useRef(null);
+  const notificationCardRef = useRef(null);
 
-  // Close support card when clicking outside
+  // Close cards when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
         supportCardRef.current &&
-        !supportCardRef.current.contains(event.target)
+        !supportCardRef.current.contains(event.target) &&
+        event.target.id !== "support-icon"
       ) {
         setShowSupportCard(false);
+      }
+
+      if (
+        notificationCardRef.current &&
+        !notificationCardRef.current.contains(event.target) &&
+        event.target.id !== "notification-icon"
+      ) {
+        setShowNotifications(false);
       }
     }
 
@@ -43,6 +58,30 @@ const GymDashboard = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+  }, []);
+
+  // Fetch expiring memberships
+  useEffect(() => {
+    const fetchExpiringMemberships = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/members-expiring?days=1`
+        );
+        if (response.data && response.data.expiringMembers) {
+          setExpiringMembers(response.data.expiringMembers);
+          setNotificationCount(response.data.count);
+        }
+      } catch (error) {
+        console.error("Error fetching expiring memberships:", error);
+      }
+    };
+
+    fetchExpiringMemberships();
+
+    // Refresh expiring memberships every 5 minutes
+    const intervalId = setInterval(fetchExpiringMemberships, 300000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Fetch dashboard statistics when component mounts
@@ -96,38 +135,105 @@ const GymDashboard = ({
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8 gap-2 relative">
-      {/* Support Icon */}
-      <div className="absolute top-4 right-4">
-        <button
-          className="text-white p-2 rounded-full hover:bg-gray-800 transition-colors"
-          onClick={() => setShowSupportCard(!showSupportCard)}
-          title="Support"
-        >
-          <FaHeadset size={24} />
-        </button>
-
-        {/* Support Card */}
-        {showSupportCard && (
+      {/* Notification and Support Icons */}
+      <div className="absolute top-4 right-4 flex items-center space-x-3">
+        {/* Notification Icon */}
+        <div className="relative">
           <div
-            ref={supportCardRef}
-            className="absolute top-12 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
+            id="notification-icon"
+            className="text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+            onClick={() => setShowNotifications(!showNotifications)}
+            title="Notifications"
           >
-            <div className="flex items-center mb-3">
-              <div className="bg-gray-700 rounded-full p-2 mr-3">
-                <FaUser size={20} className="text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-left">Sandeep</h3>
-                <div className="flex items-center text-gray-300 text-sm text-left">
-                  <span>8056759212</span>
+            <FaBell size={16} />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </div>
+
+          {/* Notification Card */}
+          {showNotifications && (
+            <div
+              ref={notificationCardRef}
+              className="absolute top-10 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-80 z-10"
+            >
+              <h3 className="font-bold text-white mb-3">
+                Expiring Memberships
+              </h3>
+              {expiringMembers.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto">
+                  {expiringMembers.map((item) => (
+                    <div
+                      key={item.member.id}
+                      className="border-b border-gray-700 py-2 last:border-0 cursor-pointer hover:bg-gray-700 rounded px-2"
+                      onClick={() => {
+                        if (onMemberClick) {
+                          onMemberClick(item.member.id);
+                          setShowNotifications(false);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center text-left">
+                        <div className="bg-gray-700 rounded-full p-2 mr-3">
+                          <FaUser size={16} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">
+                            {item.member.fullName}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Expires tomorrow ({item.membership.planType})
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  No memberships expiring soon
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Support Icon */}
+        <div className="relative">
+          <div
+            id="support-icon"
+            className="text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+            onClick={() => setShowSupportCard(!showSupportCard)}
+            title="Support"
+          >
+            <FaHeadset size={16} />
+          </div>
+
+          {/* Support Card */}
+          {showSupportCard && (
+            <div
+              ref={supportCardRef}
+              className="absolute top-10 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
+            >
+              <div className="flex items-center mb-3">
+                <div className="bg-gray-700 rounded-full p-2 mr-3">
+                  <FaUser size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-left">Sandeep</h3>
+                  <div className="flex items-center text-gray-300 text-sm text-left">
+                    <span>8056759212</span>
+                  </div>
                 </div>
               </div>
+              <p className="text-gray-400 text-sm">
+                Contact for technical support
+              </p>
             </div>
-            <p className="text-gray-400 text-sm">
-              Contact for technical support
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div>

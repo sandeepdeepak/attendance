@@ -1195,6 +1195,75 @@ app.post("/api/memberships/:memberId/extend", async (req, res) => {
   }
 });
 
+// Get members with expiring memberships
+app.get("/api/members-expiring", async (req, res) => {
+  try {
+    const { days = 1 } = req.query; // Default to 1 day if not specified
+    const daysNum = parseInt(days, 10);
+
+    // Get today's date
+    const today = new Date();
+
+    // Calculate the target date (today + days)
+    const targetDate = new Date(today);
+    targetDate.setDate(targetDate.getDate() + daysNum);
+    const targetDateStr = targetDate.toISOString().split("T")[0];
+
+    // Get all active memberships
+    const membershipScanParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "isActive = :isActive",
+      ExpressionAttributeValues: {
+        ":isActive": true,
+      },
+    };
+
+    const membershipResult = await docClient.send(
+      new ScanCommand(membershipScanParams)
+    );
+
+    // Filter memberships that expire on the target date
+    const expiringMemberships = membershipResult.Items
+      ? membershipResult.Items.filter((membership) => {
+          const endDate = membership.endDate.split("T")[0];
+          return endDate === targetDateStr;
+        })
+      : [];
+
+    // Get member details for each expiring membership
+    const expiringMembers = [];
+
+    for (const membership of expiringMemberships) {
+      const memberScanParams = {
+        TableName: MEMBERS_TABLE,
+        FilterExpression: "id = :id",
+        ExpressionAttributeValues: {
+          ":id": membership.memberId,
+        },
+      };
+
+      const memberResult = await docClient.send(
+        new ScanCommand(memberScanParams)
+      );
+
+      if (memberResult.Items && memberResult.Items.length > 0) {
+        expiringMembers.push({
+          member: memberResult.Items[0],
+          membership,
+        });
+      }
+    }
+
+    res.json({
+      expiringMembers,
+      count: expiringMembers.length,
+    });
+  } catch (error) {
+    console.error("Error getting expiring memberships:", error);
+    res.status(500).json({ error: "Failed to get expiring memberships" });
+  }
+});
+
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });
