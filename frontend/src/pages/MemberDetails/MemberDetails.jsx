@@ -32,7 +32,9 @@ const MemberDetails = ({ memberId, onBackClick }) => {
         );
 
         if (attendanceResponse.data && attendanceResponse.data.records) {
-          setAttendanceRecords(attendanceResponse.data.records);
+          const records = attendanceResponse.data.records;
+          console.log("Fetched attendance records:", records);
+          setAttendanceRecords(records);
         }
       } catch (error) {
         console.error("Error fetching member details:", error);
@@ -145,18 +147,129 @@ const MemberDetails = ({ memberId, onBackClick }) => {
 
   // Check if a specific day has attendance
   const hasAttendance = (day) => {
+    if (!day) return false;
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      console.log("No attendance records available");
+      return false;
+    }
+
+    // Get today's date to check if we're looking at today
+    const today = new Date();
+    console.log(`Checking attendance for day: ${day}`, today.getDate());
+    const isToday =
+      today.getDate() === day &&
+      today.getMonth() === currentMonth.getMonth() &&
+      today.getFullYear() === currentMonth.getFullYear();
+
+    // Log if we're checking today
+    if (isToday) {
+      console.log("Checking attendance for today");
+    }
+
+    // Create a date string in YYYY-MM-DD format for the day we're checking
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth() + 1; // Months are 0-indexed in JS
+    const dateToCheckStr = `${year}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+
+    console.log(`Checking attendance for day ${day}, date ${dateToCheckStr}`);
+
+    // Check if there's any attendance record with matching date field
+    const hasAttendance = attendanceRecords.some((record) => {
+      // First try to use the date field if available
+      if (record.date) {
+        const match = record.date === dateToCheckStr;
+        if (match) {
+          console.log(`Match found using date field: ${record.date}`);
+          return true;
+        }
+      }
+
+      // Fall back to timestamp if date field is not available
+      if (!record.timestamp) {
+        return false;
+      }
+
+      // Extract date part from timestamp (YYYY-MM-DD)
+      const recordDateStr = record.timestamp.split("T")[0];
+
+      console.log(
+        `Comparing record date ${recordDateStr} with ${dateToCheckStr}`
+      );
+
+      // Compare just the date strings (YYYY-MM-DD)
+      const match = recordDateStr === dateToCheckStr;
+
+      if (match) {
+        console.log(`Match found for ${dateToCheckStr} using timestamp`);
+      }
+
+      return match;
+    });
+
+    console.log(`Day ${day} has attendance: ${hasAttendance}`);
+    return hasAttendance;
+  };
+
+  // Check if a date is within the membership period
+  const isWithinMembershipPeriod = (date) => {
+    if (!member || !member.startDate) return false;
+
+    // Get date strings in YYYY-MM-DD format
+    const month = date.getMonth() + 1; // Months are 0-indexed in JS
+    const dateStr = `${date.getFullYear()}-${String(month).padStart(
+      2,
+      "0"
+    )}-${String(date.getDate()).padStart(2, "0")}`;
+    const startDateStr = member.startDate.split("T")[0];
+
+    const endDate = calculateMembershipEndDate(
+      member.startDate,
+      member.membershipPlan
+    );
+    if (!endDate) return false;
+
+    const endMonth = endDate.getMonth() + 1; // Months are 0-indexed in JS
+    const endDateStr = `${endDate.getFullYear()}-${String(endMonth).padStart(
+      2,
+      "0"
+    )}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+    // Compare date strings
+    return dateStr >= startDateStr && dateStr <= endDateStr;
+  };
+
+  // Check if a date is in the past
+  const isDateInPast = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date <= today;
+  };
+
+  // Get the appropriate class for a calendar day
+  const getDayClass = (day) => {
+    if (!day) return ""; // Empty cell
+
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
+    const date = new Date(year, month, day);
 
-    return attendanceRecords.some((record) => {
-      const recordDate = new Date(record.timestamp);
-      // Compare year, month, and day directly without timezone conversion
-      return (
-        recordDate.getFullYear() === year &&
-        recordDate.getMonth() === month &&
-        recordDate.getDate() === day
-      );
-    });
+    // If not within membership period, use gray
+    if (!isWithinMembershipPeriod(date)) {
+      return "bg-gray-700 text-gray-400";
+    }
+
+    // If date is in the past, check attendance
+    if (isDateInPast(date)) {
+      // Debug attendance check
+      const attended = hasAttendance(day);
+      console.log(`Day ${day} attended: ${attended}`);
+      return attended ? "bg-green-800" : "bg-red-800";
+    }
+
+    // Future dates within membership period
+    return "bg-blue-800";
   };
 
   // Get month name and year
@@ -339,13 +452,12 @@ const MemberDetails = ({ memberId, onBackClick }) => {
             return <div key={index} className="aspect-square"></div>;
           }
 
-          const attended = hasAttendance(day);
           return (
             <div
               key={index}
-              className={`aspect-square flex items-center justify-center text-xl rounded-lg ${
-                attended ? "bg-green-800" : "bg-red-800"
-              }`}
+              className={`aspect-square flex items-center justify-center text-xl rounded-lg ${getDayClass(
+                day
+              )}`}
             >
               {day}
             </div>
@@ -354,7 +466,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex justify-center gap-8 mb-8">
+      <div className="flex flex-wrap justify-center gap-4 mb-8">
         <div className="flex items-center">
           <div className="w-6 h-6 bg-green-800 rounded mr-2"></div>
           <span>Attended</span>
@@ -362,6 +474,14 @@ const MemberDetails = ({ memberId, onBackClick }) => {
         <div className="flex items-center">
           <div className="w-6 h-6 bg-red-800 rounded mr-2"></div>
           <span>Not Attended</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-6 h-6 bg-blue-800 rounded mr-2"></div>
+          <span>Future Membership Days</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-6 h-6 bg-gray-700 rounded mr-2"></div>
+          <span>Outside Membership</span>
         </div>
       </div>
 
