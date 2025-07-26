@@ -8,7 +8,6 @@ import {
   FaPlus,
   FaRegUser,
   FaHeadset,
-  FaPhone,
   FaUser,
 } from "react-icons/fa";
 import "./GymDashboard.css";
@@ -118,9 +117,8 @@ const GymDashboard = ({
                 <FaUser size={20} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-white">Sandeep</h3>
-                <div className="flex items-center text-gray-300 text-sm">
-                  <FaPhone className="mr-1" size={12} />
+                <h3 className="font-bold text-white text-left">Sandeep</h3>
+                <div className="flex items-center text-gray-300 text-sm text-left">
                   <span>8056759212</span>
                 </div>
               </div>
