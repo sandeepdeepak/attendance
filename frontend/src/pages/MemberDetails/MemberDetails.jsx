@@ -70,6 +70,51 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
   };
 
+  // Calculate membership end date based on start date and plan
+  const calculateMembershipEndDate = (startDate, membershipPlan) => {
+    if (!startDate) return null;
+
+    const start = new Date(startDate);
+    const planMonths = {
+      "1 Month": 1,
+      "3 Months": 3,
+      "6 Months": 6,
+      "12 Months": 12,
+    };
+
+    // Default to 1 month if plan is not specified or not recognized
+    const months =
+      membershipPlan && planMonths[membershipPlan]
+        ? planMonths[membershipPlan]
+        : 1;
+
+    // Create a new date by adding the appropriate number of months
+    const endDate = new Date(start);
+    endDate.setMonth(endDate.getMonth() + months);
+
+    return endDate;
+  };
+
+  // Calculate days remaining until membership ends
+  const calculateDaysRemaining = (endDate) => {
+    if (!endDate) return "N/A";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time part for accurate day calculation
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    const diffTime = end - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return "Expired";
+    }
+
+    return `${diffDays} days`;
+  };
+
   // Generate calendar days for the current month with proper day of week alignment
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
@@ -247,7 +292,14 @@ const MemberDetails = ({ memberId, onBackClick }) => {
         </div> */}
         <div>
           <p className="text-gray-400 text-left">Membership Ends In</p>
-          <p className="text-left">24 days</p>
+          <p className="text-left">
+            {calculateDaysRemaining(
+              calculateMembershipEndDate(
+                member.startDate,
+                member.membershipPlan
+              )
+            )}
+          </p>
         </div>
       </div>
 
