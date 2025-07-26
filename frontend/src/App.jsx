@@ -5,11 +5,13 @@ import FaceRecognition from "./pages/FaceRecognition/FaceRecognition";
 import AddMember from "./pages/AddMember/AddMember";
 import AllMembers from "./pages/AllMembers/AllMembers";
 import MemberDetails from "./pages/MemberDetails/MemberDetails";
+import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [faceRecognitionKey, setFaceRecognitionKey] = useState(0);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [previousPage, setPreviousPage] = useState("dashboard");
 
   // Reset the key when navigating to face recognition to force remount
   useEffect(() => {
@@ -33,6 +35,8 @@ function App() {
   const handleBackClick = () => {
     if (currentPage === "memberDetails") {
       setCurrentPage("allMembers");
+    } else if (currentPage === "todayAttendance") {
+      setCurrentPage(previousPage);
     } else {
       setCurrentPage("dashboard");
     }
@@ -41,6 +45,11 @@ function App() {
   const handleMemberClick = (memberId) => {
     setSelectedMemberId(memberId);
     setCurrentPage("memberDetails");
+  };
+
+  const handleTodayAttendanceClick = () => {
+    setPreviousPage(currentPage);
+    setCurrentPage("todayAttendance");
   };
 
   const renderCurrentPage = () => {
@@ -52,6 +61,7 @@ function App() {
             onAddMemberClick={handleAddMemberClick}
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
+            onTodayAttendanceClick={handleTodayAttendanceClick}
           />
         );
       case "faceRecognition":
@@ -78,6 +88,9 @@ function App() {
             onBackClick={handleBackClick}
           />
         );
+      case "todayAttendance":
+        return <TodayAttendance onBackClick={handleBackClick} />;
+
       default:
         return (
           <GymDashboard
@@ -85,6 +98,7 @@ function App() {
             onAddMemberClick={handleAddMemberClick}
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
+            onTodayAttendanceClick={handleTodayAttendanceClick}
           />
         );
     }

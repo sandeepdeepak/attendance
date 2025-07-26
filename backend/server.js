@@ -1264,6 +1264,122 @@ app.get("/api/members-expiring", async (req, res) => {
   }
 });
 
+// Get today's attendance with member details
+app.get("/api/attendance-today", async (req, res) => {
+  try {
+    const todayDate = getTodayDateString();
+    console.log("Today's date:", todayDate);
+
+    // Get all attendance records for today
+    const todayAttendanceParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "#dt = :today",
+      ExpressionAttributeValues: {
+        ":today": todayDate,
+      },
+      ExpressionAttributeNames: {
+        "#dt": "date",
+      },
+    };
+
+    const todayAttendanceResult = await docClient.send(
+      new ScanCommand(todayAttendanceParams)
+    );
+
+    console.log("Today's attendance records:", todayAttendanceResult.Items);
+
+    // Group attendance records by memberId
+    const attendanceByMember = {};
+
+    if (todayAttendanceResult.Items) {
+      for (const record of todayAttendanceResult.Items) {
+        const { memberId, timestamp, type } = record;
+        console.log(
+          `Processing record: memberId=${memberId}, type=${type}, timestamp=${timestamp}`
+        );
+
+        if (!attendanceByMember[memberId]) {
+          attendanceByMember[memberId] = {
+            entry: null,
+            exit: null,
+          };
+        }
+
+        if (type === "ENTRY") {
+          // If multiple entries, keep the earliest one
+          if (
+            !attendanceByMember[memberId].entry ||
+            timestamp < attendanceByMember[memberId].entry
+          ) {
+            attendanceByMember[memberId].entry = timestamp;
+          }
+        } else if (type === "EXIT") {
+          // If multiple exits, keep the latest one
+          if (
+            !attendanceByMember[memberId].exit ||
+            timestamp > attendanceByMember[memberId].exit
+          ) {
+            attendanceByMember[memberId].exit = timestamp;
+          }
+        }
+      }
+    }
+
+    console.log("Grouped attendance by member:", attendanceByMember);
+
+    // Get member details for each attendance record
+    const attendanceWithMemberDetails = [];
+
+    for (const memberId in attendanceByMember) {
+      // Get member details
+      const memberScanParams = {
+        TableName: MEMBERS_TABLE,
+        FilterExpression: "id = :id",
+        ExpressionAttributeValues: {
+          ":id": memberId,
+        },
+      };
+
+      const memberResult = await docClient.send(
+        new ScanCommand(memberScanParams)
+      );
+
+      if (memberResult.Items && memberResult.Items.length > 0) {
+        const member = memberResult.Items[0];
+
+        attendanceWithMemberDetails.push({
+          memberId,
+          fullName: member.fullName,
+          phoneNumber: member.phoneNumber,
+          entry: attendanceByMember[memberId].entry,
+          exit: attendanceByMember[memberId].exit,
+        });
+      }
+    }
+
+    // Sort by entry time (earliest first)
+    attendanceWithMemberDetails.sort((a, b) => {
+      if (!a.entry) return 1;
+      if (!b.entry) return -1;
+      return new Date(a.entry) - new Date(b.entry);
+    });
+
+    console.log(
+      "Final attendance with member details:",
+      attendanceWithMemberDetails
+    );
+
+    res.json({
+      date: todayDate,
+      attendance: attendanceWithMemberDetails,
+      count: attendanceWithMemberDetails.length,
+    });
+  } catch (error) {
+    console.error("Error getting today's attendance:", error);
+    res.status(500).json({ error: "Failed to get today's attendance" });
+  }
+});
+
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });

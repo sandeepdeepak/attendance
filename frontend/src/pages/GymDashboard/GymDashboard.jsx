@@ -19,6 +19,7 @@ const GymDashboard = ({
   onAddMemberClick,
   onAllMembersClick,
   onMemberClick,
+  onTodayAttendanceClick,
 }) => {
   const [dashboardStats, setDashboardStats] = useState({
     todaysAttendance: 0,
@@ -115,6 +116,7 @@ const GymDashboard = ({
       icon: <FaCalendarCheck size={30} />,
       label: "Today's Attendance",
       value: dashboardStats.todaysAttendance,
+      onClick: onTodayAttendanceClick,
     },
     {
       icon: <FaUsers size={30} />,
@@ -250,7 +252,10 @@ const GymDashboard = ({
           stats.map((stat, index) => (
             <div
               key={index}
-              className="bg-[#1A1A1A] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40"
+              className={`bg-[#1A1A1A] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
+                stat.onClick ? "cursor-pointer hover:bg-[#252525]" : ""
+              }`}
+              onClick={stat.onClick}
             >
               <div className="text-gray-300 mb-2">{stat.icon}</div>
               <p className="text-center text-sm mb-1">{stat.label}</p>
