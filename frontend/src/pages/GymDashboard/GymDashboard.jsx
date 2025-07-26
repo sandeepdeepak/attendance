@@ -84,7 +84,7 @@ const GymDashboard = ({
     },
     {
       icon: <FaTimesCircle size={30} />,
-      label: "Missed Check-ins",
+      label: "Absent Members",
       value: dashboardStats.missedCheckIns,
     },
     {
