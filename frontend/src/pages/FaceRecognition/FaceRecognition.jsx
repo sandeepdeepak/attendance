@@ -259,6 +259,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
           ? new Date(attendanceInfo.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
+              hour12: true,
             })
           : "";
 
@@ -273,9 +274,9 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                 ? `Welcome ${searchResult.member.fullName}`
                 : `Welcome ${searchResult.id}`}
             </p>
-            <p className="text-sm text-gray-400 mb-2">
+            {/* <p className="text-sm text-gray-400 mb-2">
               Confidence: {Math.round(searchResult.similarity)}%
-            </p>
+            </p> */}
 
             {/* Display attendance information */}
             {attendanceInfo && (

@@ -672,7 +672,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap justify-start gap-4 mb-8">
+      <div className="flex flex-wrap justify-start gap-2 mb-8">
         <div className="flex items-center">
           <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
           <span>Attended</span>
@@ -694,7 +694,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
           <div className="bg-gray-800 rounded-lg p-4">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700">
+                <tr className="border-b border-gray-700 text-left">
                   <th className="text-left py-2">Start Date</th>
                   <th className="text-left py-2">End Date</th>
                   <th className="text-left py-2">Plan</th>
@@ -702,7 +702,10 @@ const MemberDetails = ({ memberId, onBackClick }) => {
               </thead>
               <tbody>
                 {membershipHistory.map((membership) => (
-                  <tr key={membership.id} className="border-b border-gray-700">
+                  <tr
+                    key={membership.id}
+                    className="border-b border-gray-700 text-left"
+                  >
                     <td className="py-2">{formatDate(membership.startDate)}</td>
                     <td className="py-2">{formatDate(membership.endDate)}</td>
                     <td className="py-2">{membership.planType}</td>
