@@ -634,6 +634,90 @@ app.get("/api/members/:id", async (req, res) => {
   }
 });
 
+// Delete a member by ID
+app.delete("/api/members/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First, find the member to get the phoneNumber and faceId
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (!scanResult.Items || scanResult.Items.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const member = scanResult.Items[0];
+    const { phoneNumber, faceId } = member;
+
+    // Delete the member from DynamoDB
+    const deleteParams = {
+      TableName: MEMBERS_TABLE,
+      Key: {
+        id,
+        phoneNumber,
+      },
+    };
+
+    await docClient.send(new DeleteCommand(deleteParams));
+
+    // Delete the face from Rekognition collection
+    if (faceId) {
+      const { DeleteFacesCommand } = require("@aws-sdk/client-rekognition");
+
+      const deleteFacesParams = {
+        CollectionId: "my-face-collection",
+        FaceIds: [faceId],
+      };
+
+      await rekClient.send(new DeleteFacesCommand(deleteFacesParams));
+    }
+
+    // Delete all attendance records for this member
+    const attendanceScanParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": id,
+      },
+    };
+
+    const attendanceResult = await docClient.send(
+      new ScanCommand(attendanceScanParams)
+    );
+
+    if (attendanceResult.Items && attendanceResult.Items.length > 0) {
+      // Delete each attendance record
+      for (const record of attendanceResult.Items) {
+        const deleteAttendanceParams = {
+          TableName: ATTENDANCE_TABLE,
+          Key: {
+            memberId: record.memberId,
+            timestamp: record.timestamp,
+          },
+        };
+
+        await docClient.send(new DeleteCommand(deleteAttendanceParams));
+      }
+    }
+
+    res.json({
+      message: "Member deleted successfully",
+      deletedMember: member,
+    });
+  } catch (error) {
+    console.error("Error deleting member:", error);
+    res.status(500).json({ error: "Failed to delete member" });
+  }
+});
+
 // Delete all faces from a collection
 app.delete("/api/faces", async (req, res) => {
   try {

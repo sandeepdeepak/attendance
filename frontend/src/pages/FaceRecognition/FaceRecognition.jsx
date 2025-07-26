@@ -238,7 +238,6 @@ const FaceRecognition = ({ onBackClick }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <div className="text-4xl font-bold">Face Recognition</div>
       </div>
 
       {/* Face recognition viewfinder */}

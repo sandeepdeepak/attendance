@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaUser } from "react-icons/fa";
+import { FaArrowLeft, FaUser, FaTrash } from "react-icons/fa";
 import "./AllMembers.css";
 import { API_URL } from "../../config";
 
@@ -7,31 +7,56 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingMemberId, setDeletingMemberId] = useState(null);
+
+  const fetchMembers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_URL}/api/members`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch members");
+      }
+
+      const data = await response.json();
+      setMembers(data.members || []);
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setError("Failed to load members. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch(`${API_URL}/api/members`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch members");
-        }
-
-        const data = await response.json();
-        setMembers(data.members || []);
-      } catch (error) {
-        console.error("Error fetching members:", error);
-        setError("Failed to load members. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMembers();
   }, []);
+
+  const handleDeleteMember = async (e, memberId) => {
+    e.stopPropagation(); // Prevent triggering the member click event
+
+    try {
+      setDeletingMemberId(memberId);
+
+      const response = await fetch(`${API_URL}/api/members/${memberId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete member");
+      }
+
+      // Refresh the members list
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error deleting member:", error);
+      alert("Failed to delete member. Please try again.");
+    } finally {
+      setDeletingMemberId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
@@ -70,7 +95,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
                   <FaUser size={32} className="text-gray-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-medium text-left">
                     {member.fullName}
                   </h2>
@@ -78,6 +103,21 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
                     {member.phoneNumber}
                   </p>
                 </div>
+                {deletingMemberId === member.id ? (
+                  <div className="p-3 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <button
+                    className="p-3 text-red-500 hover:text-red-300 transition-colors"
+                    onClick={(e) => handleDeleteMember(e, member.id)}
+                    disabled={deletingMemberId !== null}
+                    title="Delete member"
+                    style={{ opacity: deletingMemberId !== null ? 0.5 : 1 }}
+                  >
+                    <FaTrash size={20} />
+                  </button>
+                )}
               </div>
             ))}
           </div>

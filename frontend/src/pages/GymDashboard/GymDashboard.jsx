@@ -77,7 +77,7 @@ const GymDashboard = ({
     <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8 gap-2">
       <div>
         <h1 className="text-4xl font-bold mb-2"> Attendance</h1>
-        <p className="text-gray-400 mb-6 text-lg">using face recognition</p>
+        <p className="text-gray-400 mb-6 text-lg">using face scan</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -116,7 +116,7 @@ const GymDashboard = ({
           className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
           onClick={onFaceRecognitionClick}
         >
-          <FaRegUser /> Go to face recognition
+          <FaRegUser /> Go to face scan
         </button>
       </div>
     </div>
