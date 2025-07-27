@@ -24,6 +24,11 @@ jobs:
           rsync -avz --exclude=".git" --exclude="node_modules" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}
 
+      - name: Create .env file
+        run: |
+          echo "TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}" >> backend/.env
+          echo "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}" >> backend/.env
+
       - name: Build frontend and restart backend on EC2
         run: |
           HOST=${{ secrets.EC2_HOST }}

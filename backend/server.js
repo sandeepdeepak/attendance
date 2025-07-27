@@ -2,6 +2,34 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+
+// Load environment variables from .env file
+try {
+  const envPath = path.join(__dirname, ".env");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    const envLines = envContent.split("\n");
+
+    envLines.forEach((line) => {
+      // Skip comments and empty lines
+      if (line.startsWith("#") || !line.trim()) return;
+
+      // Parse key=value pairs
+      const [key, ...valueParts] = line.split("=");
+      const value = valueParts.join("=").trim();
+
+      if (key && value) {
+        process.env[key.trim()] = value;
+      }
+    });
+
+    console.log("Environment variables loaded from .env file");
+  }
+} catch (error) {
+  console.error("Error loading .env file:", error);
+}
 const {
   RekognitionClient,
   CompareFacesCommand,
@@ -1499,6 +1527,156 @@ app.post("/api/diet-plans", async (req, res) => {
   } catch (error) {
     console.error("Error saving diet plan:", error);
     res.status(500).json({ error: "Failed to save diet plan" });
+  }
+});
+
+// Send diet plan to WhatsApp
+app.post("/api/send-diet-plan-whatsapp", async (req, res) => {
+  try {
+    const { memberId, date, phoneNumber } = req.body;
+
+    if (!memberId || !date || !phoneNumber) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date, phoneNumber",
+      });
+    }
+
+    // Get diet plan from database
+    const params = {
+      TableName: DIET_PLANS_TABLE,
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Diet plan not found" });
+    }
+
+    const dietPlan = result.Item;
+
+    // Format the date for the message template
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Format the time (current time)
+    const formattedTime = new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+
+    // Format phone number (ensure it has country code)
+    const formattedPhone = phoneNumber.startsWith("+")
+      ? phoneNumber
+      : `+91${phoneNumber}`; // Assuming Indian numbers
+
+    // Format food lists for each meal
+    const formatFoodList = (foods) => {
+      if (!foods || foods.length === 0) return "No items added";
+
+      return foods
+        .map(
+          (food) =>
+            `• ${food.quantity}x ${food.name} (${
+              food.totalCalories || food.calories
+            } kcal)`
+        )
+        .join("\n");
+    };
+
+    const breakfastText = formatFoodList(dietPlan.breakfast);
+    const lunchText = formatFoodList(dietPlan.lunch);
+    const dinnerText = formatFoodList(dietPlan.dinner);
+
+    // Get gym contact number from environment variable or use a default
+    const gymContactNumber =
+      process.env.GYM_CONTACT_NUMBER || "+91 98765 43210";
+
+    // Get member details
+    const memberScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const memberResult = await docClient.send(
+      new ScanCommand(memberScanParams)
+    );
+    const memberName =
+      memberResult.Items && memberResult.Items.length > 0
+        ? memberResult.Items[0].fullName
+        : "Member";
+
+    // Use child_process to execute the curl command
+    const { exec } = require("child_process");
+
+    // Get auth token from environment variable or use a default for development
+    const authToken = process.env.TWILIO_AUTH_TOKEN || "your_auth_token_here";
+    const twilioAccountId =
+      process.env.TWILIO_ACCOUNT_SID || "your_account_sid_here";
+
+    // Create the message body with full diet plan details
+    const messageBody = `FITNESS ZONE - YOUR PERSONALIZED DIET PLAN \n📅 Date: ${formattedDate} \n⏰ Created at: ${formattedTime}
+
+Dear ${memberName},
+
+Here your customized diet plan to help you achieve your fitness goals:
+
+BREAKFAST 🍳
+${breakfastText}
+
+LUNCH 🥗
+${lunchText}
+
+DINNER 🍽️
+${dinnerText}
+
+DAILY NUTRITION SUMMARY
+• Calories: ${dietPlan.nutritionTotals.calories} kcal
+• Protein: ${dietPlan.nutritionTotals.proteins} g
+• Carbs: ${dietPlan.nutritionTotals.carbs} g
+• Fats: ${dietPlan.nutritionTotals.fats} g
+• Fiber: ${dietPlan.nutritionTotals.fibre} g
+
+Stay consistent with your diet plan and workout routine!
+
+For any questions, contact your trainer at ${gymContactNumber}.
+
+FITNESS ZONE - Building Better Bodies`;
+
+    // Create a simple message body without special characters
+    const simpleMessageBody = `Your diet plan for ${formattedDate} is ready! Check your app for details.`;
+
+    console.log(messageBody);
+
+    // Create the curl command with a simple message body
+    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=whatsapp:${formattedPhone}' --data-urlencode 'From=whatsapp:+14155238886' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
+
+    // Execute the curl command
+    exec(curlCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing curl command: ${error}`);
+        return res
+          .status(500)
+          .json({ error: "Failed to send WhatsApp message" });
+      }
+
+      console.log(`WhatsApp message sent successfully: ${stdout}`);
+      res.json({ success: true, message: "Diet plan sent to WhatsApp" });
+    });
+  } catch (error) {
+    console.error("Error sending WhatsApp message:", error);
+    res.status(500).json({ error: "Failed to send WhatsApp message" });
   }
 });
 

@@ -25,6 +25,7 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ text: "", type: "" }); // type can be "success" or "error"
 
   // Default popular South Indian dishes to show before search
   const popularSouthIndianFoods = [
@@ -336,13 +337,59 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
 
   const handleSendDietPlan = async () => {
     try {
+      // Clear any previous status messages
+      setStatusMessage({ text: "", type: "" });
+
       // Save the current diet plan
       await saveDietPlan();
-      alert("Diet plan sent successfully!");
-      onBackClick();
+
+      // Send to WhatsApp
+      if (member && member.phoneNumber) {
+        try {
+          const response = await axios.post(
+            `${API_URL}/api/send-diet-plan-whatsapp`,
+            {
+              memberId,
+              date: selectedDate,
+              phoneNumber: member.phoneNumber,
+            }
+          );
+
+          if (response.data.success) {
+            setStatusMessage({
+              text: "Diet plan sent successfully to WhatsApp!",
+              type: "success",
+            });
+            // Wait 2 seconds before going back
+            setTimeout(() => {
+              onBackClick();
+            }, 2000);
+          } else {
+            throw new Error("Failed to send to WhatsApp");
+          }
+        } catch (whatsappError) {
+          console.error("Error sending to WhatsApp:", whatsappError);
+          setStatusMessage({
+            text: "Diet plan saved but could not be sent to WhatsApp. Please try again later.",
+            type: "error",
+          });
+        }
+      } else {
+        setStatusMessage({
+          text: "Diet plan saved successfully!",
+          type: "success",
+        });
+        // Wait 2 seconds before going back
+        setTimeout(() => {
+          onBackClick();
+        }, 2000);
+      }
     } catch (error) {
       console.error("Error sending diet plan:", error);
-      alert("Failed to send diet plan. Please try again.");
+      setStatusMessage({
+        text: "Failed to save diet plan. Please try again.",
+        type: "error",
+      });
     }
   };
 
@@ -650,6 +697,19 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
           <p className="text-2xl">{nutritionTotals.fibre}</p>
         </div>
       </div>
+
+      {/* Status message */}
+      {statusMessage.text && (
+        <div
+          className={`mb-2 mt-4 p-4 rounded-lg text-center ${
+            statusMessage.type === "success"
+              ? "bg-green-800 text-white"
+              : "bg-red-800 text-white"
+          }`}
+        >
+          {statusMessage.text}
+        </div>
+      )}
 
       {/* Send button */}
       <button
