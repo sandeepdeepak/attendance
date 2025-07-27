@@ -825,6 +825,183 @@ app.get("/api/members/:id", async (req, res) => {
   }
 });
 
+// Update a member by ID
+app.put("/api/members/:id", upload.single("faceImage"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fullName,
+      phoneNumber,
+      dateOfBirth,
+      gender,
+      startDate,
+      membershipPlan,
+    } = req.body;
+    const faceImage = req.file?.buffer;
+
+    if (!fullName || !phoneNumber || !dateOfBirth || !gender) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "fullName, phoneNumber, dateOfBirth, gender",
+      });
+    }
+
+    // First, find the member to get the current data
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (!scanResult.Items || scanResult.Items.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const existingMember = scanResult.Items[0];
+
+    // Create updated member item
+    const updatedMember = {
+      ...existingMember,
+      fullName,
+      phoneNumber,
+      dateOfBirth,
+      gender,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // If a new face image was provided, update the face in Rekognition
+    if (faceImage) {
+      try {
+        // Delete the old face from the collection if it exists
+        if (existingMember.faceId) {
+          const { DeleteFacesCommand } = require("@aws-sdk/client-rekognition");
+          const deleteFacesParams = {
+            CollectionId: "my-face-collection",
+            FaceIds: [existingMember.faceId],
+          };
+          await rekClient.send(new DeleteFacesCommand(deleteFacesParams));
+        }
+
+        // Index the new face
+        const indexParams = {
+          CollectionId: "my-face-collection",
+          Image: { Bytes: faceImage },
+          ExternalImageId: id,
+          DetectionAttributes: [],
+          MaxFaces: 1,
+          QualityFilter: "AUTO",
+        };
+
+        const indexResult = await rekClient.send(
+          new IndexFacesCommand(indexParams)
+        );
+
+        if (indexResult.FaceRecords.length > 0) {
+          const faceId = indexResult.FaceRecords[0].Face.FaceId;
+          updatedMember.faceId = faceId;
+        }
+      } catch (faceError) {
+        console.error("Error updating face:", faceError);
+        // Continue with member update even if face update fails
+      }
+    }
+
+    // Update the member in DynamoDB
+    const putParams = {
+      TableName: MEMBERS_TABLE,
+      Item: updatedMember,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // If membership plan and start date are provided, update the membership
+    if (startDate && membershipPlan) {
+      try {
+        // Calculate end date based on plan type
+        const start = new Date(startDate);
+        const planMonths = {
+          "1 Month": 1,
+          "3 Months": 3,
+          "6 Months": 6,
+          "12 Months": 12,
+        };
+        const months = planMonths[membershipPlan] || 1;
+
+        const endDate = new Date(start);
+        endDate.setMonth(endDate.getMonth() + months);
+
+        // Generate a unique ID for the membership
+        const membershipId = `membership_${Date.now()}`;
+
+        // Create the new membership record
+        const membershipItem = {
+          id: membershipId,
+          memberId: id,
+          startDate,
+          endDate: endDate.toISOString().split("T")[0],
+          planType: membershipPlan,
+          createdAt: new Date().toISOString(),
+          isActive: true,
+        };
+
+        const putMembershipParams = {
+          TableName: MEMBERSHIPS_TABLE,
+          Item: membershipItem,
+        };
+
+        await docClient.send(new PutCommand(putMembershipParams));
+
+        // Mark previous memberships as inactive
+        const previousMembershipsParams = {
+          TableName: MEMBERSHIPS_TABLE,
+          FilterExpression: "memberId = :memberId AND id <> :id",
+          ExpressionAttributeValues: {
+            ":memberId": id,
+            ":id": membershipId,
+          },
+        };
+
+        const previousMemberships = await docClient.send(
+          new ScanCommand(previousMembershipsParams)
+        );
+
+        if (previousMemberships.Items && previousMemberships.Items.length > 0) {
+          for (const prevMembership of previousMemberships.Items) {
+            const updatePrevMembershipParams = {
+              TableName: MEMBERSHIPS_TABLE,
+              Key: {
+                id: prevMembership.id,
+                memberId: prevMembership.memberId,
+              },
+              Item: {
+                ...prevMembership,
+                isActive: false,
+              },
+            };
+
+            await docClient.send(new PutCommand(updatePrevMembershipParams));
+          }
+        }
+      } catch (membershipError) {
+        console.error("Error updating membership:", membershipError);
+        // Continue with member update even if membership update fails
+      }
+    }
+
+    res.json({
+      message: "Member updated successfully",
+      member: updatedMember,
+    });
+  } catch (error) {
+    console.error("Error updating member:", error);
+    res.status(500).json({ error: "Failed to update member" });
+  }
+});
+
 // Delete a member by ID
 app.delete("/api/members/:id", async (req, res) => {
   try {

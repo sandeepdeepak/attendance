@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaUser, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaUser, FaTrash, FaEdit } from "react-icons/fa";
 import "./AllMembers.css";
 import { API_URL } from "../../config";
+import AddMember from "../AddMember/AddMember";
 
 const AllMembers = ({ onBackClick, onMemberClick }) => {
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingMemberId, setDeletingMemberId] = useState(null);
+  const [editingMember, setEditingMember] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    gender: "",
+  });
+  const [updating, setUpdating] = useState(false);
 
   const fetchMembers = async () => {
     try {
@@ -58,6 +70,73 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
     }
   };
 
+  const handleEditClick = (e, member) => {
+    e.stopPropagation(); // Prevent triggering the member click event
+    setMemberToEdit(member);
+    setShowEditForm(true);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleUpdateMember = async (e) => {
+    e.preventDefault();
+
+    if (!editingMember) return;
+
+    try {
+      setUpdating(true);
+
+      const response = await fetch(
+        `${API_URL}/api/members/${editingMember.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update member");
+      }
+
+      // Close modal and refresh members list
+      setShowEditModal(false);
+      setEditingMember(null);
+      await fetchMembers();
+    } catch (error) {
+      console.error("Error updating member:", error);
+      alert("Failed to update member. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Handle returning from edit form
+  const handleEditFormBack = () => {
+    setShowEditForm(false);
+    setMemberToEdit(null);
+    fetchMembers(); // Refresh the members list
+  };
+
+  // If showing edit form, render the AddMember component
+  if (showEditForm && memberToEdit) {
+    return (
+      <AddMember
+        onBackClick={handleEditFormBack}
+        editMode={true}
+        memberToEdit={memberToEdit}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
       {/* Header with back button and title */}
@@ -103,26 +182,139 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
                     {member.phoneNumber}
                   </p>
                 </div>
-                {deletingMemberId === member.id ? (
-                  <div className="p-3 flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin"></div>
-                  </div>
-                ) : (
+                <div className="flex">
+                  {/* Edit button */}
                   <button
-                    className="p-3 text-red-500 hover:text-red-300 transition-colors"
-                    onClick={(e) => handleDeleteMember(e, member.id)}
-                    disabled={deletingMemberId !== null}
-                    title="Delete member"
-                    style={{ opacity: deletingMemberId !== null ? 0.5 : 1 }}
+                    className="p-3 text-blue-500 hover:text-blue-300 transition-colors"
+                    onClick={(e) => handleEditClick(e, member)}
+                    disabled={deletingMemberId !== null || updating}
+                    title="Edit member"
+                    style={{
+                      opacity: deletingMemberId !== null || updating ? 0.5 : 1,
+                    }}
                   >
-                    <FaTrash size={20} />
+                    <FaEdit size={20} />
                   </button>
-                )}
+
+                  {/* Delete button or loading spinner */}
+                  {deletingMemberId === member.id ? (
+                    <div className="p-3 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    <button
+                      className="p-3 text-red-500 hover:text-red-300 transition-colors"
+                      onClick={(e) => handleDeleteMember(e, member.id)}
+                      disabled={deletingMemberId !== null || updating}
+                      title="Delete member"
+                      style={{
+                        opacity:
+                          deletingMemberId !== null || updating ? 0.5 : 1,
+                      }}
+                    >
+                      <FaTrash size={20} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Member Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 px-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Edit Member</h2>
+
+            <form onSubmit={handleUpdateMember}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth}
+                  onChange={handleInputChange}
+                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  required
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleInputChange}
+                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingMember(null);
+                  }}
+                  className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700 transition-colors"
+                  disabled={updating}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  disabled={updating}
+                >
+                  {updating ? (
+                    <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin"></div>
+                  ) : (
+                    "Update"
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

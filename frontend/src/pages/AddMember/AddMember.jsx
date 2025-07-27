@@ -4,7 +4,7 @@ import "./AddMember.css";
 import Webcam from "react-webcam";
 import { API_URL } from "../../config";
 
-const AddMember = ({ onBackClick }) => {
+const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",
@@ -118,29 +118,60 @@ const AddMember = ({ onBackClick }) => {
       formDataToSend.append("membershipPlan", formData.membershipPlan);
       formDataToSend.append("faceImage", imageBlob, "face.jpg");
 
+      let url = `${API_URL}/api/members`;
+      let method = "POST";
+
+      // If in edit mode, use PUT request to update the member
+      if (editMode && memberToEdit) {
+        url = `${API_URL}/api/members/${memberToEdit.id}`;
+        method = "PUT";
+      }
+
       // Send data to API
-      const response = await fetch(`${API_URL}/api/members`, {
-        method: "POST",
+      const response = await fetch(url, {
+        method: method,
         body: formDataToSend,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save member");
+        throw new Error(
+          errorData.error || `Failed to ${editMode ? "update" : "save"} member`
+        );
       }
 
       const result = await response.json();
-      console.log("Member saved successfully:", result);
+      console.log(
+        `Member ${editMode ? "updated" : "saved"} successfully:`,
+        result
+      );
 
       // After saving, go back to dashboard
       onBackClick();
     } catch (error) {
-      console.error("Error saving member:", error);
-      setSaveError(error.message || "Failed to save member");
+      console.error(`Error ${editMode ? "updating" : "saving"} member:`, error);
+      setSaveError(
+        error.message || `Failed to ${editMode ? "update" : "save"} member`
+      );
     } finally {
       setIsSaving(false);
     }
-  }, [formData, capturedImage, onBackClick]);
+  }, [formData, capturedImage, onBackClick, editMode, memberToEdit]);
+
+  // Load member data when in edit mode
+  useEffect(() => {
+    if (editMode && memberToEdit) {
+      setFormData({
+        fullName: memberToEdit.fullName || "",
+        phoneNumber: memberToEdit.phoneNumber || "",
+        startDate:
+          memberToEdit.startDate || new Date().toISOString().split("T")[0],
+        dateOfBirth: memberToEdit.dateOfBirth || "",
+        gender: memberToEdit.gender || "male",
+        membershipPlan: memberToEdit.membershipPlan || "1 Month",
+      });
+    }
+  }, [editMode, memberToEdit]);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
@@ -149,7 +180,9 @@ const AddMember = ({ onBackClick }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <div className="text-4xl font-bold mx-auto pr-10">Add Member</div>
+        <div className="text-4xl font-bold mx-auto pr-10">
+          {editMode ? "Edit Member" : "Add Member"}
+        </div>
       </div>
 
       {/* Form fields */}
@@ -443,7 +476,13 @@ const AddMember = ({ onBackClick }) => {
           isSaving
         }
       >
-        {isSaving ? "Saving..." : "Save Member"}
+        {isSaving
+          ? editMode
+            ? "Updating..."
+            : "Saving..."
+          : editMode
+          ? "Update Member"
+          : "Save Member"}
       </button>
     </div>
   );
