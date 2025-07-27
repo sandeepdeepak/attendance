@@ -28,13 +28,6 @@ jobs:
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} <<EOF
             cd ${{ secrets.EC2_PATH }}
-            
-            # Make sure backend directory exists
-            mkdir -p backend
-            
-            # Create .env file with secrets
-            echo "TWILIO_AUTH_TOKEN=$${{ secrets.TWILIO_AUTH_TOKEN }}" >> backend/.env
-            echo "TWILIO_ACCOUNT_SID=$${{ secrets.TWILIO_ACCOUNT_SID }}" > backend/.env
 
             # Ensure Node.js is installed (you may skip if already done)
             if ! command -v node &> /dev/null; then
