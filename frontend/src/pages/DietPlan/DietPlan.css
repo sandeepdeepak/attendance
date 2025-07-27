@@ -1,0 +1,55 @@
+/* DietPlan.css */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.bg-gray-900 {
+  background-color: #121212;
+}
+
+.bg-gray-900:hover {
+  background-color: #1a1a1a;
+  cursor: pointer;
+}
+
+/* Drag and drop styles */
+.drag-area {
+  border: 2px dashed #444;
+  transition: all 0.3s ease;
+}
+
+.drag-area.active {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Nutrition info styles */
+.nutrition-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Send button hover effect */
+button.bg-white:hover {
+  background-color: #e6e6e6;
+}
+
+/* Custom scrollbar for the food list */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

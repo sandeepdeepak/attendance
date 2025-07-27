@@ -6,12 +6,14 @@ import AddMember from "./pages/AddMember/AddMember";
 import AllMembers from "./pages/AllMembers/AllMembers";
 import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
+import DietPlan from "./pages/DietPlan/DietPlan";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [faceRecognitionKey, setFaceRecognitionKey] = useState(0);
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [previousPage, setPreviousPage] = useState("dashboard");
+  const [selectedDate, setSelectedDate] = useState(null);
 
   // Reset the key when navigating to face recognition to force remount
   useEffect(() => {
@@ -37,6 +39,8 @@ function App() {
       setCurrentPage("allMembers");
     } else if (currentPage === "todayAttendance") {
       setCurrentPage(previousPage);
+    } else if (currentPage === "dietPlan") {
+      setCurrentPage("memberDetails");
     } else {
       setCurrentPage("dashboard");
     }
@@ -50,6 +54,12 @@ function App() {
   const handleTodayAttendanceClick = () => {
     setPreviousPage(currentPage);
     setCurrentPage("todayAttendance");
+  };
+
+  const handleDietPlanClick = (memberId, date) => {
+    setSelectedMemberId(memberId);
+    setSelectedDate(date);
+    setCurrentPage("dietPlan");
   };
 
   const renderCurrentPage = () => {
@@ -86,10 +96,20 @@ function App() {
           <MemberDetails
             memberId={selectedMemberId}
             onBackClick={handleBackClick}
+            onDietPlanClick={handleDietPlanClick}
           />
         );
       case "todayAttendance":
         return <TodayAttendance onBackClick={handleBackClick} />;
+
+      case "dietPlan":
+        return (
+          <DietPlan
+            memberId={selectedMemberId}
+            selectedDate={selectedDate}
+            onBackClick={handleBackClick}
+          />
+        );
 
       default:
         return (

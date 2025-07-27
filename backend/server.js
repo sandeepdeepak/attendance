@@ -35,6 +35,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
 const MEMBERSHIPS_TABLE = "memberships";
+const DIET_PLANS_TABLE = "diet_plans";
 
 // Configure CORS with specific options
 app.use(
@@ -75,6 +76,8 @@ async function initializeDynamoDB() {
       listTablesResponse.TableNames.includes(ATTENDANCE_TABLE);
     const membershipsTableExists =
       listTablesResponse.TableNames.includes(MEMBERSHIPS_TABLE);
+    const dietPlansTableExists =
+      listTablesResponse.TableNames.includes(DIET_PLANS_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -150,6 +153,32 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${MEMBERSHIPS_TABLE}`);
     } else {
       console.log(`Table ${MEMBERSHIPS_TABLE} already exists`);
+    }
+
+    // Create diet plans table if it doesn't exist
+    if (!dietPlansTableExists) {
+      const createDietPlansTableParams = {
+        TableName: DIET_PLANS_TABLE,
+        KeySchema: [
+          { AttributeName: "memberId", KeyType: "HASH" }, // Partition key
+          { AttributeName: "date", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "memberId", AttributeType: "S" },
+          { AttributeName: "date", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createDietPlansTableParams)
+      );
+      console.log(`Created table: ${DIET_PLANS_TABLE}`);
+    } else {
+      console.log(`Table ${DIET_PLANS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -1377,6 +1406,99 @@ app.get("/api/attendance-today", async (req, res) => {
   } catch (error) {
     console.error("Error getting today's attendance:", error);
     res.status(500).json({ error: "Failed to get today's attendance" });
+  }
+});
+
+// Diet plan endpoints
+// Get diet plan for a specific member and date
+app.get("/api/diet-plans/:memberId/:date", async (req, res) => {
+  try {
+    const { memberId, date } = req.params;
+
+    const params = {
+      TableName: DIET_PLANS_TABLE,
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (result.Item) {
+      res.json({
+        success: true,
+        dietPlan: result.Item,
+      });
+    } else {
+      res.json({
+        success: true,
+        dietPlan: {
+          memberId,
+          date,
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          nutritionTotals: {
+            calories: 0,
+            carbs: 0,
+            fats: 0,
+            proteins: 0,
+            fibre: 0,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error getting diet plan:", error);
+    res.status(500).json({ error: "Failed to get diet plan" });
+  }
+});
+
+// Save or update diet plan
+app.post("/api/diet-plans", async (req, res) => {
+  try {
+    const { memberId, date, breakfast, lunch, dinner, nutritionTotals } =
+      req.body;
+
+    if (!memberId || !date) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date",
+      });
+    }
+
+    const dietPlanItem = {
+      memberId,
+      date,
+      breakfast: breakfast || [],
+      lunch: lunch || [],
+      dinner: dinner || [],
+      nutritionTotals: nutritionTotals || {
+        calories: 0,
+        carbs: 0,
+        fats: 0,
+        proteins: 0,
+        fibre: 0,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: DIET_PLANS_TABLE,
+      Item: dietPlanItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(200).json({
+      success: true,
+      message: "Diet plan saved successfully",
+      dietPlan: dietPlanItem,
+    });
+  } catch (error) {
+    console.error("Error saving diet plan:", error);
+    res.status(500).json({ error: "Failed to save diet plan" });
   }
 });
 

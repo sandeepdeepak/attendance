@@ -4,7 +4,7 @@ import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
 
-const MemberDetails = ({ memberId, onBackClick }) => {
+const MemberDetails = ({ memberId, onBackClick, onDietPlanClick }) => {
   const [member, setMember] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -266,6 +266,26 @@ const MemberDetails = ({ memberId, onBackClick }) => {
     return date <= today;
   };
 
+  // Handle calendar day click
+  const handleDayClick = (day) => {
+    if (!day) return; // Don't do anything for empty cells
+
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const date = new Date(year, month, day);
+
+    // Format date as YYYY-MM-DD for API
+    const formattedDate = `${year}-${String(month + 1).padStart(
+      2,
+      "0"
+    )}-${String(day).padStart(2, "0")}`;
+
+    // Navigate to diet plan page
+    if (onDietPlanClick) {
+      onDietPlanClick(memberId, formattedDate);
+    }
+  };
+
   // Get the appropriate class for a calendar day
   const getDayClass = (day) => {
     if (!day) return ""; // Empty cell
@@ -284,11 +304,13 @@ const MemberDetails = ({ memberId, onBackClick }) => {
       // Debug attendance check
       const attended = hasAttendance(day);
       console.log(`Day ${day} attended: ${attended}`);
-      return attended ? "bg-green-800" : "bg-red-800";
+      return attended
+        ? "bg-green-800 cursor-pointer"
+        : "bg-red-800 cursor-pointer";
     }
 
     // Future dates within membership period
-    return "bg-blue-800";
+    return "bg-blue-800 cursor-pointer";
   };
 
   // Get month name and year
@@ -664,6 +686,7 @@ const MemberDetails = ({ memberId, onBackClick }) => {
               className={`aspect-square flex items-center justify-center text-xl rounded-lg ${getDayClass(
                 day
               )}`}
+              onClick={() => handleDayClick(day)}
             >
               {day}
             </div>
