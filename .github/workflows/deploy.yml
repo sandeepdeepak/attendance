@@ -24,19 +24,13 @@ jobs:
           rsync -avz --exclude=".git" --exclude="node_modules" ./ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}
 
-      - name: Create .env file
-        run: |
-          echo "TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}" >> backend/.env
-          echo "TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}" >> backend/.env
-
       - name: Build frontend and restart backend on EC2
         run: |
-          HOST=${{ secrets.EC2_HOST }}
-          USER=${{ secrets.EC2_USER }}
-          PATH_ON_EC2=${{ secrets.EC2_PATH }}
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} <<EOF
+            cd ${EC2_PATH}
 
-          ssh $USER@$HOST <<'EOF'
-            cd $PATH_ON_EC2
+            echo "TWILIO_ACCOUNT_SID=$${{ secrets.TWILIO_ACCOUNT_SID }}" > backend/.env
+            echo "TWILIO_AUTH_TOKEN=$${{ secrets.TWILIO_AUTH_TOKEN }}" >> backend/.env
 
             # Ensure Node.js is installed (you may skip if already done)
             if ! command -v node &> /dev/null; then
@@ -48,11 +42,9 @@ jobs:
             if ! command -v pm2 &> /dev/null; then
               sudo npm install -g pm2
             fi
-            
-            ls
+
             cd attendance
             cd frontend && npm install && npm run build && cd ..
             sudo cp -r frontend/dist/* /usr/share/nginx/html/
-            ls
             cd backend && npm install
             pm2 restart all || pm2 start server.js
