@@ -1682,6 +1682,53 @@ FITNESS ZONE - Building Better Bodies`;
   }
 });
 
+// Sync member data to Google Sheets
+app.get("/api/sync-to-excel", async (req, res) => {
+  try {
+    // Import the sheetsService module
+    const { updateAttendance } = require("./sheetsService");
+
+    // Get all members from DynamoDB
+    const params = {
+      TableName: MEMBERS_TABLE,
+    };
+
+    const result = await docClient.send(new ScanCommand(params));
+    const members = result.Items || [];
+
+    if (members.length === 0) {
+      return res.status(404).json({ error: "No members found" });
+    }
+
+    // Format member data for Google Sheets with headers
+    // Add headers as the first row
+    const headers = ["Full Name", "Phone Number", "Date of Birth", "Gender"];
+
+    // Format member data rows
+    const memberRows = members.map((member) => [
+      member.fullName || "",
+      member.phoneNumber || "",
+      member.dateOfBirth || "",
+      member.gender || "",
+    ]);
+
+    // Combine headers and data
+    const memberData = [headers, ...memberRows];
+
+    // Update Google Sheets with member data
+    await updateAttendance(memberData);
+
+    res.json({
+      success: true,
+      message: "Member data synced to Google Sheets successfully",
+      count: members.length,
+    });
+  } catch (error) {
+    console.error("Error syncing to Excel:", error);
+    res.status(500).json({ error: "Failed to sync data to Excel" });
+  }
+});
+
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });

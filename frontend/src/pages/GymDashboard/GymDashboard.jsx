@@ -10,6 +10,7 @@ import {
   FaHeadset,
   FaUser,
   FaBell,
+  FaUpload,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -32,6 +33,7 @@ const GymDashboard = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [expiringMembers, setExpiringMembers] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [syncingToExcel, setSyncingToExcel] = useState(false);
   const supportCardRef = useRef(null);
   const notificationCardRef = useRef(null);
 
@@ -200,6 +202,39 @@ const GymDashboard = ({
               )}
             </div>
           )}
+        </div>
+
+        {/* Upload to Excel Icon */}
+        <div className="relative">
+          <div
+            id="upload-icon"
+            className={`text-white p-1 rounded-full hover:bg-gray-800 transition-colors ${
+              syncingToExcel ? "animate-pulse text-green-400" : ""
+            }`}
+            onClick={async () => {
+              if (syncingToExcel) return;
+
+              try {
+                setSyncingToExcel(true);
+                const response = await axios.get(
+                  `${API_URL}/api/sync-to-excel`
+                );
+                if (response.data && response.data.success) {
+                  alert(
+                    `Successfully synced ${response.data.count} members to Excel!`
+                  );
+                }
+              } catch (error) {
+                console.error("Error syncing to Excel:", error);
+                alert("Failed to sync data to Excel. Please try again.");
+              } finally {
+                setSyncingToExcel(false);
+              }
+            }}
+            title="Sync to Excel"
+          >
+            <FaUpload size={16} />
+          </div>
         </div>
 
         {/* Support Icon */}
