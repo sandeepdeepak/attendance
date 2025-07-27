@@ -219,14 +219,8 @@ const GymDashboard = ({
                 const response = await axios.get(
                   `${API_URL}/api/sync-to-excel`
                 );
-                if (response.data && response.data.success) {
-                  alert(
-                    `Successfully synced ${response.data.count} members to Excel!`
-                  );
-                }
               } catch (error) {
                 console.error("Error syncing to Excel:", error);
-                alert("Failed to sync data to Excel. Please try again.");
               } finally {
                 setSyncingToExcel(false);
               }
