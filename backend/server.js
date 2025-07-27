@@ -1863,7 +1863,7 @@ FITNESS ZONE - Building Better Bodies`;
 app.get("/api/sync-to-excel", async (req, res) => {
   try {
     // Import the sheetsService module
-    const { updateAttendance } = require("./sheetsService");
+    const { updateMembers } = require("./sheetsService");
 
     // Get all members from DynamoDB
     const params = {
@@ -1893,7 +1893,7 @@ app.get("/api/sync-to-excel", async (req, res) => {
     const memberData = [headers, ...memberRows];
 
     // Update Google Sheets with member data
-    await updateAttendance(memberData);
+    await updateMembers(memberData);
 
     res.json({
       success: true,
@@ -1903,6 +1903,174 @@ app.get("/api/sync-to-excel", async (req, res) => {
   } catch (error) {
     console.error("Error syncing to Excel:", error);
     res.status(500).json({ error: "Failed to sync data to Excel" });
+  }
+});
+
+// Sync member data from Google Sheets to DynamoDB
+app.get("/api/sync-from-excel", async (req, res) => {
+  try {
+    // Import the sheetsService module
+    const { readMembers } = require("./sheetsService");
+
+    // Read member data from Google Sheets
+    const sheetMembers = await readMembers();
+
+    if (!sheetMembers || sheetMembers.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No member data found in Google Sheets" });
+    }
+
+    // Get all existing members from DynamoDB
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+    const existingMembers = scanResult.Items || [];
+
+    // Create a map of existing members by phone number for quick lookup
+    const existingMemberMap = {};
+    existingMembers.forEach((member) => {
+      existingMemberMap[member.phoneNumber] = member;
+    });
+
+    // Track operations for summary
+    const summary = {
+      added: 0,
+      updated: 0,
+      unchanged: 0,
+      errors: 0,
+    };
+
+    // Process each member from the sheet (skip header row)
+    const processedMembers = [];
+
+    // Skip the first row which contains headers
+    const dataRows = sheetMembers.slice(1);
+
+    for (const sheetMember of dataRows) {
+      // Ensure we have at least the required fields
+      if (sheetMember.length < 3) {
+        console.warn("Skipping row with insufficient data:", sheetMember);
+        continue;
+      }
+
+      const [fullName, phoneNumber, dateOfBirth, gender] = sheetMember;
+
+      // Skip rows with missing essential data
+      if (!fullName || !phoneNumber) {
+        console.warn("Skipping row with missing name or phone:", sheetMember);
+        continue;
+      }
+
+      // Skip if the row looks like a header (contains "Full Name" or "Phone Number")
+      if (
+        fullName.toLowerCase().includes("name") ||
+        phoneNumber.toLowerCase().includes("phone") ||
+        fullName === "Full Name" ||
+        phoneNumber === "Phone Number"
+      ) {
+        console.warn("Skipping header-like row:", sheetMember);
+        continue;
+      }
+
+      processedMembers.push(phoneNumber);
+
+      try {
+        // Check if member already exists
+        if (existingMemberMap[phoneNumber]) {
+          const existingMember = existingMemberMap[phoneNumber];
+
+          // Check if any data has changed
+          if (
+            existingMember.fullName !== fullName ||
+            existingMember.dateOfBirth !== dateOfBirth ||
+            existingMember.gender !== gender
+          ) {
+            // Update the existing member
+            const updatedMember = {
+              ...existingMember,
+              fullName,
+              dateOfBirth: dateOfBirth || existingMember.dateOfBirth,
+              gender: gender || existingMember.gender,
+              updatedAt: new Date().toISOString(),
+            };
+
+            const putParams = {
+              TableName: MEMBERS_TABLE,
+              Item: updatedMember,
+            };
+
+            await docClient.send(new PutCommand(putParams));
+            summary.updated++;
+          } else {
+            // Member exists but no changes needed
+            summary.unchanged++;
+          }
+        } else {
+          // This is a new member, create it
+          // Generate a unique ID for the member
+          const memberId = `member_${Date.now()}_${Math.floor(
+            Math.random() * 1000
+          )}`;
+
+          const newMember = {
+            id: memberId,
+            fullName,
+            phoneNumber,
+            dateOfBirth: dateOfBirth || "",
+            gender: gender || "male",
+            createdAt: new Date().toISOString(),
+            active: true,
+          };
+
+          const putParams = {
+            TableName: MEMBERS_TABLE,
+            Item: newMember,
+          };
+
+          await docClient.send(new PutCommand(putParams));
+          summary.added++;
+        }
+      } catch (error) {
+        console.error(`Error processing member ${fullName}:`, error);
+        summary.errors++;
+      }
+    }
+
+    // Optional: Delete members that are in DynamoDB but not in the sheet
+    // Uncomment if you want this functionality
+    /*
+    for (const member of existingMembers) {
+      if (!processedMembers.includes(member.phoneNumber)) {
+        try {
+          const deleteParams = {
+            TableName: MEMBERS_TABLE,
+            Key: {
+              id: member.id,
+              phoneNumber: member.phoneNumber
+            }
+          };
+          
+          await docClient.send(new DeleteCommand(deleteParams));
+          summary.deleted++;
+        } catch (error) {
+          console.error(`Error deleting member ${member.fullName}:`, error);
+          summary.errors++;
+        }
+      }
+    }
+    */
+
+    res.json({
+      success: true,
+      message: "Member data synced from Google Sheets successfully",
+      summary,
+    });
+  } catch (error) {
+    console.error("Error syncing from Excel:", error);
+    res.status(500).json({ error: "Failed to sync data from Excel" });
   }
 });
 

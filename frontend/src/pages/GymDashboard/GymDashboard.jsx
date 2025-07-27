@@ -11,6 +11,7 @@ import {
   FaUser,
   FaBell,
   FaUpload,
+  FaDownload,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -34,6 +35,8 @@ const GymDashboard = ({
   const [expiringMembers, setExpiringMembers] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [syncingToExcel, setSyncingToExcel] = useState(false);
+  const [syncingFromExcel, setSyncingFromExcel] = useState(false);
+  const [statusMessage, setStatusMessage] = useState({ text: "", type: "" });
   const supportCardRef = useRef(null);
   const notificationCardRef = useRef(null);
 
@@ -216,11 +219,32 @@ const GymDashboard = ({
 
               try {
                 setSyncingToExcel(true);
+                setStatusMessage({ text: "", type: "" });
                 const response = await axios.get(
                   `${API_URL}/api/sync-to-excel`
                 );
+                if (response.data && response.data.success) {
+                  setStatusMessage({
+                    text: `Successfully synced ${response.data.count} members to Excel!`,
+                    type: "success",
+                  });
+
+                  // Clear status message after 5 seconds
+                  setTimeout(() => {
+                    setStatusMessage({ text: "", type: "" });
+                  }, 5000);
+                }
               } catch (error) {
                 console.error("Error syncing to Excel:", error);
+                setStatusMessage({
+                  text: "Failed to sync data to Excel. Please try again.",
+                  type: "error",
+                });
+
+                // Clear status message after 5 seconds
+                setTimeout(() => {
+                  setStatusMessage({ text: "", type: "" });
+                }, 5000);
               } finally {
                 setSyncingToExcel(false);
               }
@@ -228,6 +252,55 @@ const GymDashboard = ({
             title="Sync to Excel"
           >
             <FaUpload size={16} />
+          </div>
+        </div>
+
+        {/* Download from Excel Icon */}
+        <div className="relative">
+          <div
+            id="download-icon"
+            className={`text-white p-1 rounded-full hover:bg-gray-800 transition-colors ${
+              syncingFromExcel ? "animate-pulse text-blue-400" : ""
+            }`}
+            onClick={async () => {
+              if (syncingFromExcel) return;
+
+              try {
+                setSyncingFromExcel(true);
+                setStatusMessage({ text: "", type: "" });
+                const response = await axios.get(
+                  `${API_URL}/api/sync-from-excel`
+                );
+                if (response.data && response.data.success) {
+                  const summary = response.data.summary;
+                  setStatusMessage({
+                    text: `Excel sync complete! Added: ${summary.added} | Updated: ${summary.updated} | Unchanged: ${summary.unchanged} | Errors: ${summary.errors}`,
+                    type: "success",
+                  });
+
+                  // Clear status message after 5 seconds
+                  setTimeout(() => {
+                    setStatusMessage({ text: "", type: "" });
+                  }, 5000);
+                }
+              } catch (error) {
+                console.error("Error syncing from Excel:", error);
+                setStatusMessage({
+                  text: "Failed to sync data from Excel. Please try again.",
+                  type: "error",
+                });
+
+                // Clear status message after 5 seconds
+                setTimeout(() => {
+                  setStatusMessage({ text: "", type: "" });
+                }, 5000);
+              } finally {
+                setSyncingFromExcel(false);
+              }
+            }}
+            title="Sync from Excel"
+          >
+            <FaDownload size={16} />
           </div>
         </div>
 
@@ -266,6 +339,19 @@ const GymDashboard = ({
           )}
         </div>
       </div>
+
+      {/* Status message */}
+      {statusMessage.text && (
+        <div
+          className={`mb-2 mt-4 p-4 rounded-lg text-center w-full max-w-md ${
+            statusMessage.type === "success"
+              ? "bg-green-800 text-white"
+              : "bg-red-800 text-white"
+          }`}
+        >
+          {statusMessage.text}
+        </div>
+      )}
 
       <div>
         <h1 className="text-4xl font-bold mb-2"> Attendance</h1>
