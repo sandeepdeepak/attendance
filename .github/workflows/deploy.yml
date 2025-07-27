@@ -27,8 +27,12 @@ jobs:
       - name: Build frontend and restart backend on EC2
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} <<EOF
-            cd ${EC2_PATH}
-
+            cd ${{ secrets.EC2_PATH }}
+            
+            # Make sure backend directory exists
+            mkdir -p backend
+            
+            # Create .env file with secrets
             echo "TWILIO_ACCOUNT_SID=$${{ secrets.TWILIO_ACCOUNT_SID }}" > backend/.env
             echo "TWILIO_AUTH_TOKEN=$${{ secrets.TWILIO_AUTH_TOKEN }}" >> backend/.env
 
