@@ -354,7 +354,7 @@ const GymDashboard = ({
       )}
 
       <div>
-        <h1 className="text-4xl font-bold mb-2"> Attendance</h1>
+        <h1 className="text-4xl font-bold mb-2 mt-4"> Attendance</h1>
         <p className="text-gray-400 mb-6 text-lg">using face scan</p>
       </div>
 
