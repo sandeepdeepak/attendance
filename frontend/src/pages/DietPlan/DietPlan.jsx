@@ -432,18 +432,19 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
       {/* Header with back button and member name */}
-      <div className="w-full flex items-center mb-2">
-        <button className="text-white p-2" onClick={onBackClick}>
-          <FaArrowLeft size={24} />
-        </button>
-        <h1 className="text-4xl font-bold text-center flex-grow">
-          {member.fullName}
-        </h1>
-      </div>
+      <button className="text-white p-2" onClick={onBackClick}>
+        <FaArrowLeft size={18} />
+      </button>
+      <div class="flex items-start space-x-2">
+        <div className="items-center w-full">
+          <div className="text-xl font-bold flex-grow">{member.fullName}</div>
 
-      {/* Selected date */}
-      <div className="text-center mb-8">
-        <h2 className="text-2xl text-gray-400">{formatDate(selectedDate)}</h2>
+          <div className="text-center mb-8">
+            <h2 className="text-xl text-gray-400">
+              {formatDate(selectedDate)}
+            </h2>
+          </div>
+        </div>
       </div>
 
       {/* Meal sections */}
