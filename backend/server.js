@@ -2098,6 +2098,92 @@ app.get("/api/sync-from-excel", async (req, res) => {
   }
 });
 
+// Calculate daily calories based on member data
+app.get("/api/calculate-calories/:memberId", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const { goal = "loss" } = req.query; // Default to weight loss
+
+    // Get member details
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    if (!result.Items || result.Items.length === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    const member = result.Items[0];
+    const { height, weight, dateOfBirth, gender } = member;
+
+    if (!height || !weight || !dateOfBirth || !gender) {
+      return res.status(400).json({
+        error: "Missing required data",
+        message:
+          "Height, weight, date of birth, and gender are required for calorie calculation",
+      });
+    }
+
+    // Calculate age from date of birth
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    // Calculate BMR using Mifflin-St Jeor Equation
+    let bmr;
+    if (gender.toLowerCase() === "male") {
+      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    } else {
+      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    }
+
+    // Apply activity factor (sedentary = 1.2)
+    const activityFactor = 1.2;
+    const tdee = bmr * activityFactor;
+
+    // Apply goal adjustment
+    let goalAdjustment = 0;
+    switch (goal) {
+      case "loss":
+        goalAdjustment = -500;
+        break;
+      case "gain":
+        goalAdjustment = 500;
+        break;
+      default: // maintenance
+        goalAdjustment = 0;
+    }
+
+    const dailyCalories = Math.round(tdee + goalAdjustment);
+
+    res.json({
+      success: true,
+      data: {
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+        dailyCalories,
+        goal,
+      },
+    });
+  } catch (error) {
+    console.error("Error calculating calories:", error);
+    res.status(500).json({ error: "Failed to calculate calories" });
+  }
+});
+
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });

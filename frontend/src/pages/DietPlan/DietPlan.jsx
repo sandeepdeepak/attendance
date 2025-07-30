@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaSearch } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaFire } from "react-icons/fa";
 import axios from "axios";
 import "./DietPlan.css";
 import { API_URL } from "../../config";
@@ -26,6 +26,9 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: "", type: "" }); // type can be "success" or "error"
+  const [calorieGoal, setCalorieGoal] = useState("loss"); // Default to weight loss
+  const [calculatedCalories, setCalculatedCalories] = useState(null);
+  const [isLoadingCalories, setIsLoadingCalories] = useState(false);
 
   // Default popular South Indian dishes to show before search
   const popularSouthIndianFoods = [
@@ -161,6 +164,27 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
     }
   };
 
+  // Function to fetch calculated calories
+  const fetchCalculatedCalories = async () => {
+    if (!memberId) return;
+
+    setIsLoadingCalories(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/calculate-calories/${memberId}?goal=${calorieGoal}`
+      );
+
+      if (response.data && response.data.success) {
+        setCalculatedCalories(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching calculated calories:", error);
+      // Don't show error to user to avoid disrupting UX
+    } finally {
+      setIsLoadingCalories(false);
+    }
+  };
+
   useEffect(() => {
     const fetchMemberDetailsAndDietPlan = async () => {
       try {
@@ -205,6 +229,13 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fetchMemberDetailsAndDietPlan();
     }
   }, [memberId, selectedDate]);
+
+  // Call this when component loads and when goal changes
+  useEffect(() => {
+    if (member && member.height && member.weight) {
+      fetchCalculatedCalories();
+    }
+  }, [member, calorieGoal]);
 
   // Save diet plan whenever it changes
   useEffect(() => {
@@ -435,16 +466,98 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       <button className="text-white p-2" onClick={onBackClick}>
         <FaArrowLeft size={18} />
       </button>
-      <div class="flex items-start space-x-2">
+      <div className="flex items-start space-x-2">
         <div className="items-center w-full">
           <div className="text-xl font-bold flex-grow">{member.fullName}</div>
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-4">
             <h2 className="text-xl text-gray-400">
               {formatDate(selectedDate)}
             </h2>
           </div>
         </div>
+      </div>
+
+      {/* Calorie Goal Section */}
+      <div className="bg-gray-900 rounded-lg p-4 mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            <FaFire className="text-orange-500 mr-2" /> Daily Calories
+          </div>
+          <div className="flex items-center">
+            <label className="mr-2 text-gray-400">Goal:</label>
+            <select
+              className="bg-gray-800 text-white p-2 rounded"
+              value={calorieGoal}
+              onChange={(e) => setCalorieGoal(e.target.value)}
+            >
+              <option value="loss">Weight Loss</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="gain">Weight Gain</option>
+            </select>
+          </div>
+        </div>
+
+        {isLoadingCalories ? (
+          <div className="flex justify-center py-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : calculatedCalories ? (
+          <div>
+            <div className="flex justify-between items-center">
+              <span>Recommended Daily Calories:</span>
+              <span className="text-xl font-bold">
+                {calculatedCalories.dailyCalories} kcal
+              </span>
+            </div>
+            <div className="mt-2 px-3 bg-gray-800 rounded-lg overflow-hidden">
+              <div className="relative pt-1">
+                <div className="flex mb-2 items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold inline-block text-blue-600">
+                      {Math.min(
+                        100,
+                        Math.round(
+                          (nutritionTotals.calories /
+                            calculatedCalories.dailyCalories) *
+                            100
+                        )
+                      )}
+                      %
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold inline-block text-blue-600">
+                      {nutritionTotals.calories} /{" "}
+                      {calculatedCalories.dailyCalories} kcal
+                    </span>
+                  </div>
+                </div>
+                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
+                  <div
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.round(
+                          (nutritionTotals.calories /
+                            calculatedCalories.dailyCalories) *
+                            100
+                        )
+                      )}%`,
+                    }}
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-2 text-gray-400">
+            {member && (!member.height || !member.weight)
+              ? "Height and weight data required for calorie calculation"
+              : "Unable to calculate calories"}
+          </div>
+        )}
       </div>
 
       {/* Meal sections */}
@@ -462,7 +575,7 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-white">{food.name}</p>
+                        <p className="text-white text-left">{food.name}</p>
                         <p className="text-gray-400 text-sm text-left">
                           {food.totalCalories} kcal
                         </p>
