@@ -19,6 +19,7 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
     fats: 0,
     proteins: 0,
     fibre: 0,
+    serving_qty: 0,
   });
   const [showFoodSelector, setShowFoodSelector] = useState(false);
   const [currentMealType, setCurrentMealType] = useState(null);
@@ -40,6 +41,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: 1,
       proteins: 6,
       fibre: 4,
+      serving_qty: 1,
+      serving_unit: "cup",
     },
     {
       id: "default-2",
@@ -49,6 +52,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: 8,
       proteins: 5,
       fibre: 3,
+      serving_qty: 1,
+      serving_unit: "medium",
     },
     {
       id: "default-3",
@@ -58,6 +63,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: 5,
       proteins: 3,
       fibre: 2,
+      serving_qty: 1,
+      serving_unit: "medium",
     },
     {
       id: "default-4",
@@ -67,6 +74,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: 6,
       proteins: 5,
       fibre: 3,
+      serving_qty: 1,
+      serving_unit: "medium",
     },
     {
       id: "default-5",
@@ -76,6 +85,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: 10,
       proteins: 5,
       fibre: 3,
+      serving_qty: 1,
+      serving_unit: "piece",
     },
   ];
 
@@ -111,6 +122,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
           fats: Math.round(food.nf_total_fat),
           proteins: Math.round(food.nf_protein),
           fibre: Math.round(food.nf_dietary_fiber || 0),
+          serving_qty: food.serving_qty || 1,
+          serving_unit: food.serving_unit || "g",
         }));
 
         setSearchResults(foods);
@@ -264,6 +277,7 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   };
 
   const addFoodToMeal = (food) => {
+    console.log("Adding food:", food, "to meal:", currentMealType);
     if (!currentMealType) return;
 
     // Add the food to the selected meal with quantity
@@ -289,6 +303,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       fats: prev.fats + food.fats,
       proteins: prev.proteins + food.proteins,
       fibre: prev.fibre + food.fibre,
+      serving_qty: prev.serving_qty + food.serving_qty,
+      serving_unit: prev.serving_unit + food.serving_unit,
     }));
 
     // Close the food selector
@@ -316,6 +332,8 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
             fats: prev.fats + fatsDiff,
             proteins: prev.proteins + proteinsDiff,
             fibre: prev.fibre + fibreDiff,
+            serving_qty: prev.serving_qty + food.serving_qty * quantityDiff,
+            serving_unit: prev.serving_unit + food.serving_unit * quantityDiff,
           }));
 
           // Return updated food item with new quantity and totals
@@ -356,6 +374,10 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
         fats: prev.fats - foodToRemove.fats * foodToRemove.quantity,
         proteins: prev.proteins - foodToRemove.proteins * foodToRemove.quantity,
         fibre: prev.fibre - foodToRemove.fibre * foodToRemove.quantity,
+        serving_qty:
+          prev.serving_qty - foodToRemove.serving_qty * foodToRemove.quantity,
+        serving_unit:
+          prev.serving_unit - foodToRemove.serving_unit * foodToRemove.quantity,
       }));
     }
   };
@@ -874,7 +896,9 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
                       onClick={() => addFoodToMeal(food)}
                     >
                       <div className="flex justify-between items-center">
-                        <p className="text-xl">{food.name}</p>
+                        <p className="text-xl">
+                          {food.name} - {food.serving_qty} {food.serving_unit}
+                        </p>
                         <p className="text-xl">{food.calories} kcal</p>
                       </div>
                       <p className="text-sm text-gray-400 text-left">
