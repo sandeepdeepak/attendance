@@ -1803,7 +1803,7 @@ app.post("/api/send-diet-plan-whatsapp", async (req, res) => {
       process.env.TWILIO_ACCOUNT_SID || "your_account_sid_here";
 
     // Create the message body with full diet plan details
-    const messageBody = `FITNESS ZONE - YOUR PERSONALIZED DIET PLAN \n📅 Date: ${formattedDate} \n⏰ Created at: ${formattedTime}
+    const messageBody = `FITNESS ZONE - YOUR PERSONALIZED DIET PLAN \n📅 Date: ${formattedDate} \n
 
 Dear ${memberName},
 
