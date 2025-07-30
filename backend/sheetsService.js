@@ -9,14 +9,14 @@ async function updateMembers(data) {
   const sheets = google.sheets({ version: "v4", auth: client });
 
   const spreadsheetId = "1kmwq7-lE1OOrOj1s2DqwhCT2b9DdkVUVWGDtPWWFYIU";
-  const range = "Members!A2:D"; // adjust to your sheet/tab
+  const range = "Members!A2:F"; // Updated range to include height and weight
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range,
     valueInputOption: "USER_ENTERED",
     resource: {
-      values: data, // e.g., [['John', '2025-07-27', '08:00', '09:00']]
+      values: data, // e.g., [['John', '1234567890', '2000-01-01', 'male', '175', '70']]
     },
   });
 
@@ -28,7 +28,7 @@ async function readMembers() {
   const sheets = google.sheets({ version: "v4", auth: client });
 
   const spreadsheetId = "1kmwq7-lE1OOrOj1s2DqwhCT2b9DdkVUVWGDtPWWFYIU";
-  const range = "Members!A2:D"; // Adjust to match the data range
+  const range = "Members!A2:F"; // Updated range to include height and weight
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -43,7 +43,7 @@ async function readMembers() {
   }
 
   console.log("Members fetched from Google Sheets:", rows);
-  return rows; // Array of arrays, e.g., [['John', '2025-07-27', '08:00', '09:00']]
+  return rows; // Array of arrays, e.g., [['John', '1234567890', '2000-01-01', 'male', '175', '70']]
 }
 
 module.exports = { updateMembers, readMembers };

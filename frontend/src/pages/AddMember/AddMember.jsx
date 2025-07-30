@@ -12,6 +12,8 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
     dateOfBirth: "", // New field for date of birth
     gender: "male", // Default gender
     membershipPlan: "1 Month", // Default membership plan
+    height: "", // Height in cm
+    weight: "", // Weight in kg
   });
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -116,6 +118,8 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
       formDataToSend.append("dateOfBirth", formData.dateOfBirth);
       formDataToSend.append("gender", formData.gender);
       formDataToSend.append("membershipPlan", formData.membershipPlan);
+      formDataToSend.append("height", formData.height);
+      formDataToSend.append("weight", formData.weight);
       formDataToSend.append("faceImage", imageBlob, "face.jpg");
 
       let url = `${API_URL}/api/members`;
@@ -169,6 +173,8 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
         dateOfBirth: memberToEdit.dateOfBirth || "",
         gender: memberToEdit.gender || "male",
         membershipPlan: memberToEdit.membershipPlan || "1 Month",
+        height: memberToEdit.height || "",
+        weight: memberToEdit.weight || "",
       });
     }
   }, [editMode, memberToEdit]);
@@ -379,6 +385,34 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Height (cm)
+          </label>
+          <input
+            type="number"
+            name="height"
+            value={formData.height}
+            onChange={handleInputChange}
+            className="bg-[#111] text-white p-4 rounded-lg"
+            placeholder="Enter height in cm"
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
+            Weight (kg)
+          </label>
+          <input
+            type="number"
+            name="weight"
+            value={formData.weight}
+            onChange={handleInputChange}
+            className="bg-[#111] text-white p-4 rounded-lg"
+            placeholder="Enter weight in kg"
+          />
         </div>
 
         <div className="flex flex-col">

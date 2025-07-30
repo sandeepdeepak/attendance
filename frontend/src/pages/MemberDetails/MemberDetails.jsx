@@ -619,6 +619,18 @@ const MemberDetails = ({ memberId, onBackClick, onDietPlanClick }) => {
           <p className="text-left">{member.phoneNumber}</p>
         </div>
         <div>
+          <p className="text-gray-400 text-left">Height</p>
+          <p className="text-left">
+            {member.height ? `${member.height} cm` : "N/A"}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-left">Weight</p>
+          <p className="text-left">
+            {member.weight ? `${member.weight} kg` : "N/A"}
+          </p>
+        </div>
+        <div>
           <p className="text-gray-400 text-left">Membership Start</p>
           <p className="text-left">
             {getActiveMembership()

@@ -720,6 +720,8 @@ app.post("/api/members", upload.single("faceImage"), async (req, res) => {
       phoneNumber,
       dateOfBirth,
       gender,
+      height: req.body.height || null,
+      weight: req.body.weight || null,
       faceId,
       createdAt: new Date().toISOString(),
       active: true,
@@ -836,6 +838,8 @@ app.put("/api/members/:id", upload.single("faceImage"), async (req, res) => {
       gender,
       startDate,
       membershipPlan,
+      height,
+      weight,
     } = req.body;
     const faceImage = req.file?.buffer;
 
@@ -870,6 +874,8 @@ app.put("/api/members/:id", upload.single("faceImage"), async (req, res) => {
       phoneNumber,
       dateOfBirth,
       gender,
+      height: height || existingMember.height,
+      weight: weight || existingMember.weight,
       updatedAt: new Date().toISOString(),
     };
 
@@ -1881,7 +1887,14 @@ app.get("/api/sync-to-excel", async (req, res) => {
 
     // Format member data for Google Sheets with headers
     // Add headers as the first row
-    const headers = ["Full Name", "Phone Number", "Date of Birth", "Gender"];
+    const headers = [
+      "Full Name",
+      "Phone Number",
+      "Date of Birth",
+      "Gender",
+      "Height (cm)",
+      "Weight (kg)",
+    ];
 
     // Format member data rows
     const memberRows = members.map((member) => [
@@ -1889,6 +1902,8 @@ app.get("/api/sync-to-excel", async (req, res) => {
       member.phoneNumber || "",
       member.dateOfBirth || "",
       member.gender || "",
+      member.height || "",
+      member.weight || "",
     ]);
 
     // Combine headers and data
@@ -1958,7 +1973,8 @@ app.get("/api/sync-from-excel", async (req, res) => {
         continue;
       }
 
-      const [fullName, phoneNumber, dateOfBirth, gender] = sheetMember;
+      const [fullName, phoneNumber, dateOfBirth, gender, height, weight] =
+        sheetMember;
 
       // Skip rows with missing essential data
       if (!fullName || !phoneNumber) {
@@ -1988,7 +2004,9 @@ app.get("/api/sync-from-excel", async (req, res) => {
           if (
             existingMember.fullName !== fullName ||
             existingMember.dateOfBirth !== dateOfBirth ||
-            existingMember.gender !== gender
+            existingMember.gender !== gender ||
+            existingMember.height !== height ||
+            existingMember.weight !== weight
           ) {
             // Update the existing member
             const updatedMember = {
@@ -1996,6 +2014,8 @@ app.get("/api/sync-from-excel", async (req, res) => {
               fullName,
               dateOfBirth: dateOfBirth || existingMember.dateOfBirth,
               gender: gender || existingMember.gender,
+              height: height || existingMember.height,
+              weight: weight || existingMember.weight,
               updatedAt: new Date().toISOString(),
             };
 
@@ -2023,6 +2043,8 @@ app.get("/api/sync-from-excel", async (req, res) => {
             phoneNumber,
             dateOfBirth: dateOfBirth || "",
             gender: gender || "male",
+            height: height || null,
+            weight: weight || null,
             createdAt: new Date().toISOString(),
             active: true,
           };
