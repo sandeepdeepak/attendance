@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaSearch, FaFire } from "react-icons/fa";
+import { FaArrowLeft, FaSearch, FaFire, FaSave, FaList } from "react-icons/fa";
 import axios from "axios";
 import "./DietPlan.css";
 import { API_URL } from "../../config";
@@ -30,6 +30,14 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   const [calorieGoal, setCalorieGoal] = useState("loss"); // Default to weight loss
   const [calculatedCalories, setCalculatedCalories] = useState(null);
   const [isLoadingCalories, setIsLoadingCalories] = useState(false);
+
+  // Template state variables
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
 
   // Default popular South Indian dishes to show before search
   const popularSouthIndianFoods = [
@@ -174,6 +182,69 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       console.error("Error saving diet plan:", error);
       // We don't show an error to the user here to avoid disrupting the UX
       // The plan will be saved on the next change
+    }
+  };
+
+  // Function to fetch meal templates
+  const fetchTemplates = async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/meal-templates`);
+      if (response.data && response.data.success) {
+        setTemplates(response.data.templates);
+      }
+    } catch (error) {
+      console.error("Error fetching meal templates:", error);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  // Function to apply a template to the current diet plan
+  const applyTemplate = (template) => {
+    // Update the diet plan with template meals
+    setDietPlan({
+      breakfast: [...template.breakfast],
+      lunch: [...template.lunch],
+      dinner: [...template.dinner],
+    });
+
+    // Update nutrition totals
+    setNutritionTotals(template.nutritionTotals);
+
+    // Close the template modal
+    setShowTemplateModal(false);
+  };
+
+  // Function to save the current diet plan as a template
+  const saveAsTemplate = async () => {
+    if (!templateName) return;
+
+    try {
+      const response = await axios.post(`${API_URL}/api/meal-templates`, {
+        name: templateName,
+        description: templateDescription,
+        breakfast: dietPlan.breakfast,
+        lunch: dietPlan.lunch,
+        dinner: dietPlan.dinner,
+        nutritionTotals,
+      });
+
+      if (response.data && response.data.success) {
+        setStatusMessage({
+          text: "Meal template saved successfully!",
+          type: "success",
+        });
+        setShowSaveTemplateModal(false);
+        setTemplateName("");
+        setTemplateDescription("");
+      }
+    } catch (error) {
+      console.error("Error saving meal template:", error);
+      setStatusMessage({
+        text: "Failed to save meal template. Please try again.",
+        type: "error",
+      });
     }
   };
 
@@ -501,6 +572,32 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       </div>
 
       {/* Calorie Goal Section */}
+      {/* Template Buttons */}
+      <div className="flex gap-2 mb-6">
+        <button
+          className="bg-blue-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          onClick={() => {
+            fetchTemplates();
+            setShowTemplateModal(true);
+          }}
+        >
+          <FaList className="mr-2" />
+          <span>Load Template</span>
+        </button>
+        <button
+          className="bg-green-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          onClick={() => setShowSaveTemplateModal(true)}
+          disabled={
+            !dietPlan.breakfast.length &&
+            !dietPlan.lunch.length &&
+            !dietPlan.dinner.length
+          }
+        >
+          <FaSave className="mr-2" />
+          <span>Save Template</span>
+        </button>
+      </div>
+
       <div className="bg-gray-900 rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
@@ -854,6 +951,115 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
       >
         Send Diet Plan
       </button>
+
+      {/* Template Selection Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              Select Meal Template
+            </h2>
+
+            {isLoadingTemplates ? (
+              <div className="flex justify-center items-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : templates.length > 0 ? (
+              <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-2">
+                {templates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="cursor-pointer hover:bg-gray-800 p-4 rounded"
+                    onClick={() => applyTemplate(template)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <p className="text-xl font-bold">{template.name}</p>
+                      <p className="text-lg">
+                        {template.nutritionTotals.calories} kcal
+                      </p>
+                    </div>
+                    {template.description && (
+                      <p className="text-sm text-gray-400 mt-1">
+                        {template.description}
+                      </p>
+                    )}
+                    <div className="flex gap-2 mt-2 text-xs text-gray-400">
+                      <span>{template.breakfast.length} breakfast items</span>
+                      <span>•</span>
+                      <span>{template.lunch.length} lunch items</span>
+                      <span>•</span>
+                      <span>{template.dinner.length} dinner items</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-400">
+                No meal templates found. Create one by saving a meal plan.
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-6">
+              <button
+                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={() => setShowTemplateModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              Save as Template
+            </h2>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">Template Name</label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                placeholder="Enter template name"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-400 mb-2">
+                Description (Optional)
+              </label>
+              <textarea
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                className="bg-gray-800 text-white p-3 rounded-lg w-full h-24 resize-none"
+                placeholder="Enter description"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={() => setShowSaveTemplateModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={saveAsTemplate}
+                disabled={!templateName}
+              >
+                Save Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Food Selection Modal */}
       {showFoodSelector && (

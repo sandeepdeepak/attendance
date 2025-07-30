@@ -64,6 +64,7 @@ const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
 const MEMBERSHIPS_TABLE = "memberships";
 const DIET_PLANS_TABLE = "diet_plans";
+const MEAL_TEMPLATES_TABLE = "meal_templates";
 
 // Configure CORS with specific options
 app.use(
@@ -106,6 +107,8 @@ async function initializeDynamoDB() {
       listTablesResponse.TableNames.includes(MEMBERSHIPS_TABLE);
     const dietPlansTableExists =
       listTablesResponse.TableNames.includes(DIET_PLANS_TABLE);
+    const mealTemplatesTableExists =
+      listTablesResponse.TableNames.includes(MEAL_TEMPLATES_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -207,6 +210,28 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${DIET_PLANS_TABLE}`);
     } else {
       console.log(`Table ${DIET_PLANS_TABLE} already exists`);
+    }
+
+    // Create meal templates table if it doesn't exist
+    if (!mealTemplatesTableExists) {
+      const createMealTemplatesTableParams = {
+        TableName: MEAL_TEMPLATES_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createMealTemplatesTableParams)
+      );
+      console.log(`Created table: ${MEAL_TEMPLATES_TABLE}`);
+    } else {
+      console.log(`Table ${MEAL_TEMPLATES_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -2181,6 +2206,135 @@ app.get("/api/calculate-calories/:memberId", async (req, res) => {
   } catch (error) {
     console.error("Error calculating calories:", error);
     res.status(500).json({ error: "Failed to calculate calories" });
+  }
+});
+
+// Meal template endpoints
+// Create/Save meal template
+app.post("/api/meal-templates", async (req, res) => {
+  try {
+    const { name, description, breakfast, lunch, dinner, nutritionTotals } =
+      req.body;
+
+    if (!name || (!breakfast && !lunch && !dinner)) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "name and at least one meal (breakfast, lunch, or dinner)",
+      });
+    }
+
+    const templateId = `template_${Date.now()}`;
+
+    const templateItem = {
+      id: templateId,
+      name,
+      description: description || "",
+      breakfast: breakfast || [],
+      lunch: lunch || [],
+      dinner: dinner || [],
+      nutritionTotals: nutritionTotals || {
+        calories: 0,
+        carbs: 0,
+        fats: 0,
+        proteins: 0,
+        fibre: 0,
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: MEAL_TEMPLATES_TABLE,
+      Item: templateItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(201).json({
+      success: true,
+      message: "Meal template saved successfully",
+      template: templateItem,
+    });
+  } catch (error) {
+    console.error("Error saving meal template:", error);
+    res.status(500).json({ error: "Failed to save meal template" });
+  }
+});
+
+// Get all meal templates
+app.get("/api/meal-templates", async (req, res) => {
+  try {
+    const params = {
+      TableName: MEAL_TEMPLATES_TABLE,
+    };
+
+    const result = await docClient.send(new ScanCommand(params));
+
+    // Sort by createdAt in descending order (newest first)
+    const sortedTemplates = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      : [];
+
+    res.json({
+      success: true,
+      templates: sortedTemplates,
+    });
+  } catch (error) {
+    console.error("Error getting meal templates:", error);
+    res.status(500).json({ error: "Failed to get meal templates" });
+  }
+});
+
+// Get meal template by ID
+app.get("/api/meal-templates/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const params = {
+      TableName: MEAL_TEMPLATES_TABLE,
+      Key: {
+        id,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Meal template not found" });
+    }
+
+    res.json({
+      success: true,
+      template: result.Item,
+    });
+  } catch (error) {
+    console.error("Error getting meal template:", error);
+    res.status(500).json({ error: "Failed to get meal template" });
+  }
+});
+
+// Delete meal template
+app.delete("/api/meal-templates/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const params = {
+      TableName: MEAL_TEMPLATES_TABLE,
+      Key: {
+        id,
+      },
+    };
+
+    await docClient.send(new DeleteCommand(params));
+
+    res.json({
+      success: true,
+      message: "Meal template deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting meal template:", error);
+    res.status(500).json({ error: "Failed to delete meal template" });
   }
 });
 
