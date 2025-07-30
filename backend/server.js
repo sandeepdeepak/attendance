@@ -1839,7 +1839,7 @@ FITNESS ZONE - Building Better Bodies`;
     console.log("twilioAccountId", twilioAccountId, authToken);
 
     // Create the curl command with a simple message body
-    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=whatsapp:${formattedPhone}' --data-urlencode 'From=whatsapp:+14155238886' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
+    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=${formattedPhone}' --data-urlencode 'From=+12526594159' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
 
     // Execute the curl command
     exec(curlCommand, (error, stdout, stderr) => {
