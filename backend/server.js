@@ -628,6 +628,7 @@ app.get("/api/dashboard/stats", async (req, res) => {
 
     // 2. Get members currently inside (entered but not exited)
     const membersInside = new Set();
+    const membersInsideDetails = [];
 
     // Get all members
     const allMembersResult = await docClient.send(
@@ -668,12 +669,21 @@ app.get("/api/dashboard/stats", async (req, res) => {
         // If the latest record is an ENTRY, the member is inside
         if (sortedRecords[0].type === "ENTRY") {
           membersInside.add(member.id);
+          membersInsideDetails.push(member);
         }
       }
     }
 
     // 3. Get missed check-ins (members who didn't check in today)
     const missedCheckIns = allMembers.length - uniqueAttendees.size;
+    const absentMembersDetails = [];
+
+    // Identify members who didn't check in today
+    for (const member of allMembers) {
+      if (!uniqueAttendees.has(member.id)) {
+        absentMembersDetails.push(member);
+      }
+    }
 
     // 4. Get new members (joined in the last 7 days)
     const oneWeekAgo = new Date();
@@ -681,9 +691,12 @@ app.get("/api/dashboard/stats", async (req, res) => {
     const oneWeekAgoStr = oneWeekAgo.toISOString();
 
     let newJoineesCount = 0;
+    const newJoineesDetails = [];
+
     for (const member of allMembers) {
       if (member.createdAt && member.createdAt > oneWeekAgoStr) {
         newJoineesCount++;
+        newJoineesDetails.push(member);
       }
     }
 
@@ -692,10 +705,80 @@ app.get("/api/dashboard/stats", async (req, res) => {
       membersInside: membersInside.size,
       missedCheckIns,
       newJoinees: newJoineesCount,
+      membersInsideDetails: membersInsideDetails,
+      absentMembersDetails: absentMembersDetails,
+      newJoineesDetails: newJoineesDetails,
     });
   } catch (error) {
     console.error("Error getting dashboard stats:", error);
     res.status(500).json({ error: "Failed to get dashboard statistics" });
+  }
+});
+
+// Get members currently inside the gym
+app.get("/api/members-inside", async (req, res) => {
+  try {
+    const todayDate = getTodayDateString();
+    const membersInsideIds = new Set();
+    const membersInsideDetails = [];
+
+    // Get all members
+    const allMembersResult = await docClient.send(
+      new ScanCommand({
+        TableName: MEMBERS_TABLE,
+      })
+    );
+
+    const allMembers = allMembersResult.Items || [];
+    const memberMap = {};
+
+    // Create a map of members by ID for quick lookup
+    allMembers.forEach((member) => {
+      memberMap[member.id] = member;
+    });
+
+    // For each member, check their attendance records for today
+    for (const member of allMembers) {
+      const memberAttendanceParams = {
+        TableName: ATTENDANCE_TABLE,
+        FilterExpression: "memberId = :memberId AND begins_with(#ts, :today)",
+        ExpressionAttributeValues: {
+          ":memberId": member.id,
+          ":today": todayDate,
+        },
+        ExpressionAttributeNames: {
+          "#ts": "timestamp",
+        },
+      };
+
+      const memberAttendanceResult = await docClient.send(
+        new ScanCommand(memberAttendanceParams)
+      );
+
+      if (
+        memberAttendanceResult.Items &&
+        memberAttendanceResult.Items.length > 0
+      ) {
+        // Sort by timestamp to get the latest record
+        const sortedRecords = memberAttendanceResult.Items.sort(
+          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+        );
+
+        // If the latest record is an ENTRY, the member is inside
+        if (sortedRecords[0].type === "ENTRY") {
+          membersInsideIds.add(member.id);
+          membersInsideDetails.push(member);
+        }
+      }
+    }
+
+    res.json({
+      count: membersInsideDetails.length,
+      members: membersInsideDetails,
+    });
+  } catch (error) {
+    console.error("Error getting members inside:", error);
+    res.status(500).json({ error: "Failed to get members inside" });
   }
 });
 

@@ -4,7 +4,12 @@ import "./AllMembers.css";
 import { API_URL } from "../../config";
 import AddMember from "../AddMember/AddMember";
 
-const AllMembers = ({ onBackClick, onMemberClick }) => {
+const AllMembers = ({
+  onBackClick,
+  onMemberClick,
+  filteredMembers = null,
+  title = "All members",
+}) => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [memberToEdit, setMemberToEdit] = useState(null);
   const [members, setMembers] = useState([]);
@@ -43,8 +48,13 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
   };
 
   useEffect(() => {
-    fetchMembers();
-  }, []);
+    if (filteredMembers) {
+      setMembers(Array.isArray(filteredMembers) ? filteredMembers : []);
+      setLoading(false);
+    } else {
+      fetchMembers();
+    }
+  }, [filteredMembers]);
 
   const handleDeleteMember = async (e, memberId) => {
     e.stopPropagation(); // Prevent triggering the member click event
@@ -139,20 +149,18 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
 
   return (
     <div className="h-screen bg-[#0f172a] text-white flex flex-col px-4 py-8 overflow-hidden">
-      <div className="flex-shrink-0">
-        <div className="flex">
-          {/* Back button */}
-          <div className="mb-4">
-            <button className="text-white p-2" onClick={onBackClick}>
-              <FaArrowLeft size={24} />
-            </button>
-          </div>
+      <div className="flex">
+        {/* Back button */}
+        <div className="flex-shrink-0 mb-4">
+          <button className="text-white p-2" onClick={onBackClick}>
+            <FaArrowLeft size={24} />
+          </button>
+        </div>
 
-          {/* Header with title and count */}
-          <div className="flex justify-center mb-8">
-            <div className="text-3xl font-bold text-center mt-1">
-              All members {members.length > 0 ? `(${members.length})` : ""}
-            </div>
+        {/* Header with title and count */}
+        <div className="flex-shrink-0 w-full flex justify-start mb-8 mt-1">
+          <div className="text-3xl font-bold text-center">
+            {title} {members.length > 0 ? `(${members.length})` : ""}
           </div>
         </div>
       </div>
@@ -176,7 +184,7 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center cursor-pointer bg-[#1e3a8a] p-2 rounded-2xl transition-colors"
+                className="flex items-center cursor-pointer bg-[#1e3a8a] p-4 rounded-2xl transition-colors"
                 onClick={() => onMemberClick(member.id)}
               >
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">

@@ -29,6 +29,7 @@ const GymDashboard = ({
     missedCheckIns: 0,
     newJoinees: 0,
   });
+  const [membersInsideData, setMembersInsideData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSupportCard, setShowSupportCard] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -127,16 +128,34 @@ const GymDashboard = ({
       icon: <FaUsers size={30} />,
       label: "Members Inside",
       value: dashboardStats.membersInside,
+      onClick: () => {
+        onAllMembersClick(
+          dashboardStats.membersInsideDetails || [],
+          "Members Inside"
+        );
+      },
     },
     {
       icon: <FaTimesCircle size={30} />,
       label: "Absent Members",
       value: dashboardStats.missedCheckIns,
+      onClick: () => {
+        onAllMembersClick(
+          dashboardStats.absentMembersDetails || [],
+          "Absent Members"
+        );
+      },
     },
     {
       icon: <FaUserPlus size={30} />,
       label: "New Joinees",
       value: dashboardStats.newJoinees,
+      onClick: () => {
+        onAllMembersClick(
+          dashboardStats.newJoineesDetails || [],
+          "New Joinees"
+        );
+      },
     },
   ];
 
@@ -144,69 +163,40 @@ const GymDashboard = ({
     <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
       {/* Notification and Support Icons */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
-        {/* Notification Icon */}
+        {/* Support Icon */}
         <div className="relative">
           <div
-            id="notification-icon"
+            id="support-icon"
             className="text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
-            onClick={() => setShowNotifications(!showNotifications)}
-            title="Notifications"
+            onClick={() => setShowSupportCard(!showSupportCard)}
+            title="Support"
           >
-            <FaBell size={16} />
-            {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {notificationCount}
-              </span>
-            )}
+            <FaHeadset size={16} />
           </div>
 
-          {/* Notification Card */}
-          {showNotifications && (
+          {/* Support Card */}
+          {showSupportCard && (
             <div
-              ref={notificationCardRef}
-              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-75 z-10"
+              ref={supportCardRef}
+              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
             >
-              <h3 className="font-bold text-white mb-3 text-left ms-2">
-                Expiring Memberships
-              </h3>
-              {expiringMembers.length > 0 ? (
-                <div className="max-h-60 overflow-y-auto">
-                  {expiringMembers.map((item) => (
-                    <div
-                      key={item.member.id}
-                      className="border-b border-gray-700 py-2 last:border-0 cursor-pointer hover:bg-gray-700 rounded px-2"
-                      onClick={() => {
-                        if (onMemberClick) {
-                          onMemberClick(item.member.id);
-                          setShowNotifications(false);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center text-left">
-                        <div className="bg-gray-700 rounded-full p-2 mr-3">
-                          <FaUser size={16} className="text-white" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-white">
-                            {item.member.fullName}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Expires tomorrow ({item.membership.planType})
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <div className="flex items-center mb-3">
+                <div className="bg-gray-700 rounded-full p-2 mr-3">
+                  <FaUser size={20} className="text-white" />
                 </div>
-              ) : (
-                <p className="text-gray-400 text-sm">
-                  No memberships expiring soon
-                </p>
-              )}
+                <div>
+                  <h3 className="font-bold text-white text-left">Sandeep</h3>
+                  <div className="flex items-center text-gray-300 text-sm text-left">
+                    <span>8056759212</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Contact for technical support
+              </p>
             </div>
           )}
         </div>
-
         {/* Upload to Excel Icon */}
         <div className="relative">
           <div
@@ -304,37 +294,65 @@ const GymDashboard = ({
           </div>
         </div>
 
-        {/* Support Icon */}
+        {/* Notification Icon */}
         <div className="relative">
           <div
-            id="support-icon"
+            id="notification-icon"
             className="text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
-            onClick={() => setShowSupportCard(!showSupportCard)}
-            title="Support"
+            onClick={() => setShowNotifications(!showNotifications)}
+            title="Notifications"
           >
-            <FaHeadset size={16} />
+            <FaBell size={16} />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
           </div>
 
-          {/* Support Card */}
-          {showSupportCard && (
+          {/* Notification Card */}
+          {showNotifications && (
             <div
-              ref={supportCardRef}
-              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
+              ref={notificationCardRef}
+              className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-75 z-10"
             >
-              <div className="flex items-center mb-3">
-                <div className="bg-gray-700 rounded-full p-2 mr-3">
-                  <FaUser size={20} className="text-white" />
+              <h3 className="font-bold text-white mb-3 text-left ms-2">
+                Expiring Memberships
+              </h3>
+              {expiringMembers.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto">
+                  {expiringMembers.map((item) => (
+                    <div
+                      key={item.member.id}
+                      className="border-b border-gray-700 py-2 last:border-0 cursor-pointer hover:bg-gray-700 rounded px-2"
+                      onClick={() => {
+                        if (onMemberClick) {
+                          onMemberClick(item.member.id);
+                          setShowNotifications(false);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center text-left">
+                        <div className="bg-gray-700 rounded-full p-2 mr-3">
+                          <FaUser size={16} className="text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">
+                            {item.member.fullName}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Expires tomorrow ({item.membership.planType})
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <h3 className="font-bold text-white text-left">Sandeep</h3>
-                  <div className="flex items-center text-gray-300 text-sm text-left">
-                    <span>8056759212</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-400 text-sm">
-                Contact for technical support
-              </p>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  No memberships expiring soon
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -389,7 +407,7 @@ const GymDashboard = ({
         </button>
         <button
           className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
-          onClick={onAllMembersClick}
+          onClick={() => onAllMembersClick(null)}
         >
           <FaUsers /> All Members
         </button>

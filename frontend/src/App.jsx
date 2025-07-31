@@ -14,6 +14,8 @@ function App() {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [previousPage, setPreviousPage] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState(null);
+  const [membersData, setMembersData] = useState(null);
+  const [membersListTitle, setMembersListTitle] = useState("All members");
 
   // Reset the key when navigating to face recognition to force remount
   useEffect(() => {
@@ -30,7 +32,9 @@ function App() {
     setCurrentPage("addMember");
   };
 
-  const handleAllMembersClick = () => {
+  const handleAllMembersClick = (membersData = null, title = "All members") => {
+    setMembersData(membersData);
+    setMembersListTitle(title);
     setCurrentPage("allMembers");
   };
 
@@ -89,6 +93,8 @@ function App() {
           <AllMembers
             onBackClick={handleBackClick}
             onMemberClick={handleMemberClick}
+            filteredMembers={membersData}
+            title={membersListTitle}
           />
         );
       case "memberDetails":
