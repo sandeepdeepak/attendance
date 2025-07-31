@@ -41,7 +41,7 @@ const LazyModalWorkoutImage = ({ src, alt }) => {
         <img
           src={src}
           alt={alt}
-          className="w-full h-24 object-contain rounded"
+          className="w-full h-34 object-contain rounded"
           loading="lazy"
           onError={(e) => {
             e.target.onerror = null;
@@ -117,7 +117,7 @@ const LazyWorkoutItem = ({ workout, isSelected, onClick }) => {
           <img
             src={workout.gifUrl}
             alt={workout.name}
-            className="w-full h-24 object-contain rounded"
+            className="w-full h-34 object-contain rounded"
             loading="lazy"
             onLoad={handleImageLoad}
             onError={(e) => {
