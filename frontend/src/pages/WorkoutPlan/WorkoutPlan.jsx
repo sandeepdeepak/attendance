@@ -240,6 +240,72 @@ const WorkoutPlan = ({
     setShowTemplateModal(false);
   };
 
+  // Add useEffect to fetch templates when modal is opened (like diet plan page)
+  useEffect(() => {
+    if (showTemplateModal) {
+      fetchTemplates();
+    }
+  }, [showTemplateModal]);
+
+  // Template Selection Modal JSX similar to diet plan page
+  const TemplateSelectionModal = () => {
+    if (!showTemplateModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+          <h2 className="text-3xl font-bold mb-6 text-center">
+            Select Workout Template
+          </h2>
+
+          {isLoadingTemplates ? (
+            <div className="flex justify-center items-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : templates.length > 0 ? (
+            <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-2">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className="cursor-pointer hover:bg-gray-800 p-4 rounded"
+                  onClick={() => {
+                    applyTemplate(template);
+                    setShowTemplateModal(false);
+                  }}
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="text-xl font-bold">{template.name}</p>
+                  </div>
+                  {template.description && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      {template.description}
+                    </p>
+                  )}
+                  <div className="flex gap-2 mt-2 text-xs text-gray-400">
+                    <span>{template.exercises.length} exercises</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400">
+              No workout templates found. Create one by saving a workout plan.
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-6">
+            <button
+              className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+              onClick={() => setShowTemplateModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Function to save the current workout plan as a template
   const saveAsTemplate = async () => {
     if (!templateName) return;
@@ -259,6 +325,11 @@ const WorkoutPlan = ({
         setShowSaveTemplateModal(false);
         setTemplateName("");
         setTemplateDescription("");
+      } else {
+        setStatusMessage({
+          text: "Failed to save workout template. Please try again.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error saving workout template:", error);
@@ -528,8 +599,8 @@ const WorkoutPlan = ({
         <button
           className="bg-blue-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
           onClick={() => {
-            fetchTemplates();
             setShowTemplateModal(true);
+            fetchTemplates();
           }}
         >
           <span className="mr-2">Load Template</span>
@@ -552,6 +623,56 @@ const WorkoutPlan = ({
           Add Workouts
         </button>
       </div>
+
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              Save Template
+            </h2>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">Template Name</label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                placeholder="Enter template name"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-400 mb-2">
+                Description (Optional)
+              </label>
+              <textarea
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                className="bg-gray-800 text-white p-3 rounded-lg w-full h-24 resize-none"
+                placeholder="Enter description"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={() => setShowSaveTemplateModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={saveAsTemplate}
+                disabled={!templateName}
+              >
+                Save Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Workout Plan */}
       <div className="bg-gray-900 rounded-lg p-4 mb-6">
@@ -870,6 +991,8 @@ const WorkoutPlan = ({
           </div>
         </div>
       )}
+      {/* Template Selection Modal */}
+      <TemplateSelectionModal />
     </div>
   );
 };
