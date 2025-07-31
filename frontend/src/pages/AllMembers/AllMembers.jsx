@@ -159,7 +159,7 @@ const AllMembers = ({
 
         {/* Header with title and count */}
         <div className="flex-shrink-0 w-full flex justify-start mb-8 mt-1">
-          <div className="text-3xl font-bold text-center">
+          <div className="text-2xl font-bold text-center">
             {title} {members.length > 0 ? `(${members.length})` : ""}
           </div>
         </div>
