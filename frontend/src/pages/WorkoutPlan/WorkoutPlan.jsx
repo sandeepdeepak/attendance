@@ -46,7 +46,7 @@ const LazyModalWorkoutImage = ({ src, alt }) => {
           onError={(e) => {
             e.target.onerror = null;
             e.target.src =
-              "http://gym-meals-and-workout-planner.s3-website.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
+              "https://gym-meals-and-workout-planner.s3.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
           }}
         />
       ) : (
@@ -123,7 +123,7 @@ const LazyWorkoutItem = ({ workout, isSelected, onClick }) => {
             onError={(e) => {
               e.target.onerror = null;
               e.target.src =
-                "http://gym-meals-and-workout-planner.s3-website.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
+                "https://gym-meals-and-workout-planner.s3.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
             }}
           />
           {/* <p className="mt-2 text-center text-white">{workout.name}</p> */}
