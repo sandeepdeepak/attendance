@@ -6,7 +6,7 @@
 
 .toggle-wrapper {
   display: flex;
-  background-color: #7e22ce; /* Purple background color */
+  background-color: #1e3a8a; /* Purple background color */
   border-radius: 9999px; /* Fully rounded corners */
   padding: 4px;
   width: 100%;
@@ -29,7 +29,7 @@
 
 .toggle-button.active {
   background-color: white;
-  color: #7e22ce; /* Purple text color when active */
+  color: #1e3a8a; /* Purple text color when active */
 }
 
 /* Ensure the buttons don't have default browser styling */

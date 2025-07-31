@@ -400,19 +400,19 @@ const GymDashboard = ({
 
       <div className="flex flex-col bg items-center gap-4 mt-5">
         <button
-          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
+          className="flex items-center justify-center gap-2 bg-[#1e3a8a] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onAddMemberClick}
         >
           <FaPlus /> Add Member
         </button>
         <button
-          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
+          className="flex items-center justify-center gap-2 bg-[#1e3a8a] px-6 py-3 rounded-2xl text-white w-60"
           onClick={() => onAllMembersClick(null)}
         >
           <FaUsers /> All Members
         </button>
         <button
-          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
+          className="flex items-center justify-center gap-2 bg-[#1e3a8a] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onFaceRecognitionClick}
         >
           <FaRegUser /> Go to face scan

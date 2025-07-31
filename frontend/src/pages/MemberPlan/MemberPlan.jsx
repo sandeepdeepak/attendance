@@ -87,7 +87,7 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
+    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8 gap-6">
       {/* Header with back button and member name */}
       <button className="text-white p-2" onClick={onBackClick}>
         <FaArrowLeft size={18} />

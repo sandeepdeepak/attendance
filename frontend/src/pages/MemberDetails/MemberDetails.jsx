@@ -585,7 +585,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
                 Cancel
               </button>
               <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg"
                 onClick={handleExtendMembership}
                 disabled={isExtending}
               >
@@ -646,7 +646,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
             {calculateDaysRemaining()}
             {isExpired && (
               <button
-                className="ml-2 bg-blue-600 text-white text-xs px-2 py-1 rounded"
+                className="ml-2 bg-[#1e3a8a] text-white text-xs px-2 py-1 rounded"
                 onClick={() => setShowExtendModal(true)}
               >
                 Extend

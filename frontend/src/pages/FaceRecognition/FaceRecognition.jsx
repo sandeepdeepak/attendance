@@ -239,7 +239,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                 {/* {searchResult.id && (
                   <button
                     onClick={() => onMemberClick(searchResult.id)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg"
                   >
                     Extend Membership
                   </button>

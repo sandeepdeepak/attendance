@@ -338,7 +338,7 @@ const AllMembers = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="px-4 py-2 bg-[#1e3a8a] rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
                   disabled={updating}
                 >
                   {updating ? (

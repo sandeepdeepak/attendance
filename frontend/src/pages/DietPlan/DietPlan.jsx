@@ -562,8 +562,8 @@ const DietPlan = ({
     <div
       className={`${
         hideHeader
-          ? ""
-          : "min-h-screen bg-black text-white flex flex-col px-4 py-8"
+          ? "gap-6"
+          : "min-h-screen bg-black text-white flex flex-col px-4 py-8 gap-6"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
@@ -592,17 +592,17 @@ const DietPlan = ({
       {/* Template Buttons */}
       <div className="flex gap-2 mb-6">
         <button
-          className="bg-blue-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
           onClick={() => {
             fetchTemplates();
             setShowTemplateModal(true);
           }}
         >
-          <FaList className="mr-2" />
-          <span>Load Template</span>
+          <FaList className="mr-2 text-[#e6a84b]" />
+          <span className="text-[#e6a84b]">Load Template</span>
         </button>
         <button
-          className="bg-green-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
           onClick={() => setShowSaveTemplateModal(true)}
           disabled={
             !dietPlan.breakfast.length &&
@@ -610,20 +610,31 @@ const DietPlan = ({
             !dietPlan.dinner.length
           }
         >
-          <FaSave className="mr-2" />
-          <span>Save Template</span>
+          <FaSave className="mr-2 text-[#e8e8e8]" />
+          <span className="text-[#e8e8e8]">Save Template</span>
         </button>
       </div>
 
       <div className="bg-gray-900 rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
-            <FaFire className="text-orange-500 mr-2" /> Daily Calories
+            <div>
+              <div className="flex items-start text-gray-400">
+                <FaFire className="text-orange-500 mr-2 mt-1" />{" "}
+                <div>
+                  <div>Daily Calories</div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xl text-white font-bold">
+                      {calculatedCalories?.dailyCalories} kcal
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex items-center">
-            <label className="mr-2 text-gray-400">Goal:</label>
             <select
-              className="bg-gray-800 text-white p-2 rounded"
+              className="bg-black text-white p-2 rounded"
               value={calorieGoal}
               onChange={(e) => setCalorieGoal(e.target.value)}
             >
@@ -640,17 +651,11 @@ const DietPlan = ({
           </div>
         ) : calculatedCalories ? (
           <div>
-            <div className="flex justify-between items-center">
-              <span>Recommended Daily Calories:</span>
-              <span className="text-xl font-bold">
-                {calculatedCalories.dailyCalories} kcal
-              </span>
-            </div>
-            <div className="mt-2 px-3 bg-gray-800 rounded-lg overflow-hidden">
+            <div className="px-3 bg-black rounded-lg overflow-hidden">
               <div className="relative pt-1">
                 <div className="flex mb-2 items-center justify-between">
                   <div>
-                    <span className="text-xs font-semibold inline-block text-blue-600">
+                    <span className="text-xs font-semibold inline-block text-white-200">
                       {Math.min(
                         100,
                         Math.round(
@@ -663,13 +668,13 @@ const DietPlan = ({
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-semibold inline-block text-blue-600">
+                    <span className="text-xs font-semibold inline-block text-white">
                       {nutritionTotals.calories} /{" "}
                       {calculatedCalories.dailyCalories} kcal
                     </span>
                   </div>
                 </div>
-                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-700">
+                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-white">
                   <div
                     style={{
                       width: `${Math.min(
@@ -681,7 +686,7 @@ const DietPlan = ({
                         )
                       )}%`,
                     }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-white"
                   ></div>
                 </div>
               </div>
@@ -701,13 +706,13 @@ const DietPlan = ({
         {/* Breakfast section */}
         <div>
           <h3 className="text-2xl mb-2">BREAKFAST</h3>
-          <div className="bg-gray-900 rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.breakfast.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-gray-800 p-2 rounded"
+                    className="flex flex-col bg-black p-4 rounded-lg"
                   >
                     <div className="flex justify-between items-center">
                       <div>
@@ -756,7 +761,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-blue-600 text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#1e3a8a] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("breakfast")}
                 >
                   Add More
@@ -776,13 +781,13 @@ const DietPlan = ({
         {/* Lunch section */}
         <div>
           <h3 className="text-2xl mb-2">LUNCH</h3>
-          <div className="bg-gray-900 rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.lunch.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-gray-800 p-2 rounded"
+                    className="flex flex-col bg-black p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
                       <div>
@@ -831,7 +836,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-blue-600 text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#1e3a8a] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("lunch")}
                 >
                   Add More
@@ -851,13 +856,13 @@ const DietPlan = ({
         {/* Dinner section */}
         <div>
           <h3 className="text-2xl mb-2">DINNER</h3>
-          <div className="bg-gray-900 rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.dinner.length > 0 ? (
               <div className="flex flex-col gap-2">
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-gray-800 p-2 rounded"
+                    className="flex flex-col bg-black p-2 rounded"
                   >
                     <div className="flex justify-between items-center">
                       <div>
@@ -906,7 +911,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-blue-600 text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#1e3a8a] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("dinner")}
                 >
                   Add More
@@ -996,7 +1001,7 @@ const DietPlan = ({
                       </p>
                     </div>
                     {template.description && (
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-gray-400 mt-1 text-left">
                         {template.description}
                       </p>
                     )}
@@ -1067,7 +1072,7 @@ const DietPlan = ({
                 Cancel
               </button>
               <button
-                className="bg-blue-600 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#1e3a8a] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={saveAsTemplate}
                 disabled={!templateName}
               >

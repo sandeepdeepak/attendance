@@ -277,7 +277,7 @@ const WorkoutPlan = ({
                     <p className="text-xl font-bold">{template.name}</p>
                   </div>
                   {template.description && (
-                    <p className="text-sm text-gray-400 mt-1">
+                    <p className="text-sm text-gray-400 mt-1 text-left">
                       {template.description}
                     </p>
                   )}
@@ -569,7 +569,7 @@ const WorkoutPlan = ({
       className={`${
         hideHeader
           ? ""
-          : "min-h-screen bg-black text-white flex flex-col px-4 py-8"
+          : "min-h-screen bg-black text-white flex flex-col px-4 py-8 gap-6"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
@@ -597,20 +597,20 @@ const WorkoutPlan = ({
       {/* Template Buttons */}
       <div className="flex gap-2 mb-6">
         <button
-          className="bg-blue-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
           onClick={() => {
             setShowTemplateModal(true);
             fetchTemplates();
           }}
         >
-          <span className="mr-2">Load Template</span>
+          <span className="text-[#e6a84b]">Load Template</span>
         </button>
         <button
-          className="bg-green-600 text-white py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+          className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
           onClick={() => setShowSaveTemplateModal(true)}
           disabled={!workoutPlan.exercises.length}
         >
-          <span className="mr-2">Save Template</span>
+          <span className="text-[#e8e8e8]">Save Template</span>
         </button>
       </div>
 
@@ -663,7 +663,7 @@ const WorkoutPlan = ({
                 Cancel
               </button>
               <button
-                className="bg-blue-600 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#1e3a8a] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={saveAsTemplate}
                 disabled={!templateName}
               >
@@ -820,7 +820,7 @@ const WorkoutPlan = ({
                     }),
                     multiValue: (base) => ({
                       ...base,
-                      backgroundColor: "#2563eb", // match bg-blue-600
+                      backgroundColor: "#2563eb", // match bg-[#1e3a8a]
                       color: "white",
                     }),
                     multiValueLabel: (base) => ({
@@ -967,7 +967,7 @@ const WorkoutPlan = ({
                       src={workout.gifUrl}
                       alt={workout.name}
                     />
-                    <p className="mt-2 text-center text-white">
+                    <p className="mt-10 text-center text-white">
                       {workout.name}
                     </p>
                   </div>
