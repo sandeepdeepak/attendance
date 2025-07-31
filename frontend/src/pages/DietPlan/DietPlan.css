@@ -35,6 +35,40 @@ button.bg-white:hover {
   background-color: #e6e6e6;
 }
 
+/* Quantity control styles */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  background-color: #333;
+  border-radius: 4px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.quantity-control button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+.quantity-control button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.quantity-control span {
+  padding: 0 8px;
+  min-width: 24px;
+  text-align: center;
+}
+
 /* Custom scrollbar for the food list */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;

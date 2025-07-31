@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaSearch, FaFire, FaSave, FaList } from "react-icons/fa";
+
+// Helper function to capitalize first letter of a string
+const capitalizeFirstLetter = (string) => {
+  if (!string) return "";
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+import {
+  FaArrowLeft,
+  FaSearch,
+  FaFire,
+  FaSave,
+  FaList,
+  FaTrash,
+} from "react-icons/fa";
 import axios from "axios";
 import "./DietPlan.css";
 import { API_URL } from "../../config";
@@ -129,7 +142,7 @@ const DietPlan = ({
         // Transform the API response to match our food item structure
         const foods = response.data.foods.map((food, index) => ({
           id: `api-${index}-${Date.now()}`,
-          name: food.food_name,
+          name: capitalizeFirstLetter(food.food_name),
           calories: Math.round(food.nf_calories),
           carbs: Math.round(food.nf_total_carbohydrate),
           fats: Math.round(food.nf_total_fat),
@@ -686,7 +699,7 @@ const DietPlan = ({
                         )
                       )}%`,
                     }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-white"
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#1e3a8a]"
                   ></div>
                 </div>
               </div>
@@ -708,55 +721,54 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">BREAKFAST</h3>
           <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.breakfast.length > 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
                     className="flex flex-col bg-black p-4 rounded-lg"
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-white text-left">{food.name}</p>
-                        <p className="text-gray-400 text-sm text-left">
-                          {food.totalCalories} kcal
-                        </p>
-                      </div>
-                      <button
-                        className="text-red-500 text-sm"
+                    <div className="relative">
+                      <div
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#1e3a8a] rounded-full p-[10px]"
                         onClick={() => removeFood("breakfast", food.id)}
                       >
-                        Remove
-                      </button>
-                    </div>
-                    <div className="flex items-center mt-2">
-                      <span className="text-gray-400 mr-2">Quantity:</span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-l flex items-center justify-center mr-1"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "breakfast",
-                            food.id,
-                            food.quantity - 1
-                          )
-                        }
-                      >
-                        -
-                      </button>
-                      <span className="bg-gray-600 text-white px-3 py-1 mr-1">
-                        {food.quantity}
-                      </span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-r flex items-center justify-center"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "breakfast",
-                            food.id,
-                            food.quantity + 1
-                          )
-                        }
-                      >
-                        +
-                      </button>
+                        <FaTrash size={12} />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="pt-1">
+                          <p className="text-white text-left">
+                            {capitalizeFirstLetter(food.name)}
+                          </p>
+                          <p className="text-gray-400 text-sm text-left">
+                            {food.totalCalories} kcal
+                          </p>
+                        </div>
+                        <div className="quantity-control h-7">
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "breakfast",
+                                food.id,
+                                food.quantity - 1
+                              )
+                            }
+                          >
+                            -
+                          </button>
+                          <span>{food.quantity}</span>
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "breakfast",
+                                food.id,
+                                food.quantity + 1
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -783,55 +795,54 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">LUNCH</h3>
           <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.lunch.length > 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-black p-2 rounded"
+                    className="flex flex-col bg-black p-4 rounded-lg"
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-white">{food.name}</p>
-                        <p className="text-gray-400 text-sm text-left">
-                          {food.totalCalories} kcal
-                        </p>
-                      </div>
-                      <button
-                        className="text-red-500 text-sm"
+                    <div className="relative">
+                      <div
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#1e3a8a] rounded-full p-[10px]"
                         onClick={() => removeFood("lunch", food.id)}
                       >
-                        Remove
-                      </button>
-                    </div>
-                    <div className="flex items-center mt-2">
-                      <span className="text-gray-400 mr-2">Quantity:</span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-l flex items-center justify-center mr-1"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "lunch",
-                            food.id,
-                            food.quantity - 1
-                          )
-                        }
-                      >
-                        -
-                      </button>
-                      <span className="bg-gray-600 text-white px-3 py-1 mr-1">
-                        {food.quantity}
-                      </span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-r flex items-center justify-center"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "lunch",
-                            food.id,
-                            food.quantity + 1
-                          )
-                        }
-                      >
-                        +
-                      </button>
+                        <FaTrash size={12} />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="pt-1">
+                          <p className="text-white text-left">
+                            {capitalizeFirstLetter(food.name)}
+                          </p>
+                          <p className="text-gray-400 text-sm text-left">
+                            {food.totalCalories} kcal
+                          </p>
+                        </div>
+                        <div className="quantity-control h-7">
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "lunch",
+                                food.id,
+                                food.quantity - 1
+                              )
+                            }
+                          >
+                            -
+                          </button>
+                          <span>{food.quantity}</span>
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "lunch",
+                                food.id,
+                                food.quantity + 1
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -858,55 +869,54 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">DINNER</h3>
           <div className="bg-[#0f172a] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.dinner.length > 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-black p-2 rounded"
+                    className="flex flex-col bg-black p-4 rounded"
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-white">{food.name}</p>
-                        <p className="text-gray-400 text-sm text-left">
-                          {food.totalCalories} kcal
-                        </p>
-                      </div>
-                      <button
-                        className="text-red-500 text-sm"
+                    <div className="relative">
+                      <div
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#1e3a8a] rounded-full p-[10px]"
                         onClick={() => removeFood("dinner", food.id)}
                       >
-                        Remove
-                      </button>
-                    </div>
-                    <div className="flex items-center mt-2">
-                      <span className="text-gray-400 mr-2">Quantity:</span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-l flex items-center justify-center mr-1"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "dinner",
-                            food.id,
-                            food.quantity - 1
-                          )
-                        }
-                      >
-                        -
-                      </button>
-                      <span className="bg-gray-600 text-white px-3 py-1 mr-1">
-                        {food.quantity}
-                      </span>
-                      <button
-                        className="bg-gray-700 text-white w-8 h-8 rounded-r flex items-center justify-center"
-                        onClick={() =>
-                          updateFoodQuantity(
-                            "dinner",
-                            food.id,
-                            food.quantity + 1
-                          )
-                        }
-                      >
-                        +
-                      </button>
+                        <FaTrash size={12} />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="pt-1">
+                          <p className="text-white text-left">
+                            {capitalizeFirstLetter(food.name)}
+                          </p>
+                          <p className="text-gray-400 text-sm text-left">
+                            {food.totalCalories} kcal
+                          </p>
+                        </div>
+                        <div className="quantity-control h-7">
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "dinner",
+                                food.id,
+                                food.quantity - 1
+                              )
+                            }
+                          >
+                            -
+                          </button>
+                          <span>{food.quantity}</span>
+                          <button
+                            onClick={() =>
+                              updateFoodQuantity(
+                                "dinner",
+                                food.id,
+                                food.quantity + 1
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1125,7 +1135,8 @@ const DietPlan = ({
                     >
                       <div className="flex justify-between items-center">
                         <p className="text-xl">
-                          {food.name} - {food.serving_qty} {food.serving_unit}
+                          {capitalizeFirstLetter(food.name)} -{" "}
+                          {food.serving_qty} {food.serving_unit}
                         </p>
                         <p className="text-xl">{food.calories} kcal</p>
                       </div>
