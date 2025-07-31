@@ -141,7 +141,7 @@ const GymDashboard = ({
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8 gap-2 relative">
+    <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
       {/* Notification and Support Icons */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
         {/* Notification Icon */}
@@ -353,12 +353,12 @@ const GymDashboard = ({
         </div>
       )}
 
-      <div>
-        <h1 className="text-4xl font-bold mb-2 mt-4"> Attendance</h1>
-        <p className="text-gray-400 mb-6 text-lg">using face scan</p>
-      </div>
+      {/* <div>
+        <h1 className="text-4xl font-bold mb-2 mt-4"> SD GYM</h1>
+        <p className="text-gray-400 mb-6 text-lg">SD GYM</p>
+      </div> */}
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6 mt-20">
         {isLoading ? (
           <div className="col-span-2 text-center py-8">
             <p className="text-xl">Loading statistics...</p>
@@ -367,7 +367,7 @@ const GymDashboard = ({
           stats.map((stat, index) => (
             <div
               key={index}
-              className={`bg-[#1A1A1A] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
+              className={`bg-[#142275] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
                 stat.onClick ? "cursor-pointer hover:bg-[#252525]" : ""
               }`}
               onClick={stat.onClick}
@@ -382,19 +382,19 @@ const GymDashboard = ({
 
       <div className="flex flex-col bg items-center gap-4 mt-5">
         <button
-          className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
+          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onAddMemberClick}
         >
           <FaPlus /> Add Member
         </button>
         <button
-          className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
+          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onAllMembersClick}
         >
           <FaUsers /> All Members
         </button>
         <button
-          className="flex items-center justify-center gap-2 bg-[#f9f9f9] px-6 py-3 rounded-2xl text-black w-60"
+          className="flex items-center justify-center gap-2 bg-[#2B41B4] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onFaceRecognitionClick}
         >
           <FaRegUser /> Go to face scan

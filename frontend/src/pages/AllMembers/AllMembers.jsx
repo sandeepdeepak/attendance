@@ -138,19 +138,27 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
-      {/* Header with back button and title */}
-      <div className="w-full flex items-center mb-8">
-        <button className="text-white p-2" onClick={onBackClick}>
-          <FaArrowLeft size={24} />
-        </button>
-        <div className="text-3xl font-bold ml-4">
-          All members {members.length > 0 ? `(${members.length})` : ""}{" "}
+    <div className="h-screen bg-[#0f172a] text-white flex flex-col px-4 py-8 overflow-hidden">
+      <div className="flex-shrink-0">
+        <div className="flex">
+          {/* Back button */}
+          <div className="mb-4">
+            <button className="text-white p-2" onClick={onBackClick}>
+              <FaArrowLeft size={24} />
+            </button>
+          </div>
+
+          {/* Header with title and count */}
+          <div className="flex justify-center mb-8">
+            <div className="text-3xl font-bold text-center mt-1">
+              All members {members.length > 0 ? `(${members.length})` : ""}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Members list */}
-      <div className="flex-1 max-h-[44rem] overflow-auto">
+      <div className="flex-1 h-[calc(100vh-12rem)] overflow-auto">
         {loading ? (
           <div className="flex justify-center items-center h-full">
             <p className="text-xl">Loading members...</p>
@@ -164,56 +172,77 @@ const AllMembers = ({ onBackClick, onMemberClick }) => {
             <p className="text-xl">No members found</p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-4">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center cursor-pointer hover:bg-gray-800 p-3 rounded-lg transition-colors"
+                className="flex items-center cursor-pointer bg-[#1e3a8a] p-2 rounded-2xl transition-colors"
                 onClick={() => onMemberClick(member.id)}
               >
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
                   <FaUser size={32} className="text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-medium text-left">
+                  <h2 className="text-xl font-medium text-left text-white">
                     {member.fullName}
                   </h2>
-                  <p className="text-gray-400 text-left">
+                  <p className="text-gray-300 text-left">
                     {member.phoneNumber}
                   </p>
                 </div>
-                <div className="flex">
-                  {/* Edit button */}
-                  <button
-                    className="p-3 text-blue-500 hover:text-blue-300 transition-colors"
-                    onClick={(e) => handleEditClick(e, member)}
-                    disabled={deletingMemberId !== null || updating}
-                    title="Edit member"
-                    style={{
-                      opacity: deletingMemberId !== null || updating ? 0.5 : 1,
-                    }}
-                  >
-                    <FaEdit size={20} />
-                  </button>
-
-                  {/* Delete button or loading spinner */}
+                <div className="flex items-center">
                   {deletingMemberId === member.id ? (
                     <div className="p-3 flex items-center justify-center">
                       <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin"></div>
                     </div>
                   ) : (
-                    <button
-                      className="p-3 text-red-500 hover:text-red-300 transition-colors"
-                      onClick={(e) => handleDeleteMember(e, member.id)}
-                      disabled={deletingMemberId !== null || updating}
-                      title="Delete member"
-                      style={{
-                        opacity:
-                          deletingMemberId !== null || updating ? 0.5 : 1,
-                      }}
-                    >
-                      <FaTrash size={20} />
-                    </button>
+                    <div className="relative group">
+                      <button
+                        className="p-3 text-white hover:text-gray-300 transition-colors rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Toggle dropdown menu
+                          const dropdown = document.getElementById(
+                            `dropdown-${member.id}`
+                          );
+                          if (dropdown) {
+                            dropdown.classList.toggle("hidden");
+                          }
+                        }}
+                        disabled={deletingMemberId !== null || updating}
+                        style={{
+                          opacity:
+                            deletingMemberId !== null || updating ? 0.5 : 1,
+                        }}
+                      >
+                        <div className="flex flex-col items-center justify-center h-6">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full mb-1"></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full mb-1"></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                        </div>
+                      </button>
+
+                      {/* Dropdown menu */}
+                      <div
+                        id={`dropdown-${member.id}`}
+                        className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10 hidden"
+                      >
+                        <div className="py-1">
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center"
+                            onClick={(e) => handleEditClick(e, member)}
+                          >
+                            <FaEdit className="mr-2" /> Edit Member
+                          </button>
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center"
+                            onClick={(e) => handleDeleteMember(e, member.id)}
+                          >
+                            <FaTrash className="mr-2" /> Delete Member
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
