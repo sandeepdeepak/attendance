@@ -4,7 +4,12 @@ import axios from "axios";
 import "./DietPlan.css";
 import { API_URL } from "../../config";
 
-const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
+const DietPlan = ({
+  memberId,
+  selectedDate,
+  onBackClick,
+  hideHeader = false,
+}) => {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -554,22 +559,34 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
-      {/* Header with back button and member name */}
-      <button className="text-white p-2" onClick={onBackClick}>
-        <FaArrowLeft size={18} />
-      </button>
-      <div className="flex items-start space-x-2">
-        <div className="items-center w-full">
-          <div className="text-xl font-bold flex-grow">{member.fullName}</div>
+    <div
+      className={`${
+        hideHeader
+          ? ""
+          : "min-h-screen bg-black text-white flex flex-col px-4 py-8"
+      }`}
+    >
+      {/* Header with back button and member name - only show if hideHeader is false */}
+      {!hideHeader && (
+        <>
+          <button className="text-white p-2" onClick={onBackClick}>
+            <FaArrowLeft size={18} />
+          </button>
+          <div className="flex items-start space-x-2">
+            <div className="items-center w-full">
+              <div className="text-xl font-bold flex-grow">
+                {member.fullName}
+              </div>
 
-          <div className="text-center mb-4">
-            <h2 className="text-xl text-gray-400">
-              {formatDate(selectedDate)}
-            </h2>
+              <div className="text-center mb-4">
+                <h2 className="text-xl text-gray-400">
+                  {formatDate(selectedDate)}
+                </h2>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Calorie Goal Section */}
       {/* Template Buttons */}
@@ -1016,7 +1033,7 @@ const DietPlan = ({ memberId, selectedDate, onBackClick }) => {
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
             <h2 className="text-3xl font-bold mb-6 text-center">
-              Save as Template
+              Save Template
             </h2>
 
             <div className="mb-4">

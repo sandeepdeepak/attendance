@@ -6,7 +6,7 @@ import AddMember from "./pages/AddMember/AddMember";
 import AllMembers from "./pages/AllMembers/AllMembers";
 import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
-import DietPlan from "./pages/DietPlan/DietPlan";
+import MemberPlan from "./pages/MemberPlan/MemberPlan";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -39,7 +39,7 @@ function App() {
       setCurrentPage("allMembers");
     } else if (currentPage === "todayAttendance") {
       setCurrentPage(previousPage);
-    } else if (currentPage === "dietPlan") {
+    } else if (currentPage === "memberPlan") {
       setCurrentPage("memberDetails");
     } else {
       setCurrentPage("dashboard");
@@ -56,10 +56,10 @@ function App() {
     setCurrentPage("todayAttendance");
   };
 
-  const handleDietPlanClick = (memberId, date) => {
+  const handleMemberPlanClick = (memberId, date) => {
     setSelectedMemberId(memberId);
     setSelectedDate(date);
-    setCurrentPage("dietPlan");
+    setCurrentPage("memberPlan");
   };
 
   const renderCurrentPage = () => {
@@ -96,15 +96,15 @@ function App() {
           <MemberDetails
             memberId={selectedMemberId}
             onBackClick={handleBackClick}
-            onDietPlanClick={handleDietPlanClick}
+            onMemberPlanClick={handleMemberPlanClick}
           />
         );
       case "todayAttendance":
         return <TodayAttendance onBackClick={handleBackClick} />;
 
-      case "dietPlan":
+      case "memberPlan":
         return (
-          <DietPlan
+          <MemberPlan
             memberId={selectedMemberId}
             selectedDate={selectedDate}
             onBackClick={handleBackClick}

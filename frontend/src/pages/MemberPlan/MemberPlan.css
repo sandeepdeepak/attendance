@@ -1,0 +1,38 @@
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.toggle-wrapper {
+  display: flex;
+  background-color: #7e22ce; /* Purple background color */
+  border-radius: 9999px; /* Fully rounded corners */
+  padding: 4px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.toggle-button {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 9999px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  color: white;
+  background-color: transparent;
+}
+
+.toggle-button.active {
+  background-color: white;
+  color: #7e22ce; /* Purple text color when active */
+}
+
+/* Ensure the buttons don't have default browser styling */
+.toggle-button:focus {
+  outline: none;
+}

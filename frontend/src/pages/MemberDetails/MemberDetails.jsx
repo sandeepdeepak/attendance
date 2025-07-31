@@ -4,7 +4,7 @@ import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
 
-const MemberDetails = ({ memberId, onBackClick, onDietPlanClick }) => {
+const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
   const [member, setMember] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -280,9 +280,9 @@ const MemberDetails = ({ memberId, onBackClick, onDietPlanClick }) => {
       "0"
     )}-${String(day).padStart(2, "0")}`;
 
-    // Navigate to diet plan page
-    if (onDietPlanClick) {
-      onDietPlanClick(memberId, formattedDate);
+    // Navigate to member plan page
+    if (onMemberPlanClick) {
+      onMemberPlanClick(memberId, formattedDate);
     }
   };
 

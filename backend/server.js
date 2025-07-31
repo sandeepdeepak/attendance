@@ -59,12 +59,13 @@ const dynamoClient = new DynamoDBClient({ region });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const upload = multer({ storage: multer.memoryStorage() });
 
-// DynamoDB table names
 const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
 const MEMBERSHIPS_TABLE = "memberships";
 const DIET_PLANS_TABLE = "diet_plans";
 const MEAL_TEMPLATES_TABLE = "meal_templates";
+const WORKOUT_PLANS_TABLE = "workout_plans";
+const WORKOUT_TEMPLATES_TABLE = "workout_templates";
 
 // Configure CORS with specific options
 app.use(
@@ -109,6 +110,11 @@ async function initializeDynamoDB() {
       listTablesResponse.TableNames.includes(DIET_PLANS_TABLE);
     const mealTemplatesTableExists =
       listTablesResponse.TableNames.includes(MEAL_TEMPLATES_TABLE);
+    const workoutPlansTableExists =
+      listTablesResponse.TableNames.includes(WORKOUT_PLANS_TABLE);
+    const workoutTemplatesTableExists = listTablesResponse.TableNames.includes(
+      WORKOUT_TEMPLATES_TABLE
+    );
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -232,6 +238,54 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${MEAL_TEMPLATES_TABLE}`);
     } else {
       console.log(`Table ${MEAL_TEMPLATES_TABLE} already exists`);
+    }
+
+    // Create workout plans table if it doesn't exist
+    if (!workoutPlansTableExists) {
+      const createWorkoutPlansTableParams = {
+        TableName: WORKOUT_PLANS_TABLE,
+        KeySchema: [
+          { AttributeName: "memberId", KeyType: "HASH" }, // Partition key
+          { AttributeName: "date", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "memberId", AttributeType: "S" },
+          { AttributeName: "date", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createWorkoutPlansTableParams)
+      );
+      console.log(`Created table: ${WORKOUT_PLANS_TABLE}`);
+    } else {
+      console.log(`Table ${WORKOUT_PLANS_TABLE} already exists`);
+    }
+
+    // Create workout templates table if it doesn't exist
+    if (!workoutTemplatesTableExists) {
+      const createWorkoutTemplatesTableParams = {
+        TableName: WORKOUT_TEMPLATES_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createWorkoutTemplatesTableParams)
+      );
+      console.log(`Created table: ${WORKOUT_TEMPLATES_TABLE}`);
+    } else {
+      console.log(`Table ${WORKOUT_TEMPLATES_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -2206,6 +2260,325 @@ app.get("/api/calculate-calories/:memberId", async (req, res) => {
   } catch (error) {
     console.error("Error calculating calories:", error);
     res.status(500).json({ error: "Failed to calculate calories" });
+  }
+});
+
+// Workout plan endpoints
+// Get workout plan for a specific member and date
+app.get("/api/workout-plans/:memberId/:date", async (req, res) => {
+  try {
+    const { memberId, date } = req.params;
+
+    const params = {
+      TableName: "workout_plans",
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (result.Item) {
+      res.json({
+        success: true,
+        workoutPlan: result.Item,
+      });
+    } else {
+      res.json({
+        success: true,
+        workoutPlan: {
+          memberId,
+          date,
+          exercises: [],
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error getting workout plan:", error);
+    res.status(500).json({ error: "Failed to get workout plan" });
+  }
+});
+
+// Save or update workout plan
+app.post("/api/workout-plans", async (req, res) => {
+  try {
+    const { memberId, date, exercises } = req.body;
+
+    if (!memberId || !date) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date",
+      });
+    }
+
+    const workoutPlanItem = {
+      memberId,
+      date,
+      exercises: exercises || [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: "workout_plans",
+      Item: workoutPlanItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(200).json({
+      success: true,
+      message: "Workout plan saved successfully",
+      workoutPlan: workoutPlanItem,
+    });
+  } catch (error) {
+    console.error("Error saving workout plan:", error);
+    res.status(500).json({ error: "Failed to save workout plan" });
+  }
+});
+
+// Send workout plan to WhatsApp
+app.post("/api/send-workout-plan-whatsapp", async (req, res) => {
+  try {
+    const { memberId, date, phoneNumber } = req.body;
+
+    if (!memberId || !date || !phoneNumber) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date, phoneNumber",
+      });
+    }
+
+    // Get workout plan from database
+    const params = {
+      TableName: "workout_plans",
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    const workoutPlan = result.Item;
+
+    // Format the date for the message template
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Format phone number (ensure it has country code)
+    const formattedPhone = phoneNumber.startsWith("+")
+      ? phoneNumber
+      : `+91${phoneNumber}`; // Assuming Indian numbers
+
+    // Format exercise list
+    const formatExerciseList = (exercises) => {
+      if (!exercises || exercises.length === 0) return "No exercises added";
+
+      return exercises
+        .map(
+          (exercise) =>
+            `• ${exercise.name}: ${exercise.sets} sets x ${exercise.reps} reps${
+              exercise.weight > 0 ? ` @ ${exercise.weight}kg` : ""
+            }${exercise.notes ? `\n  Note: ${exercise.notes}` : ""}`
+        )
+        .join("\n");
+    };
+
+    const exerciseText = formatExerciseList(workoutPlan.exercises);
+
+    // Get gym contact number from environment variable or use a default
+    const gymContactNumber =
+      process.env.GYM_CONTACT_NUMBER || "+91 98765 43210";
+
+    // Get member details
+    const memberScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const memberResult = await docClient.send(
+      new ScanCommand(memberScanParams)
+    );
+    const memberName =
+      memberResult.Items && memberResult.Items.length > 0
+        ? memberResult.Items[0].fullName
+        : "Member";
+
+    // Use child_process to execute the curl command
+    const { exec } = require("child_process");
+
+    // Get auth token from environment variable or use a default for development
+    const authToken = process.env.TWILIO_AUTH_TOKEN || "your_auth_token_here";
+    const twilioAccountId =
+      process.env.TWILIO_ACCOUNT_SID || "your_account_sid_here";
+
+    // Create the message body with full workout plan details
+    const messageBody = `FITNESS ZONE - YOUR WORKOUT PLAN
+    
+📅 Date: ${formattedDate}
+
+Dear ${memberName},
+
+Here is your personalized workout plan:
+
+${exerciseText}
+
+Remember to warm up properly before starting your workout and cool down afterward.
+
+For any questions, contact your trainer at ${gymContactNumber}.
+
+FITNESS ZONE - Building Better Bodies`;
+
+    console.log(messageBody);
+
+    // Create the curl command
+    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=${formattedPhone}' --data-urlencode 'From=+12526594159' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
+
+    // Execute the curl command
+    exec(curlCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing curl command: ${error}`);
+        return res
+          .status(500)
+          .json({ error: "Failed to send WhatsApp message" });
+      }
+
+      console.log(`WhatsApp message sent successfully: ${stdout}`);
+      res.json({ success: true, message: "Workout plan sent to WhatsApp" });
+    });
+  } catch (error) {
+    console.error("Error sending WhatsApp message:", error);
+    res.status(500).json({ error: "Failed to send WhatsApp message" });
+  }
+});
+
+// Workout template endpoints
+// Create/Save workout template
+app.post("/api/workout-templates", async (req, res) => {
+  try {
+    const { name, description, exercises } = req.body;
+
+    if (!name || !exercises || !exercises.length) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "name and exercises",
+      });
+    }
+
+    const templateId = `workout_template_${Date.now()}`;
+
+    const templateItem = {
+      id: templateId,
+      name,
+      description: description || "",
+      exercises: exercises || [],
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: "workout_templates",
+      Item: templateItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(201).json({
+      success: true,
+      message: "Workout template saved successfully",
+      template: templateItem,
+    });
+  } catch (error) {
+    console.error("Error saving workout template:", error);
+    res.status(500).json({ error: "Failed to save workout template" });
+  }
+});
+
+// Get all workout templates
+app.get("/api/workout-templates", async (req, res) => {
+  try {
+    const params = {
+      TableName: "workout_templates",
+    };
+
+    const result = await docClient.send(new ScanCommand(params));
+
+    // Sort by createdAt in descending order (newest first)
+    const sortedTemplates = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      : [];
+
+    res.json({
+      success: true,
+      templates: sortedTemplates,
+    });
+  } catch (error) {
+    console.error("Error getting workout templates:", error);
+    res.status(500).json({ error: "Failed to get workout templates" });
+  }
+});
+
+// Get workout template by ID
+app.get("/api/workout-templates/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const params = {
+      TableName: "workout_templates",
+      Key: {
+        id,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Workout template not found" });
+    }
+
+    res.json({
+      success: true,
+      template: result.Item,
+    });
+  } catch (error) {
+    console.error("Error getting workout template:", error);
+    res.status(500).json({ error: "Failed to get workout template" });
+  }
+});
+
+// Delete workout template
+app.delete("/api/workout-templates/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const params = {
+      TableName: "workout_templates",
+      Key: {
+        id,
+      },
+    };
+
+    await docClient.send(new DeleteCommand(params));
+
+    res.json({
+      success: true,
+      message: "Workout template deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting workout template:", error);
+    res.status(500).json({ error: "Failed to delete workout template" });
   }
 });
 
