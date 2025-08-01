@@ -1073,7 +1073,7 @@ app.get("/api/members", authenticateToken, async (req, res) => {
 });
 
 // Get a specific member by ID
-app.get("/api/members/:id", authenticateToken, async (req, res) => {
+app.get("/api/members/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { gymId } = req.user;
