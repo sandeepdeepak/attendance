@@ -7,6 +7,8 @@ import AllMembers from "./pages/AllMembers/AllMembers";
 import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
 import MemberPlan from "./pages/MemberPlan/MemberPlan";
+import Login from "./pages/Login/Login";
+import { API_URL } from "./config";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -16,6 +18,43 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [membersData, setMembersData] = useState(null);
   const [membersListTitle, setMembersListTitle] = useState("All members");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [gymOwner, setGymOwner] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(true);
+
+  // Check for existing auth token on load
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("authToken");
+      const storedGymOwner = localStorage.getItem("gymOwner");
+
+      if (token && storedGymOwner) {
+        try {
+          // Verify token with backend
+          const response = await fetch(`${API_URL}/api/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            setIsAuthenticated(true);
+            setGymOwner(JSON.parse(storedGymOwner));
+          } else {
+            // Token invalid, clear storage
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("gymOwner");
+          }
+        } catch (error) {
+          console.error("Auth verification error:", error);
+        }
+      }
+
+      setIsVerifying(false);
+    };
+
+    checkAuth();
+  }, []);
 
   // Reset the key when navigating to face recognition to force remount
   useEffect(() => {
@@ -23,6 +62,19 @@ function App() {
       setFaceRecognitionKey((prevKey) => prevKey + 1);
     }
   }, [currentPage]);
+
+  const handleLoginSuccess = (owner) => {
+    setIsAuthenticated(true);
+    setGymOwner(owner);
+    setCurrentPage("dashboard");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("gymOwner");
+    setIsAuthenticated(false);
+    setGymOwner(null);
+  };
 
   const handleFaceRecognitionClick = () => {
     setCurrentPage("faceRecognition");
@@ -76,6 +128,8 @@ function App() {
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
+            onLogout={handleLogout}
+            gymOwner={gymOwner}
           />
         );
       case "faceRecognition":
@@ -125,11 +179,37 @@ function App() {
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
+            onLogout={handleLogout}
+            gymOwner={gymOwner}
           />
         );
     }
   };
 
+  // Show loading state while verifying authentication
+  if (isVerifying) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontSize: "18px",
+          color: "#666",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // Show main app if authenticated
   return <>{renderCurrentPage()}</>;
 }
 

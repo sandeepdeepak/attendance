@@ -12,6 +12,7 @@ import {
   FaBell,
   FaUpload,
   FaDownload,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -22,6 +23,8 @@ const GymDashboard = ({
   onAllMembersClick,
   onMemberClick,
   onTodayAttendanceClick,
+  onLogout,
+  gymOwner,
 }) => {
   const [dashboardStats, setDashboardStats] = useState({
     todaysAttendance: 0,
@@ -161,8 +164,29 @@ const GymDashboard = ({
 
   return (
     <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
+      {/* Gym Owner Name */}
+      <div className="absolute top-4 left-4 flex items-center">
+        <div className="bg-[#1e293b] rounded-full p-2 mr-2">
+          <FaUser size={16} className="text-white" />
+        </div>
+        <div className="text-white text-sm">
+          {gymOwner?.gymName || "Gym Owner"}
+        </div>
+      </div>
+
       {/* Notification and Support Icons */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
+        {/* Logout Icon */}
+        <div className="relative">
+          <div
+            id="logout-icon"
+            className="text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+            onClick={onLogout}
+            title="Logout"
+          >
+            <FaSignOutAlt size={16} />
+          </div>
+        </div>
         {/* Support Icon */}
         <div className="relative">
           <div

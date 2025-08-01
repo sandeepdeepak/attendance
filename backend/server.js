@@ -4,6 +4,8 @@ const multer = require("multer");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // Load environment variables from .env file
 try {
@@ -66,6 +68,11 @@ const DIET_PLANS_TABLE = "diet_plans";
 const MEAL_TEMPLATES_TABLE = "meal_templates";
 const WORKOUT_PLANS_TABLE = "workout_plans";
 const WORKOUT_TEMPLATES_TABLE = "workout_templates";
+const GYM_OWNERS_TABLE = "gym_owners";
+
+// JWT Secret Key - should be in environment variables in production
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
+const JWT_EXPIRES_IN = "24h"; // Token expiration time
 
 // Configure CORS with specific options
 app.use(
@@ -115,6 +122,8 @@ async function initializeDynamoDB() {
     const workoutTemplatesTableExists = listTablesResponse.TableNames.includes(
       WORKOUT_TEMPLATES_TABLE
     );
+    const gymOwnersTableExists =
+      listTablesResponse.TableNames.includes(GYM_OWNERS_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -286,6 +295,28 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${WORKOUT_TEMPLATES_TABLE}`);
     } else {
       console.log(`Table ${WORKOUT_TEMPLATES_TABLE} already exists`);
+    }
+
+    // Create gym owners table if it doesn't exist
+    if (!gymOwnersTableExists) {
+      const createGymOwnersTableParams = {
+        TableName: GYM_OWNERS_TABLE,
+        KeySchema: [
+          { AttributeName: "email", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [{ AttributeName: "email", AttributeType: "S" }],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createGymOwnersTableParams)
+      );
+      console.log(`Created table: ${GYM_OWNERS_TABLE}`);
+    } else {
+      console.log(`Table ${GYM_OWNERS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -2792,6 +2823,154 @@ app.delete("/api/meal-templates/:id", async (req, res) => {
     console.error("Error deleting meal template:", error);
     res.status(500).json({ error: "Failed to delete meal template" });
   }
+});
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
+
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+
+  try {
+    const verified = jwt.verify(token, JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (error) {
+    console.error("Token verification error:", error);
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
+};
+
+// Register a new gym owner
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { gymName, email, password } = req.body;
+
+    if (!gymName || !email || !password) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "gymName, email, password",
+      });
+    }
+
+    // Check if email already exists
+    const scanParams = {
+      TableName: GYM_OWNERS_TABLE,
+      FilterExpression: "email = :email",
+      ExpressionAttributeValues: {
+        ":email": email,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (scanResult.Items && scanResult.Items.length > 0) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create gym owner record
+    const gymOwnerItem = {
+      email,
+      gymName,
+      password: hashedPassword,
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: GYM_OWNERS_TABLE,
+      Item: gymOwnerItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // Create and sign JWT token
+    const token = jwt.sign({ email: email, gymName: gymName }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Gym owner registered successfully",
+      token,
+      gymOwner: {
+        email,
+        gymName,
+      },
+    });
+  } catch (error) {
+    console.error("Error registering gym owner:", error);
+    res.status(500).json({ error: "Failed to register gym owner" });
+  }
+});
+
+// Login gym owner
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "email, password",
+      });
+    }
+
+    // Get gym owner by email
+    const params = {
+      TableName: GYM_OWNERS_TABLE,
+      Key: {
+        email,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    const gymOwner = result.Item;
+
+    // Validate password
+    const validPassword = await bcrypt.compare(password, gymOwner.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Create and sign JWT token
+    const token = jwt.sign(
+      { email: gymOwner.email, gymName: gymOwner.gymName },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    res.json({
+      success: true,
+      token,
+      gymOwner: {
+        email: gymOwner.email,
+        gymName: gymOwner.gymName,
+      },
+    });
+  } catch (error) {
+    console.error("Error logging in:", error);
+    res.status(500).json({ error: "Failed to login" });
+  }
+});
+
+// Verify authentication token
+app.get("/api/auth/verify", authenticateToken, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
 });
 
 // Simple hello endpoint
