@@ -699,7 +699,7 @@ const DietPlan = ({
                         )
                       )}%`,
                     }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#036BA3]"
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#036BA2]"
                   ></div>
                 </div>
               </div>
@@ -721,7 +721,7 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">BREAKFAST</h3>
           <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.breakfast.length > 0 ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
@@ -729,7 +729,7 @@ const DietPlan = ({
                   >
                     <div className="relative">
                       <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#036BA3] rounded-full p-[10px]"
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
                         onClick={() => removeFood("breakfast", food.id)}
                       >
                         <FaTrash size={12} />
@@ -773,7 +773,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-[#036BA3] text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("breakfast")}
                 >
                   Add More
@@ -795,7 +795,7 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">LUNCH</h3>
           <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.lunch.length > 0 ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
@@ -803,7 +803,7 @@ const DietPlan = ({
                   >
                     <div className="relative">
                       <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#036BA3] rounded-full p-[10px]"
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
                         onClick={() => removeFood("lunch", food.id)}
                       >
                         <FaTrash size={12} />
@@ -847,7 +847,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-[#036BA3] text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("lunch")}
                 >
                   Add More
@@ -869,7 +869,7 @@ const DietPlan = ({
           <h3 className="text-2xl mb-2">DINNER</h3>
           <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.dinner.length > 0 ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}
@@ -877,7 +877,7 @@ const DietPlan = ({
                   >
                     <div className="relative">
                       <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#036BA3] rounded-full p-[10px]"
+                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
                         onClick={() => removeFood("dinner", food.id)}
                       >
                         <FaTrash size={12} />
@@ -921,7 +921,7 @@ const DietPlan = ({
                   </div>
                 ))}
                 <button
-                  className="bg-[#036BA3] text-white py-2 px-4 rounded mt-2"
+                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
                   onClick={() => openFoodSelector("dinner")}
                 >
                   Add More
@@ -1082,7 +1082,7 @@ const DietPlan = ({
                 Cancel
               </button>
               <button
-                className="bg-[#036BA3] text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#024a72] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={saveAsTemplate}
                 disabled={!templateName}
               >

@@ -617,7 +617,7 @@ const WorkoutPlan = ({
       {/* Add Workouts Button */}
       <div className="mb-6">
         <button
-          className="bg-purple-600 text-white py-3 px-4 rounded-lg w-full"
+          className="bg-[#036BA2] text-white py-3 px-4 rounded-lg w-full"
           onClick={() => setShowWorkoutSelectionModal(true)}
         >
           Add Workouts
@@ -663,7 +663,7 @@ const WorkoutPlan = ({
                 Cancel
               </button>
               <button
-                className="bg-[#036BA3] text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#024a72] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={saveAsTemplate}
                 disabled={!templateName}
               >
@@ -820,7 +820,7 @@ const WorkoutPlan = ({
                     }),
                     multiValue: (base) => ({
                       ...base,
-                      backgroundColor: "#2563eb", // match bg-[#036BA3]
+                      backgroundColor: "#2563eb", // match bg-[#024a72]
                       color: "white",
                     }),
                     multiValueLabel: (base) => ({

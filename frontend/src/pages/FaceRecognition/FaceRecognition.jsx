@@ -239,7 +239,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                 {/* {searchResult.id && (
                   <button
                     onClick={() => onMemberClick(searchResult.id)}
-                    className="bg-[#036BA3] text-white px-4 py-2 rounded-lg"
+                    className="bg-[#024a72] text-white px-4 py-2 rounded-lg"
                   >
                     Extend Membership
                   </button>
@@ -285,7 +285,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                   isEntry
                     ? "bg-green-800"
                     : isExit
-                    ? "bg-[#056AA2]"
+                    ? "bg-[#024a72]"
                     : "bg-purple-800"
                 }`}
               >
