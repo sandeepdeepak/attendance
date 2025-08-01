@@ -446,28 +446,75 @@ const DietPlan = ({
     });
   };
 
+  // Function to check if all meal types are empty and reset nutrition totals if needed
+  const checkAndResetNutritionTotals = () => {
+    const allMealsEmpty =
+      dietPlan.breakfast.length === 0 &&
+      dietPlan.lunch.length === 0 &&
+      dietPlan.dinner.length === 0;
+
+    if (allMealsEmpty) {
+      setNutritionTotals({
+        calories: 0,
+        carbs: 0,
+        fats: 0,
+        proteins: 0,
+        fibre: 0,
+        serving_qty: 0,
+        serving_unit: "",
+      });
+    }
+  };
+
   const removeFood = (mealType, foodId) => {
     const foodToRemove = dietPlan[mealType].find((food) => food.id === foodId);
 
     if (foodToRemove) {
       // Remove the food from the meal
-      setDietPlan((prevPlan) => ({
-        ...prevPlan,
-        [mealType]: prevPlan[mealType].filter((food) => food.id !== foodId),
-      }));
+      setDietPlan((prevPlan) => {
+        const updatedPlan = {
+          ...prevPlan,
+          [mealType]: prevPlan[mealType].filter((food) => food.id !== foodId),
+        };
 
-      // Update nutrition totals based on quantity
-      setNutritionTotals((prev) => ({
-        calories: prev.calories - foodToRemove.calories * foodToRemove.quantity,
-        carbs: prev.carbs - foodToRemove.carbs * foodToRemove.quantity,
-        fats: prev.fats - foodToRemove.fats * foodToRemove.quantity,
-        proteins: prev.proteins - foodToRemove.proteins * foodToRemove.quantity,
-        fibre: prev.fibre - foodToRemove.fibre * foodToRemove.quantity,
-        serving_qty:
-          prev.serving_qty - foodToRemove.serving_qty * foodToRemove.quantity,
-        serving_unit:
-          prev.serving_unit - foodToRemove.serving_unit * foodToRemove.quantity,
-      }));
+        // Check if this was the last food item and reset totals if needed
+        const willBeEmpty =
+          updatedPlan.breakfast.length === 0 &&
+          updatedPlan.lunch.length === 0 &&
+          updatedPlan.dinner.length === 0;
+
+        if (willBeEmpty) {
+          // If all meals will be empty, reset nutrition totals immediately
+          setNutritionTotals({
+            calories: 0,
+            carbs: 0,
+            fats: 0,
+            proteins: 0,
+            fibre: 0,
+            serving_qty: 0,
+            serving_unit: "",
+          });
+        } else {
+          // Otherwise, update nutrition totals based on quantity
+          setNutritionTotals((prev) => ({
+            calories:
+              prev.calories - foodToRemove.calories * foodToRemove.quantity,
+            carbs: prev.carbs - foodToRemove.carbs * foodToRemove.quantity,
+            fats: prev.fats - foodToRemove.fats * foodToRemove.quantity,
+            proteins:
+              prev.proteins - foodToRemove.proteins * foodToRemove.quantity,
+            fibre: prev.fibre - foodToRemove.fibre * foodToRemove.quantity,
+            serving_qty:
+              prev.serving_qty -
+              foodToRemove.serving_qty * foodToRemove.quantity,
+            serving_unit:
+              prev.serving_unit -
+              foodToRemove.serving_unit * foodToRemove.quantity,
+          }));
+        }
+
+        return updatedPlan;
+      });
     }
   };
 
