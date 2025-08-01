@@ -719,9 +719,9 @@ const DietPlan = ({
         {/* Breakfast section */}
         <div>
           <h3 className="text-2xl mb-2">BREAKFAST</h3>
-          <div className="bg-[#0a1f2e] rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.breakfast.length > 0 ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
@@ -793,9 +793,9 @@ const DietPlan = ({
         {/* Lunch section */}
         <div>
           <h3 className="text-2xl mb-2">LUNCH</h3>
-          <div className="bg-[#0a1f2e] rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.lunch.length > 0 ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
@@ -867,9 +867,9 @@ const DietPlan = ({
         {/* Dinner section */}
         <div>
           <h3 className="text-2xl mb-2">DINNER</h3>
-          <div className="bg-[#0a1f2e] rounded-lg p-4 h-auto min-h-32">
+          <div className="bg-[#1C2937] rounded-lg p-4 h-auto min-h-32">
             {dietPlan.dinner.length > 0 ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}

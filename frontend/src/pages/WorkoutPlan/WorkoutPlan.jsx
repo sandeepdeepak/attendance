@@ -687,9 +687,11 @@ const WorkoutPlan = ({
         ) : (
           <div className="space-y-4">
             {workoutPlan.exercises.map((exercise) => (
-              <div key={exercise.id} className="bg-gray-800 p-4 rounded-lg">
+              <div key={exercise.id} className="bg-[#123347] p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-xl font-semibold">{exercise.name}</h3>
+                  <h3 className="text-xl font-semibold text-left">
+                    {exercise.name}
+                  </h3>
                   <button
                     className="text-red-500"
                     onClick={() => handleRemoveExercise(exercise.id)}
