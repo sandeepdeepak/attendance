@@ -74,8 +74,20 @@ const GymDashboard = ({
   useEffect(() => {
     const fetchExpiringMemberships = async () => {
       try {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          console.error("Authentication token not found");
+          return;
+        }
+
         const response = await axios.get(
-          `${API_URL}/api/members-expiring?days=1`
+          `${API_URL}/api/members-expiring?days=1`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
         );
         if (response.data && response.data.expiringMembers) {
           setExpiringMembers(response.data.expiringMembers);
@@ -99,7 +111,20 @@ const GymDashboard = ({
     const fetchDashboardStats = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`${API_URL}/api/dashboard/stats`);
+
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          console.error("Authentication token not found");
+          return;
+        }
+
+        const response = await axios.get(`${API_URL}/api/dashboard/stats`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+
         if (response.data) {
           setDashboardStats(response.data);
         }
@@ -234,8 +259,20 @@ const GymDashboard = ({
               try {
                 setSyncingToExcel(true);
                 setStatusMessage({ text: "", type: "" });
+
+                // Get auth token from localStorage
+                const authToken = localStorage.getItem("authToken");
+                if (!authToken) {
+                  throw new Error("Authentication token not found");
+                }
+
                 const response = await axios.get(
-                  `${API_URL}/api/sync-to-excel`
+                  `${API_URL}/api/sync-to-excel`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${authToken}`,
+                    },
+                  }
                 );
                 if (response.data && response.data.success) {
                   setStatusMessage({
@@ -282,8 +319,20 @@ const GymDashboard = ({
               try {
                 setSyncingFromExcel(true);
                 setStatusMessage({ text: "", type: "" });
+
+                // Get auth token from localStorage
+                const authToken = localStorage.getItem("authToken");
+                if (!authToken) {
+                  throw new Error("Authentication token not found");
+                }
+
                 const response = await axios.get(
-                  `${API_URL}/api/sync-from-excel`
+                  `${API_URL}/api/sync-from-excel`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${authToken}`,
+                    },
+                  }
                 );
                 if (response.data && response.data.success) {
                   const summary = response.data.summary;

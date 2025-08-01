@@ -31,7 +31,17 @@ const AllMembers = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_URL}/api/members`);
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      const response = await fetch(`${API_URL}/api/members`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch members");
@@ -62,8 +72,17 @@ const AllMembers = ({
     try {
       setDeletingMemberId(memberId);
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
       const response = await fetch(`${API_URL}/api/members/${memberId}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       if (!response.ok) {
@@ -102,12 +121,19 @@ const AllMembers = ({
     try {
       setUpdating(true);
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
       const response = await fetch(
         `${API_URL}/api/members/${editingMember.id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify(formData),
         }

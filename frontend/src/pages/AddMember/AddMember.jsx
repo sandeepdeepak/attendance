@@ -131,9 +131,18 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
         method = "PUT";
       }
 
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
       // Send data to API
       const response = await fetch(url, {
         method: method,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
         body: formDataToSend,
       });
 

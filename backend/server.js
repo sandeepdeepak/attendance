@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 
 // Load environment variables from .env file
 try {
@@ -99,6 +100,25 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", true);
   next();
 });
+
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
+
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+
+  try {
+    const verified = jwt.verify(token, JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (error) {
+    console.error("Token verification error:", error);
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
+};
 
 // Initialize DynamoDB tables if they don't exist
 async function initializeDynamoDB() {
@@ -628,11 +648,34 @@ app.get("/api/attendance/:memberId", async (req, res) => {
 });
 
 // Get dashboard statistics
-app.get("/api/dashboard/stats", async (req, res) => {
+app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {
   try {
+    // Get gymId from the authenticated user
+    const { gymId } = req.user;
+    if (!gymId) {
+      return res.status(400).json({
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
+      });
+    }
+
     const todayDate = getTodayDateString();
 
+    // Get all members for this gym
+    const allMembersResult = await docClient.send(
+      new ScanCommand({
+        TableName: MEMBERS_TABLE,
+        FilterExpression: "gymId = :gymId",
+        ExpressionAttributeValues: {
+          ":gymId": gymId,
+        },
+      })
+    );
+
+    const allMembers = allMembersResult.Items || [];
+
     // 1. Get today's attendance count (unique members who checked in today)
+    // First get all attendance records for today
     const todayAttendanceParams = {
       TableName: ATTENDANCE_TABLE,
       FilterExpression: "begins_with(#ts, :today)",
@@ -648,27 +691,24 @@ app.get("/api/dashboard/stats", async (req, res) => {
       new ScanCommand(todayAttendanceParams)
     );
 
+    // Filter attendance records for members of this gym
+    const gymMemberIds = new Set(allMembers.map((member) => member.id));
+    const filteredAttendanceItems = todayAttendanceResult.Items
+      ? todayAttendanceResult.Items.filter((item) =>
+          gymMemberIds.has(item.memberId)
+        )
+      : [];
+
     // Count unique members who attended today
     const uniqueAttendees = new Set();
-    if (todayAttendanceResult.Items) {
-      todayAttendanceResult.Items.forEach((item) => {
-        uniqueAttendees.add(item.memberId);
-      });
-    }
+    filteredAttendanceItems.forEach((item) => {
+      uniqueAttendees.add(item.memberId);
+    });
     const todaysAttendance = uniqueAttendees.size;
 
     // 2. Get members currently inside (entered but not exited)
     const membersInside = new Set();
     const membersInsideDetails = [];
-
-    // Get all members
-    const allMembersResult = await docClient.send(
-      new ScanCommand({
-        TableName: MEMBERS_TABLE,
-      })
-    );
-
-    const allMembers = allMembersResult.Items || [];
 
     // For each member, check their attendance records for today
     for (const member of allMembers) {
@@ -747,16 +787,29 @@ app.get("/api/dashboard/stats", async (req, res) => {
 });
 
 // Get members currently inside the gym
-app.get("/api/members-inside", async (req, res) => {
+app.get("/api/members-inside", authenticateToken, async (req, res) => {
   try {
+    // Get gymId from the authenticated user
+    const { gymId } = req.user;
+    if (!gymId) {
+      return res.status(400).json({
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
+      });
+    }
+
     const todayDate = getTodayDateString();
     const membersInsideIds = new Set();
     const membersInsideDetails = [];
 
-    // Get all members
+    // Get all members for this gym
     const allMembersResult = await docClient.send(
       new ScanCommand({
         TableName: MEMBERS_TABLE,
+        FilterExpression: "gymId = :gymId",
+        ExpressionAttributeValues: {
+          ":gymId": gymId,
+        },
       })
     );
 
@@ -855,127 +908,157 @@ app.post("/api/index-face", upload.single("image"), async (req, res) => {
 });
 
 // Add a new member to DynamoDB and index their face
-app.post("/api/members", upload.single("faceImage"), async (req, res) => {
-  try {
-    const {
-      fullName,
-      phoneNumber,
-      startDate,
-      dateOfBirth,
-      gender,
-      membershipPlan,
-    } = req.body;
-    const faceImage = req.file?.buffer;
+app.post(
+  "/api/members",
+  authenticateToken,
+  upload.single("faceImage"),
+  async (req, res) => {
+    try {
+      const {
+        fullName,
+        phoneNumber,
+        startDate,
+        dateOfBirth,
+        gender,
+        membershipPlan,
+      } = req.body;
+      const faceImage = req.file?.buffer;
 
-    if (
-      !fullName ||
-      !phoneNumber ||
-      !startDate ||
-      !dateOfBirth ||
-      !gender ||
-      !membershipPlan ||
-      !faceImage
-    ) {
+      if (
+        !fullName ||
+        !phoneNumber ||
+        !startDate ||
+        !dateOfBirth ||
+        !gender ||
+        !membershipPlan ||
+        !faceImage
+      ) {
+        return res.status(400).json({
+          error: "Missing required fields",
+          required:
+            "fullName, phoneNumber, startDate, dateOfBirth, gender, membershipPlan, faceImage",
+        });
+      }
+
+      // Get gymId from the authenticated user
+      const { gymId } = req.user;
+      if (!gymId) {
+        return res.status(400).json({
+          error: "Missing gym ID",
+          message:
+            "Your account doesn't have a gym ID. Please contact support.",
+        });
+      }
+
+      // Generate a unique ID for the member
+      const memberId = `member_${Date.now()}`;
+
+      // First, index the face in the Rekognition collection
+      const indexParams = {
+        CollectionId: "my-face-collection",
+        Image: { Bytes: faceImage },
+        ExternalImageId: memberId,
+        DetectionAttributes: [],
+        MaxFaces: 1,
+        QualityFilter: "AUTO",
+      };
+
+      const indexResult = await rekClient.send(
+        new IndexFacesCommand(indexParams)
+      );
+
+      if (indexResult.FaceRecords.length === 0) {
+        return res.status(400).json({ error: "No face detected in the image" });
+      }
+
+      const faceId = indexResult.FaceRecords[0].Face.FaceId;
+
+      // Then, save the member data to DynamoDB (without membership details)
+      const memberItem = {
+        id: memberId,
+        fullName,
+        phoneNumber,
+        dateOfBirth,
+        gender,
+        height: req.body.height || null,
+        weight: req.body.weight || null,
+        faceId,
+        gymId, // Associate member with the gym owner
+        createdAt: new Date().toISOString(),
+        active: true,
+      };
+
+      const putParams = {
+        TableName: MEMBERS_TABLE,
+        Item: memberItem,
+      };
+
+      await docClient.send(new PutCommand(putParams));
+
+      // Create initial membership record
+      const membershipId = `membership_${Date.now()}`;
+
+      // Calculate end date based on plan type
+      const start = new Date(startDate);
+      const planMonths = {
+        "1 Month": 1,
+        "3 Months": 3,
+        "6 Months": 6,
+        "12 Months": 12,
+      };
+      const months = planMonths[membershipPlan] || 1;
+
+      const endDate = new Date(start);
+      endDate.setMonth(endDate.getMonth() + months);
+
+      const membershipItem = {
+        id: membershipId,
+        memberId,
+        gymId, // Associate membership with the gym owner
+        startDate,
+        endDate: endDate.toISOString().split("T")[0],
+        planType: membershipPlan,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      const putMembershipParams = {
+        TableName: MEMBERSHIPS_TABLE,
+        Item: membershipItem,
+      };
+
+      await docClient.send(new PutCommand(putMembershipParams));
+
+      res.status(201).json({
+        message: "Member added successfully",
+        member: memberItem,
+        membership: membershipItem,
+      });
+    } catch (error) {
+      console.error("Error adding member:", error);
+      res.status(500).json({ error: "Failed to add member" });
+    }
+  }
+);
+
+// Get all members
+app.get("/api/members", authenticateToken, async (req, res) => {
+  try {
+    // Get gymId from the authenticated user
+    const { gymId } = req.user;
+    if (!gymId) {
       return res.status(400).json({
-        error: "Missing required fields",
-        required:
-          "fullName, phoneNumber, startDate, dateOfBirth, gender, membershipPlan, faceImage",
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
       });
     }
 
-    // Generate a unique ID for the member
-    const memberId = `member_${Date.now()}`;
-
-    // First, index the face in the Rekognition collection
-    const indexParams = {
-      CollectionId: "my-face-collection",
-      Image: { Bytes: faceImage },
-      ExternalImageId: memberId,
-      DetectionAttributes: [],
-      MaxFaces: 1,
-      QualityFilter: "AUTO",
-    };
-
-    const indexResult = await rekClient.send(
-      new IndexFacesCommand(indexParams)
-    );
-
-    if (indexResult.FaceRecords.length === 0) {
-      return res.status(400).json({ error: "No face detected in the image" });
-    }
-
-    const faceId = indexResult.FaceRecords[0].Face.FaceId;
-
-    // Then, save the member data to DynamoDB (without membership details)
-    const memberItem = {
-      id: memberId,
-      fullName,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      height: req.body.height || null,
-      weight: req.body.weight || null,
-      faceId,
-      createdAt: new Date().toISOString(),
-      active: true,
-    };
-
-    const putParams = {
-      TableName: MEMBERS_TABLE,
-      Item: memberItem,
-    };
-
-    await docClient.send(new PutCommand(putParams));
-
-    // Create initial membership record
-    const membershipId = `membership_${Date.now()}`;
-
-    // Calculate end date based on plan type
-    const start = new Date(startDate);
-    const planMonths = {
-      "1 Month": 1,
-      "3 Months": 3,
-      "6 Months": 6,
-      "12 Months": 12,
-    };
-    const months = planMonths[membershipPlan] || 1;
-
-    const endDate = new Date(start);
-    endDate.setMonth(endDate.getMonth() + months);
-
-    const membershipItem = {
-      id: membershipId,
-      memberId,
-      startDate,
-      endDate: endDate.toISOString().split("T")[0],
-      planType: membershipPlan,
-      createdAt: new Date().toISOString(),
-      isActive: true,
-    };
-
-    const putMembershipParams = {
-      TableName: MEMBERSHIPS_TABLE,
-      Item: membershipItem,
-    };
-
-    await docClient.send(new PutCommand(putMembershipParams));
-
-    res.status(201).json({
-      message: "Member added successfully",
-      member: memberItem,
-      membership: membershipItem,
-    });
-  } catch (error) {
-    console.error("Error adding member:", error);
-    res.status(500).json({ error: "Failed to add member" });
-  }
-});
-
-// Get all members
-app.get("/api/members", async (req, res) => {
-  try {
     const params = {
       TableName: MEMBERS_TABLE,
+      FilterExpression: "gymId = :gymId",
+      ExpressionAttributeValues: {
+        ":gymId": gymId,
+      },
     };
 
     const result = await docClient.send(new ScanCommand(params));
@@ -990,18 +1073,27 @@ app.get("/api/members", async (req, res) => {
 });
 
 // Get a specific member by ID
-app.get("/api/members/:id", async (req, res) => {
+app.get("/api/members/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const { gymId } = req.user;
+
+    if (!gymId) {
+      return res.status(400).json({
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
+      });
+    }
 
     // Use scan with filter expression instead of GetCommand
     // because we need to query by just the id (partition key)
     // but our table has a composite key (id + phoneNumber)
     const scanParams = {
       TableName: MEMBERS_TABLE,
-      FilterExpression: "id = :id",
+      FilterExpression: "id = :id AND gymId = :gymId",
       ExpressionAttributeValues: {
         ":id": id,
+        ":gymId": gymId,
       },
     };
 
@@ -2825,25 +2917,6 @@ app.delete("/api/meal-templates/:id", async (req, res) => {
   }
 });
 
-// Authentication middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
-
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  try {
-    const verified = jwt.verify(token, JWT_SECRET);
-    req.user = verified;
-    next();
-  } catch (error) {
-    console.error("Token verification error:", error);
-    res.status(403).json({ error: "Invalid or expired token" });
-  }
-};
-
 // Register a new gym owner
 app.post("/api/auth/register", async (req, res) => {
   try {
@@ -2871,6 +2944,9 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ error: "Email already exists" });
     }
 
+    // Generate a unique gymId using UUID
+    const gymId = `gym_${uuidv4()}`;
+
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -2879,6 +2955,7 @@ app.post("/api/auth/register", async (req, res) => {
     const gymOwnerItem = {
       email,
       gymName,
+      gymId,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
     };
@@ -2891,9 +2968,11 @@ app.post("/api/auth/register", async (req, res) => {
     await docClient.send(new PutCommand(putParams));
 
     // Create and sign JWT token
-    const token = jwt.sign({ email: email, gymName: gymName }, JWT_SECRET, {
-      expiresIn: JWT_EXPIRES_IN,
-    });
+    const token = jwt.sign(
+      { email: email, gymName: gymName, gymId: gymId },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
 
     res.status(201).json({
       success: true,
@@ -2902,6 +2981,7 @@ app.post("/api/auth/register", async (req, res) => {
       gymOwner: {
         email,
         gymName,
+        gymId,
       },
     });
   } catch (error) {
@@ -2944,9 +3024,26 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    // Check if gymId exists, if not, generate one (for backward compatibility with existing accounts)
+    if (!gymOwner.gymId) {
+      gymOwner.gymId = `gym_${uuidv4()}`;
+
+      // Update the gym owner record with the new gymId
+      const updateParams = {
+        TableName: GYM_OWNERS_TABLE,
+        Item: gymOwner,
+      };
+
+      await docClient.send(new PutCommand(updateParams));
+    }
+
     // Create and sign JWT token
     const token = jwt.sign(
-      { email: gymOwner.email, gymName: gymOwner.gymName },
+      {
+        email: gymOwner.email,
+        gymName: gymOwner.gymName,
+        gymId: gymOwner.gymId,
+      },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -2957,6 +3054,7 @@ app.post("/api/auth/login", async (req, res) => {
       gymOwner: {
         email: gymOwner.email,
         gymName: gymOwner.gymName,
+        gymId: gymOwner.gymId,
       },
     });
   } catch (error) {

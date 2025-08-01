@@ -43,9 +43,25 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
         setLoading(true);
         setError(null);
 
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        const config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+
         // Fetch member details
         const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`
+          `${API_URL}/api/members/${memberId}`,
+          config
         );
 
         if (memberResponse.data && memberResponse.data.member) {
@@ -54,7 +70,8 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
         // Fetch membership history
         const membershipResponse = await axios.get(
-          `${API_URL}/api/memberships/${memberId}`
+          `${API_URL}/api/memberships/${memberId}`,
+          config
         );
 
         if (membershipResponse.data && membershipResponse.data.memberships) {
@@ -63,7 +80,8 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
         // Fetch attendance records
         const attendanceResponse = await axios.get(
-          `${API_URL}/api/attendance/${memberId}`
+          `${API_URL}/api/attendance/${memberId}`,
+          config
         );
 
         if (attendanceResponse.data && attendanceResponse.data.records) {
@@ -391,9 +409,23 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
     setIsExtending(true);
 
     try {
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
       const response = await axios.post(
         `${API_URL}/api/memberships/${memberId}/extend`,
-        extendFormData
+        extendFormData,
+        config
       );
 
       if (response.data) {
