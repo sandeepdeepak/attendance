@@ -148,7 +148,7 @@ const AllMembers = ({
   }
 
   return (
-    <div className="h-screen bg-[#1C2937] text-white flex flex-col px-4 py-8 overflow-hidden">
+    <div className="h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 overflow-hidden">
       <div className="flex">
         {/* Back button */}
         <div className="flex-shrink-0 mb-4">
@@ -184,7 +184,7 @@ const AllMembers = ({
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center cursor-pointer bg-[#024a72] p-4 rounded-2xl transition-colors"
+                className="flex items-center cursor-pointer bg-[#024a72] p-2 rounded-2xl transition-colors"
                 onClick={() => onMemberClick(member.id)}
               >
                 <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">

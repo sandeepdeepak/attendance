@@ -160,7 +160,7 @@ const GymDashboard = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#1C2937] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
       {/* Notification and Support Icons */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
         {/* Support Icon */}
@@ -385,7 +385,7 @@ const GymDashboard = ({
           stats.map((stat, index) => (
             <div
               key={index}
-              className={`bg-[#024a72] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
+              className={`bg-[#123347] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
                 stat.onClick ? "cursor-pointer hover:bg-[#252525]" : ""
               }`}
               onClick={stat.onClick}
