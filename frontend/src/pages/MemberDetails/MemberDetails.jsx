@@ -455,7 +455,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
   const isExpired = membershipEndDate ? new Date() > membershipEndDate : false;
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
       {/* Header with back button and member name */}
       <div className="w-full flex items-center mb-8">
         <button className="text-white p-2" onClick={onBackClick}>
@@ -467,7 +467,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
       {/* Membership Extension Modal */}
       {showExtendModal && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="bg-[#123347] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Extend Membership</h2>
 
             <div className="mb-4">
@@ -660,14 +660,14 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousMonth}
-          className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+          className="bg-[#123347] hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
         >
           &lt; Prev
         </button>
         <h2 className="text-xl font-bold">{getMonthYearString()}</h2>
         <button
           onClick={goToNextMonth}
-          className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+          className="bg-[#123347] hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
         >
           Next &gt;
         </button>
@@ -726,7 +726,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
       {membershipHistory.length > 0 && (
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-3">Membership History</h2>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="bg-[#123347] rounded-lg p-4">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-700 text-left">
