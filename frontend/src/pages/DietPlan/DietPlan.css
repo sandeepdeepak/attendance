@@ -3,15 +3,6 @@
   min-height: 100vh;
 }
 
-.bg-[#1C2937] {
-  background-color: #121212;
-}
-
-.bg-[#1C2937]:hover {
-  background-color: #1a1a1a;
-  cursor: pointer;
-}
-
 /* Drag and drop styles */
 .drag-area {
   border: 2px dashed #444;

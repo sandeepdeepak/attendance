@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: "SD GYM",
         description:
           "Managing gym members and attendance and thier diet plans and workout plans",
-        theme_color: "#1E40AF", // Tailwind blue-800 for example
+        theme_color: "#024a72",
         icons: [
           {
             src: "pwa-192x192.png",
