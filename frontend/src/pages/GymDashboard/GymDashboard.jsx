@@ -181,7 +181,7 @@ const GymDashboard = ({
               className="absolute top-7 right-0 bg-gray-800 rounded-lg shadow-lg p-4 w-64 z-10"
             >
               <div className="flex items-center mb-3">
-                <div className="bg-gray-700 rounded-full p-2 mr-3">
+                <div className="bg-[#1e293b] rounded-full p-2 mr-3">
                   <FaUser size={20} className="text-white" />
                 </div>
                 <div>
@@ -324,7 +324,7 @@ const GymDashboard = ({
                   {expiringMembers.map((item) => (
                     <div
                       key={item.member.id}
-                      className="border-b border-gray-700 py-2 last:border-0 cursor-pointer hover:bg-gray-700 rounded px-2"
+                      className="border-b border-gray-700 py-2 last:border-0 cursor-pointer hover:bg-[#1e293b] rounded px-2"
                       onClick={() => {
                         if (onMemberClick) {
                           onMemberClick(item.member.id);
@@ -333,7 +333,7 @@ const GymDashboard = ({
                       }}
                     >
                       <div className="flex items-center text-left">
-                        <div className="bg-gray-700 rounded-full p-2 mr-3">
+                        <div className="bg-[#1e293b] rounded-full p-2 mr-3">
                           <FaUser size={16} className="text-white" />
                         </div>
                         <div>

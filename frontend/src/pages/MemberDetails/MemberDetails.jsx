@@ -296,7 +296,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
     // If not within membership period, use gray
     if (!isWithinMembershipPeriod(date)) {
-      return "bg-gray-700 text-gray-400";
+      return "bg-[#1e293b] text-gray-400";
     }
 
     // If date is in the past, check attendance
@@ -478,7 +478,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
                   name="startDate"
                   value={extendFormData.startDate}
                   onChange={handleInputChange}
-                  className="bg-gray-700 text-white p-3 rounded-lg w-full"
+                  className="bg-[#1e293b] text-white p-3 rounded-lg w-full"
                 />
                 <FaCalendar
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -507,7 +507,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
                 {/* Custom dropdown UI */}
                 <div
-                  className={`select-selected bg-gray-700 ${
+                  className={`select-selected bg-[#1e293b] ${
                     isPlanDropdownOpen ? "select-arrow-active" : ""
                   }`}
                   onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
@@ -516,7 +516,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
                 </div>
 
                 <div
-                  className={`select-items bg-gray-700 ${
+                  className={`select-items bg-[#1e293b] ${
                     isPlanDropdownOpen ? "" : "select-hide"
                   }`}
                 >
@@ -660,14 +660,14 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousMonth}
-          className="bg-[#123347] hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+          className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
         >
           &lt; Prev
         </button>
         <h2 className="text-xl font-bold">{getMonthYearString()}</h2>
         <button
           onClick={goToNextMonth}
-          className="bg-[#123347] hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
+          className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
         >
           Next &gt;
         </button>

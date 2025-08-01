@@ -724,7 +724,7 @@ const WorkoutPlan = ({
                               parseInt(e.target.value) || 0
                             )
                           }
-                          className="bg-gray-700 text-white p-2 rounded w-full"
+                          className="bg-[#1e293b] text-white p-2 rounded w-full"
                           min="1"
                         />
                       </div>
@@ -742,7 +742,7 @@ const WorkoutPlan = ({
                               parseInt(e.target.value) || 0
                             )
                           }
-                          className="bg-gray-700 text-white p-2 rounded w-full"
+                          className="bg-[#1e293b] text-white p-2 rounded w-full"
                           min="1"
                         />
                       </div>

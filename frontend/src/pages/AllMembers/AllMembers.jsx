@@ -187,7 +187,7 @@ const AllMembers = ({
                 className="flex items-center cursor-pointer bg-[#024a72] p-2 rounded-2xl transition-colors"
                 onClick={() => onMemberClick(member.id)}
               >
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mr-4">
+                <div className="w-16 h-16 bg-[#1e293b] rounded-full flex items-center justify-center mr-4">
                   <FaUser size={32} className="text-gray-400" />
                 </div>
                 <div className="flex-1">
@@ -237,13 +237,13 @@ const AllMembers = ({
                       >
                         <div className="py-1">
                           <button
-                            className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#1e293b] flex items-center"
                             onClick={(e) => handleEditClick(e, member)}
                           >
                             <FaEdit className="mr-2" /> Edit Member
                           </button>
                           <button
-                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#1e293b] flex items-center"
                             onClick={(e) => handleDeleteMember(e, member.id)}
                           >
                             <FaTrash className="mr-2" /> Delete Member
@@ -275,7 +275,7 @@ const AllMembers = ({
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white"
                   required
                 />
               </div>
@@ -289,7 +289,7 @@ const AllMembers = ({
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white"
                   required
                 />
               </div>
@@ -303,7 +303,7 @@ const AllMembers = ({
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white"
                   required
                 />
               </div>
@@ -314,7 +314,7 @@ const AllMembers = ({
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-gray-700 rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white"
                   required
                 >
                   <option value="">Select Gender</option>
@@ -331,7 +331,7 @@ const AllMembers = ({
                     setShowEditModal(false);
                     setEditingMember(null);
                   }}
-                  className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700 transition-colors"
+                  className="px-4 py-2 bg-gray-600 rounded hover:bg-[#1e293b] transition-colors"
                   disabled={updating}
                 >
                   Cancel
