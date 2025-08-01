@@ -30,7 +30,7 @@ button.bg-white:hover {
 .quantity-control {
   display: flex;
   align-items: center;
-  background-color: #333;
+  background-color: #024a72;
   border-radius: 4px;
   overflow: hidden;
   width: fit-content;

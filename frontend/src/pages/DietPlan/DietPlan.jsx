@@ -576,7 +576,7 @@ const DietPlan = ({
       className={`${
         hideHeader
           ? "gap-6"
-          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 gap-6"
+          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
@@ -725,7 +725,7 @@ const DietPlan = ({
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-[#0a1f2e] p-4 rounded-lg"
+                    className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
                       <div
@@ -799,7 +799,7 @@ const DietPlan = ({
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-[#0a1f2e] p-4 rounded-lg"
+                    className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
                       <div
@@ -873,7 +873,7 @@ const DietPlan = ({
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-[#0a1f2e] p-4 rounded"
+                    className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
                       <div

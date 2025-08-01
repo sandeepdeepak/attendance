@@ -569,7 +569,7 @@ const WorkoutPlan = ({
       className={`${
         hideHeader
           ? ""
-          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 gap-6"
+          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
