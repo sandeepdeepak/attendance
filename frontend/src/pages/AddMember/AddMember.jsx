@@ -180,7 +180,7 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
   }, [editMode, memberToEdit]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
       {/* Header with back button and title */}
       <div className="w-full flex items-center mb-8">
         <button className="text-white p-2" onClick={onBackClick}>
@@ -457,7 +457,7 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
               />
               {isCapturing && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-4xl font-bold text-white bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center">
+                  <div className="text-4xl font-bold text-white bg-[#0a1f2e] bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center">
                     {countdown === 0 ? "" : countdown}
                   </div>
                 </div>

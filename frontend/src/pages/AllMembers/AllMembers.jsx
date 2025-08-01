@@ -261,7 +261,7 @@ const AllMembers = ({
 
       {/* Edit Member Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-75 flex items-center justify-center z-50 px-4">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Edit Member</h2>
 

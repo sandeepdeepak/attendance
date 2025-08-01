@@ -537,7 +537,7 @@ const DietPlan = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Loading...</p>
       </div>
     );
@@ -545,7 +545,7 @@ const DietPlan = ({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-red-500 text-xl">{error}</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -559,7 +559,7 @@ const DietPlan = ({
 
   if (!member) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Member not found</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -576,7 +576,7 @@ const DietPlan = ({
       className={`${
         hideHeader
           ? "gap-6"
-          : "min-h-screen bg-black text-white flex flex-col px-4 py-8 gap-6"
+          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 gap-6"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
@@ -628,7 +628,7 @@ const DietPlan = ({
         </button>
       </div>
 
-      <div className="bg-gray-900 rounded-lg p-4 mb-6">
+      <div className="bg-[#1C2937] rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
             <div>
@@ -647,7 +647,7 @@ const DietPlan = ({
           </div>
           <div className="flex items-center">
             <select
-              className="bg-black text-white p-2 rounded"
+              className="bg-[#0a1f2e] text-white p-2 rounded"
               value={calorieGoal}
               onChange={(e) => setCalorieGoal(e.target.value)}
             >
@@ -664,7 +664,7 @@ const DietPlan = ({
           </div>
         ) : calculatedCalories ? (
           <div>
-            <div className="px-3 bg-black rounded-lg overflow-hidden">
+            <div className="px-3 bg-[#0a1f2e] rounded-lg overflow-hidden">
               <div className="relative pt-1">
                 <div className="flex mb-2 items-center justify-between">
                   <div>
@@ -725,7 +725,7 @@ const DietPlan = ({
                 {dietPlan.breakfast.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-black p-4 rounded-lg"
+                    className="flex flex-col bg-[#0a1f2e] p-4 rounded-lg"
                   >
                     <div className="relative">
                       <div
@@ -799,7 +799,7 @@ const DietPlan = ({
                 {dietPlan.lunch.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-black p-4 rounded-lg"
+                    className="flex flex-col bg-[#0a1f2e] p-4 rounded-lg"
                   >
                     <div className="relative">
                       <div
@@ -873,7 +873,7 @@ const DietPlan = ({
                 {dietPlan.dinner.map((food) => (
                   <div
                     key={food.id}
-                    className="flex flex-col bg-black p-4 rounded"
+                    className="flex flex-col bg-[#0a1f2e] p-4 rounded"
                   >
                     <div className="relative">
                       <div
@@ -986,8 +986,8 @@ const DietPlan = ({
 
       {/* Template Selection Modal */}
       {showTemplateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-3xl font-bold mb-6 text-center">
               Select Meal Template
             </h2>
@@ -1045,8 +1045,8 @@ const DietPlan = ({
 
       {/* Save Template Modal */}
       {showSaveTemplateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-3xl font-bold mb-6 text-center">
               Save Template
             </h2>
@@ -1095,8 +1095,8 @@ const DietPlan = ({
 
       {/* Food Selection Modal */}
       {showFoodSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-3xl font-bold mb-6 text-center">Select Food</h2>
 
             {/* Search input */}

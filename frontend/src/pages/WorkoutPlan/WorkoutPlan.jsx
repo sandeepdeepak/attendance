@@ -252,8 +252,8 @@ const WorkoutPlan = ({
     if (!showTemplateModal) return null;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-        <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+      <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+        <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
           <h2 className="text-3xl font-bold mb-6 text-center">
             Select Workout Template
           </h2>
@@ -530,7 +530,7 @@ const WorkoutPlan = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Loading...</p>
       </div>
     );
@@ -538,7 +538,7 @@ const WorkoutPlan = ({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-red-500 text-xl">{error}</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -552,7 +552,7 @@ const WorkoutPlan = ({
 
   if (!member) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Member not found</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -569,7 +569,7 @@ const WorkoutPlan = ({
       className={`${
         hideHeader
           ? ""
-          : "min-h-screen bg-black text-white flex flex-col px-4 py-8 gap-6"
+          : "min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 gap-6"
       }`}
     >
       {/* Header with back button and member name - only show if hideHeader is false */}
@@ -626,8 +626,8 @@ const WorkoutPlan = ({
 
       {/* Save Template Modal */}
       {showSaveTemplateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-3xl font-bold mb-6 text-center">
               Save Template
             </h2>
@@ -675,7 +675,7 @@ const WorkoutPlan = ({
       )}
 
       {/* Workout Plan */}
-      <div className="bg-gray-900 rounded-lg p-4 mb-6">
+      <div className="bg-[#1C2937] rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Workout Plan</h2>
         </div>
@@ -779,8 +779,8 @@ const WorkoutPlan = ({
 
       {/* Workout Selection Modal */}
       {showWorkoutSelectionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-lg w-full max-w-3xl">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-3xl">
             <h2 className="text-3xl font-bold mb-6 text-center">
               Select Workouts
             </h2>

@@ -363,7 +363,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Loading member details...</p>
       </div>
     );
@@ -371,7 +371,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-red-500 text-xl">{error}</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -435,7 +435,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
   if (!member) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Member not found</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -466,7 +466,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
 
       {/* Membership Extension Modal */}
       {showExtendModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-[#123347] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Extend Membership</h2>
 

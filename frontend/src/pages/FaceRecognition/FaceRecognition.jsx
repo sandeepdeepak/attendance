@@ -324,7 +324,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-8">
       {/* Header with back button and title */}
       <div className="w-full flex items-center mb-12">
         <button className="text-white p-2" onClick={onBackClick}>
@@ -375,7 +375,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                 />
                 {isCapturing && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-6xl font-bold text-white bg-black bg-opacity-50 rounded-full w-20 h-20 flex items-center justify-center">
+                    <div className="text-6xl font-bold text-white bg-[#0a1f2e] bg-opacity-50 rounded-full w-20 h-20 flex items-center justify-center">
                       {countdown === 0 ? "" : countdown}
                     </div>
                   </div>

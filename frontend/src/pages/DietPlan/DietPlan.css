@@ -3,11 +3,11 @@
   min-height: 100vh;
 }
 
-.bg-gray-900 {
+.bg-[#1C2937] {
   background-color: #121212;
 }
 
-.bg-gray-900:hover {
+.bg-[#1C2937]:hover {
   background-color: #1a1a1a;
   cursor: pointer;
 }

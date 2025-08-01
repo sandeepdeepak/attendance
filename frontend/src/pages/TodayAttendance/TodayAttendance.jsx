@@ -47,7 +47,7 @@ const TodayAttendance = ({ onBackClick }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-xl">Loading attendance data...</p>
       </div>
     );
@@ -55,7 +55,7 @@ const TodayAttendance = ({ onBackClick }) => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-center">
         <p className="text-red-500 text-xl">{error}</p>
         <button
           className="mt-4 bg-white text-black px-4 py-2 rounded-lg"
@@ -68,7 +68,7 @@ const TodayAttendance = ({ onBackClick }) => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col px-4 py-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
       {/* Header with back button and title */}
       <div className="w-full flex items-center mb-8">
         <button className="text-white p-2" onClick={onBackClick}>
