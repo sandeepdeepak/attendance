@@ -310,7 +310,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
     }
 
     // Future dates within membership period
-    return "bg-blue-800 cursor-pointer";
+    return "bg-[#056AA2] cursor-pointer";
   };
 
   // Get month name and year
@@ -585,7 +585,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
                 Cancel
               </button>
               <button
-                className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg"
+                className="bg-[#036BA3] text-white px-4 py-2 rounded-lg"
                 onClick={handleExtendMembership}
                 disabled={isExtending}
               >
@@ -646,7 +646,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
             {calculateDaysRemaining()}
             {isExpired && (
               <button
-                className="ml-2 bg-[#1e3a8a] text-white text-xs px-2 py-1 rounded"
+                className="ml-2 bg-[#036BA3] text-white text-xs px-2 py-1 rounded"
                 onClick={() => setShowExtendModal(true)}
               >
                 Extend
@@ -717,7 +717,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
           <span>Not Attended</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-blue-800 rounded mr-1"></div>
+          <div className="w-4 h-4 bg-[#056AA2] rounded mr-1"></div>
           <span>Membership</span>
         </div>
       </div>

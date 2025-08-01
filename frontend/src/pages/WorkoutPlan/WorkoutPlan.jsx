@@ -663,7 +663,7 @@ const WorkoutPlan = ({
                 Cancel
               </button>
               <button
-                className="bg-[#1e3a8a] text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#036BA3] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={saveAsTemplate}
                 disabled={!templateName}
               >
@@ -820,7 +820,7 @@ const WorkoutPlan = ({
                     }),
                     multiValue: (base) => ({
                       ...base,
-                      backgroundColor: "#2563eb", // match bg-[#1e3a8a]
+                      backgroundColor: "#2563eb", // match bg-[#036BA3]
                       color: "white",
                     }),
                     multiValueLabel: (base) => ({
