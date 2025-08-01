@@ -154,7 +154,7 @@ const WorkoutPlan = ({
       const updatedExercises = prevPlan.exercises.map((exercise) => ({
         ...exercise,
         setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
-        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 1,
+        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
       }));
       return { ...prevPlan, exercises: updatedExercises };
     });
@@ -195,18 +195,35 @@ const WorkoutPlan = ({
   // Function to save workout plan to the database
   const saveWorkoutPlan = async () => {
     try {
-      // Prepare exercises with setCount and repsCount defaulting to 1 if missing
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
+      // Prepare exercises with setCount and repsCount defaulting to 1 and 10 if missing
       const exercisesToSave = workoutPlan.exercises.map((exercise) => ({
         ...exercise,
         setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
-        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 1,
+        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
       }));
 
-      await axios.post(`${API_URL}/api/workout-plans`, {
-        memberId,
-        date: selectedDate,
-        exercises: exercisesToSave,
-      });
+      await axios.post(
+        `${API_URL}/api/workout-plans`,
+        {
+          memberId,
+          date: selectedDate,
+          exercises: exercisesToSave,
+        },
+        config
+      );
     } catch (error) {
       console.error("Error saving workout plan:", error);
       // We don't show an error to the user here to avoid disrupting the UX
@@ -218,7 +235,23 @@ const WorkoutPlan = ({
   const fetchTemplates = async () => {
     setIsLoadingTemplates(true);
     try {
-      const response = await axios.get(`${API_URL}/api/workout-templates`);
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
+      const response = await axios.get(
+        `${API_URL}/api/workout-templates`,
+        config
+      );
       if (response.data && response.data.success) {
         setTemplates(response.data.templates);
       }
@@ -311,11 +344,28 @@ const WorkoutPlan = ({
     if (!templateName) return;
 
     try {
-      const response = await axios.post(`${API_URL}/api/workout-templates`, {
-        name: templateName,
-        description: templateDescription,
-        exercises: workoutPlan.exercises,
-      });
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
+      const response = await axios.post(
+        `${API_URL}/api/workout-templates`,
+        {
+          name: templateName,
+          description: templateDescription,
+          exercises: workoutPlan.exercises,
+        },
+        config
+      );
 
       if (response.data && response.data.success) {
         setStatusMessage({
@@ -346,9 +396,25 @@ const WorkoutPlan = ({
         setLoading(true);
         setError(null);
 
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        const config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+
         // Fetch member details
         const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`
+          `${API_URL}/api/members/${memberId}`,
+          config
         );
 
         if (memberResponse.data && memberResponse.data.member) {
@@ -375,8 +441,24 @@ const WorkoutPlan = ({
         setLoading(true);
         setError(null);
 
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        const config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+
         const response = await axios.get(
-          `${API_URL}/api/workout-plans/${memberId}/${selectedDate}`
+          `${API_URL}/api/workout-plans/${memberId}/${selectedDate}`,
+          config
         );
 
         if (response.data && response.data.workoutPlan) {
@@ -386,7 +468,7 @@ const WorkoutPlan = ({
               ...exercise,
               setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
               repsCount:
-                exercise.repsCount !== undefined ? exercise.repsCount : 1,
+                exercise.repsCount !== undefined ? exercise.repsCount : 10,
             })
           );
           setWorkoutPlan({
@@ -455,9 +537,13 @@ const WorkoutPlan = ({
 
   // Handle adding selected workouts to the workout plan
   const addSelectedWorkoutsToPlan = () => {
-    const selectedWorkouts = allWorkouts.filter((workout) =>
-      selectedWorkoutIds.has(workout.id)
-    );
+    const selectedWorkouts = allWorkouts
+      .filter((workout) => selectedWorkoutIds.has(workout.id))
+      .map((workout) => ({
+        ...workout,
+        setCount: 1, // Default to 1 set
+        repsCount: 10, // Default to 10 reps
+      }));
 
     // Add selected workouts to current workout plan exercises
     setWorkoutPlan((prevPlan) => ({
@@ -481,13 +567,29 @@ const WorkoutPlan = ({
       // Send to WhatsApp
       if (member && member.phoneNumber) {
         try {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          if (!authToken) {
+            throw new Error(
+              "Authentication token not found. Please login again."
+            );
+          }
+
+          // Create axios config with auth header
+          const config = {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          };
+
           const response = await axios.post(
             `${API_URL}/api/send-workout-plan-whatsapp`,
             {
               memberId,
               date: selectedDate,
               phoneNumber: member.phoneNumber,
-            }
+            },
+            config
           );
 
           if (response.data.success) {

@@ -29,9 +29,25 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
         setLoading(true);
         setError(null);
 
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        const config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+
         // Fetch member details
         const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`
+          `${API_URL}/api/members/${memberId}`,
+          config
         );
 
         if (memberResponse.data && memberResponse.data.member) {

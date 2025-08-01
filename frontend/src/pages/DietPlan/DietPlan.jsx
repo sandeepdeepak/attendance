@@ -188,14 +188,31 @@ const DietPlan = ({
   // Function to save diet plan to the database
   const saveDietPlan = async () => {
     try {
-      await axios.post(`${API_URL}/api/diet-plans`, {
-        memberId,
-        date: selectedDate,
-        breakfast: dietPlan.breakfast,
-        lunch: dietPlan.lunch,
-        dinner: dietPlan.dinner,
-        nutritionTotals,
-      });
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
+      await axios.post(
+        `${API_URL}/api/diet-plans`,
+        {
+          memberId,
+          date: selectedDate,
+          breakfast: dietPlan.breakfast,
+          lunch: dietPlan.lunch,
+          dinner: dietPlan.dinner,
+          nutritionTotals,
+        },
+        config
+      );
     } catch (error) {
       console.error("Error saving diet plan:", error);
       // We don't show an error to the user here to avoid disrupting the UX
@@ -207,7 +224,20 @@ const DietPlan = ({
   const fetchTemplates = async () => {
     setIsLoadingTemplates(true);
     try {
-      const response = await axios.get(`${API_URL}/api/meal-templates`);
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      // Create axios config with auth header
+      const config = {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      };
+
+      const response = await axios.get(`${API_URL}/api/meal-templates`, config);
       if (response.data && response.data.success) {
         setTemplates(response.data.templates);
       }
@@ -293,9 +323,25 @@ const DietPlan = ({
         setLoading(true);
         setError(null);
 
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        const config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+
         // Fetch member details
         const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`
+          `${API_URL}/api/members/${memberId}`,
+          config
         );
 
         if (memberResponse.data && memberResponse.data.member) {
@@ -304,7 +350,8 @@ const DietPlan = ({
 
         // Fetch existing diet plan for this date
         const dietPlanResponse = await axios.get(
-          `${API_URL}/api/diet-plans/${memberId}/${selectedDate}`
+          `${API_URL}/api/diet-plans/${memberId}/${selectedDate}`,
+          config
         );
 
         if (dietPlanResponse.data && dietPlanResponse.data.dietPlan) {

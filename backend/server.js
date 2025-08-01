@@ -1073,7 +1073,7 @@ app.get("/api/members", authenticateToken, async (req, res) => {
 });
 
 // Get a specific member by ID
-app.get("/api/members/:id", async (req, res) => {
+app.get("/api/members/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { gymId } = req.user;
@@ -1085,9 +1085,7 @@ app.get("/api/members/:id", async (req, res) => {
       });
     }
 
-    // Use scan with filter expression instead of GetCommand
-    // because we need to query by just the id (partition key)
-    // but our table has a composite key (id + phoneNumber)
+    // First try to find the member with both id and gymId
     const scanParams = {
       TableName: MEMBERS_TABLE,
       FilterExpression: "id = :id AND gymId = :gymId",
@@ -1099,12 +1097,46 @@ app.get("/api/members/:id", async (req, res) => {
 
     const result = await docClient.send(new ScanCommand(scanParams));
 
-    if (!result.Items || result.Items.length === 0) {
+    // If member is found with gymId, return it
+    if (result.Items && result.Items.length > 0) {
+      return res.json({
+        member: result.Items[0],
+      });
+    }
+
+    // If not found with gymId, try to find by just id (for backward compatibility)
+    // This is for members created before the gymId field was added
+    const fallbackScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
+    };
+
+    const fallbackResult = await docClient.send(
+      new ScanCommand(fallbackScanParams)
+    );
+
+    if (!fallbackResult.Items || fallbackResult.Items.length === 0) {
       return res.status(404).json({ error: "Member not found" });
     }
 
+    // Found a member without gymId, update it with the current gymId
+    const memberToUpdate = fallbackResult.Items[0];
+    memberToUpdate.gymId = gymId; // Add gymId to the member
+
+    // Update the member in the database
+    const updateParams = {
+      TableName: MEMBERS_TABLE,
+      Item: memberToUpdate,
+    };
+
+    await docClient.send(new PutCommand(updateParams));
+
+    // Return the updated member
     res.json({
-      member: result.Items[0],
+      member: memberToUpdate,
     });
   } catch (error) {
     console.error("Error getting member:", error);
