@@ -8,6 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      srcDir: "src",
+      filename: "service-worker.js",
       registerType: "autoUpdate",
       manifest: {
         name: "SD GYM",

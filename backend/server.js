@@ -53,6 +53,7 @@ const {
   ScanCommand,
   DeleteCommand,
 } = require("@aws-sdk/lib-dynamodb");
+const webPush = require("web-push");
 
 const app = express();
 const port = 7777;
@@ -61,6 +62,11 @@ const rekClient = new RekognitionClient({ region });
 const dynamoClient = new DynamoDBClient({ region });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
 const upload = multer({ storage: multer.memoryStorage() });
+webPush.setVapidDetails(
+  "mailto:support@sdgym.com",
+  "BLAaXng_kgEkQVcxalwNVoFO3A7VJgTTGFueVyyc-sOyPSqDy5AmaICGebKXwAOq6fyFu3vlE7OB1759-ZRP3aA",
+  "TxrtKlVEK9FzUPdDTtXcCGBtxkPYd-sIgjoBODuK3Ts"
+);
 
 const MEMBERS_TABLE = "members";
 const ATTENDANCE_TABLE = "attendance";
@@ -70,6 +76,7 @@ const MEAL_TEMPLATES_TABLE = "meal_templates";
 const WORKOUT_PLANS_TABLE = "workout_plans";
 const WORKOUT_TEMPLATES_TABLE = "workout_templates";
 const GYM_OWNERS_TABLE = "gym_owners";
+const PUSH_SUBSCRIPTIONS_TABLE = "push_subscriptions";
 
 // JWT Secret Key - should be in environment variables in production
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
@@ -144,6 +151,10 @@ async function initializeDynamoDB() {
     );
     const gymOwnersTableExists =
       listTablesResponse.TableNames.includes(GYM_OWNERS_TABLE);
+
+    const pushSubscriptionsTableExists = listTablesResponse.TableNames.includes(
+      PUSH_SUBSCRIPTIONS_TABLE
+    );
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -337,6 +348,31 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${GYM_OWNERS_TABLE}`);
     } else {
       console.log(`Table ${GYM_OWNERS_TABLE} already exists`);
+    }
+
+    // Create push subscriptions table if it doesn't exist
+
+    if (!pushSubscriptionsTableExists) {
+      const createPushSubscriptionsTableParams = {
+        TableName: PUSH_SUBSCRIPTIONS_TABLE,
+        KeySchema: [
+          { AttributeName: "subscriptionId", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "subscriptionId", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createPushSubscriptionsTableParams)
+      );
+      console.log(`Created table: ${PUSH_SUBSCRIPTIONS_TABLE}`);
+    } else {
+      console.log(`Table ${PUSH_SUBSCRIPTIONS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -2117,6 +2153,33 @@ app.post("/api/send-diet-plan-whatsapp", async (req, res) => {
         ? memberResult.Items[0].fullName
         : "Member";
 
+    // Get all push subscriptions from the table
+    const subscriptionScanParams = {
+      TableName: PUSH_SUBSCRIPTIONS_TABLE,
+    };
+
+    const subscriptionResult = await docClient.send(
+      new ScanCommand(subscriptionScanParams)
+    );
+
+    if (!subscriptionResult.Items || subscriptionResult.Items.length === 0) {
+      return res.status(404).json({ error: "No push subscriptions found" });
+    }
+
+    // Send web push notification to all subscriptions
+    const sendNotifications = subscriptionResult.Items.map((subItem) => {
+      console.log(subItem.subscription);
+      return webPush.sendNotification(
+        subItem.subscription,
+        JSON.stringify({
+          title: "Hello User!",
+          body: "Here is a notification just for you.",
+        })
+      );
+    });
+
+    all_responses = await Promise.all(sendNotifications);
+
     // Use child_process to execute the curl command
     const { exec } = require("child_process");
 
@@ -2156,12 +2219,7 @@ For any questions, contact your trainer at ${gymContactNumber}.
 
 FITNESS ZONE - Building Better Bodies`;
 
-    // Create a simple message body without special characters
-    const simpleMessageBody = `Your diet plan for ${formattedDate} is ready! Check your app for details.`;
-
     console.log(messageBody);
-
-    console.log("twilioAccountId", twilioAccountId, authToken);
 
     // Create the curl command with a simple message body
     const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=${formattedPhone}' --data-urlencode 'From=+12526594159' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
@@ -3108,6 +3166,44 @@ app.get("/api/auth/verify", authenticateToken, (req, res) => {
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });
+});
+
+// API endpoint to save push notification subscription
+app.post("/api/push-subscriptions", async (req, res) => {
+  try {
+    const subscription = req.body;
+
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: "Invalid subscription object" });
+    }
+
+    // Generate a unique subscription ID
+    const subscriptionId = `sub_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
+
+    // Prepare item to save
+    const item = {
+      subscriptionId,
+      subscription,
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: PUSH_SUBSCRIPTIONS_TABLE,
+      Item: item,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(201).json({
+      message: "Subscription saved successfully",
+      subscriptionId,
+    });
+  } catch (error) {
+    console.error("Error saving subscription:", error);
+    res.status(500).json({ error: "Failed to save subscription" });
+  }
 });
 
 app.listen(port, () =>
