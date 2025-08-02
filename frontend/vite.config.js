@@ -11,11 +11,15 @@ export default defineConfig({
       srcDir: "src",
       filename: "service-worker.js",
       registerType: "autoUpdate",
+      strategies: "injectManifest", // <-- important change here
+      injectManifest: {
+        swSrc: "src/service-worker.js", // path to your custom SW
+      },
       manifest: {
         name: "SD GYM",
         short_name: "SD GYM",
         description:
-          "Managing gym members and attendance and thier diet plans and workout plans",
+          "Managing gym members and attendance and their diet plans and workout plans",
         theme_color: "#024a72",
         icons: [
           {
@@ -40,7 +44,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       devOptions: {
-        enabled: true, // Enable SW in dev for easier testing
+        enabled: true, // keep SW enabled in dev
       },
     }),
   ],
