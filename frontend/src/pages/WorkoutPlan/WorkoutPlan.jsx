@@ -790,16 +790,16 @@ const WorkoutPlan = ({
           <div className="space-y-4">
             {workoutPlan.exercises.map((exercise) => (
               <div key={exercise.id} className="bg-[#123347] p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 relative">
                   <h3 className="text-xl font-semibold text-left">
                     {exercise.name}
                   </h3>
-                  <button
-                    className="text-red-500"
+                  <div
+                    className="absolute -top-7 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
                     onClick={() => handleRemoveExercise(exercise.id)}
                   >
-                    <FaTrash size={16} />
-                  </button>
+                    <FaTrash size={12} />
+                  </div>
                 </div>
 
                 <div className="flex mb-2">

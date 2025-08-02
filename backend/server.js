@@ -2622,12 +2622,14 @@ app.post("/api/send-workout-plan-whatsapp", async (req, res) => {
 
       return exercises
         .map(
-          (exercise) =>
-            `• ${exercise.name}: ${exercise.sets} sets x ${exercise.reps} reps${
-              exercise.weight > 0 ? ` @ ${exercise.weight}kg` : ""
-            }${exercise.notes ? `\n  Note: ${exercise.notes}` : ""}`
+          (exercise, index) =>
+            `${index + 1}) ${exercise.name} \n   ${exercise.setCount} sets x ${
+              exercise.repsCount
+            } reps${exercise.weight > 0 ? ` @ ${exercise.weight}kg` : ""}${
+              exercise.notes ? `\n  Note: ${exercise.notes} \n` : ""
+            }`
         )
-        .join("\n");
+        .join("\n \n");
     };
 
     const exerciseText = formatExerciseList(workoutPlan.exercises);
