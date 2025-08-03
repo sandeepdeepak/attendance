@@ -792,9 +792,21 @@ const DietPlan = ({
                             100
                         )
                       )}%`,
+                      transition: "width 1s cubic-bezier(0.34, 1.56, 0.64, 1)", // Bouncy animation effect
                     }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#036BA2]"
-                  ></div>
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#036BA2] progress-bar-fill"
+                  >
+                    {/* Animated gradient overlay */}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%)",
+                        animation: "shimmer 2s infinite",
+                        backgroundSize: "200% 100%",
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>

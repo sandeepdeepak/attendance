@@ -137,6 +137,24 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
           >
             Workout Plan
           </button>
+          {/* Fallback element for browsers that don't support :has selector */}
+          <div
+            className="toggle-button-background"
+            style={{
+              position: "absolute",
+              top: "4px",
+              left: "4px",
+              width: "calc(50% - 4px)",
+              height: "calc(100% - 8px)",
+              backgroundColor: "white",
+              borderRadius: "9999px",
+              transition:
+                "transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)",
+              zIndex: "1",
+              transform:
+                activeTab === "workout" ? "translateX(100%)" : "translateX(0)",
+            }}
+          ></div>
         </div>
       </div>
 

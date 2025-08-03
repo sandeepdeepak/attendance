@@ -6,11 +6,13 @@
 
 .toggle-wrapper {
   display: flex;
-  background-color: #024a72; /* Purple background color */
-  border-radius: 9999px; /* Fully rounded corners */
+  background-color: #024a72;
+  border-radius: 9999px;
   padding: 4px;
   width: 100%;
   max-width: 400px;
+  position: relative;
+  overflow: hidden;
 }
 
 .toggle-button {
@@ -25,14 +27,45 @@
   text-align: center;
   color: white;
   background-color: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+/* Sliding background element */
+.toggle-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background-color: white;
+  border-radius: 9999px;
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Bouncy animation */
+  z-index: 1;
+}
+
+/* Move the sliding background when workout tab is active */
+.toggle-wrapper:has(.toggle-button:nth-child(2).active)::before {
+  transform: translateX(100%);
+}
+
+/* Fallback for browsers that don't support :has */
+.toggle-button.active ~ .toggle-button-background {
+  transform: translateX(100%);
 }
 
 .toggle-button.active {
-  background-color: white;
-  color: #024a72; /* Purple text color when active */
+  color: #024a72;
+  background-color: transparent;
 }
 
 /* Ensure the buttons don't have default browser styling */
 .toggle-button:focus {
   outline: none;
+}
+
+/* Add subtle scale animation when clicking */
+.toggle-button:active {
+  transform: scale(0.95);
 }
