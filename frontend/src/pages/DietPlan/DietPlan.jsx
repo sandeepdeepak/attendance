@@ -235,18 +235,25 @@ const DietPlan = ({
   const fetchTemplates = async () => {
     setIsLoadingTemplates(true);
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem("authToken");
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please login again.");
-      }
+      let config = {};
 
-      // Create axios config with auth header
-      const config = {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      };
+      // If not coming from face recognition, require authentication
+      if (!fromFaceRecognition) {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+      }
 
       const response = await axios.get(`${API_URL}/api/meal-templates`, config);
       if (response.data && response.data.success) {
@@ -280,14 +287,38 @@ const DietPlan = ({
     if (!templateName) return;
 
     try {
-      const response = await axios.post(`${API_URL}/api/meal-templates`, {
-        name: templateName,
-        description: templateDescription,
-        breakfast: dietPlan.breakfast,
-        lunch: dietPlan.lunch,
-        dinner: dietPlan.dinner,
-        nutritionTotals,
-      });
+      let config = {};
+
+      // If not coming from face recognition, require authentication
+      if (!fromFaceRecognition) {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+      }
+
+      const response = await axios.post(
+        `${API_URL}/api/meal-templates`,
+        {
+          name: templateName,
+          description: templateDescription,
+          breakfast: dietPlan.breakfast,
+          lunch: dietPlan.lunch,
+          dinner: dietPlan.dinner,
+          nutritionTotals,
+        },
+        config
+      );
 
       if (response.data && response.data.success) {
         setStatusMessage({
