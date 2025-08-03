@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 
+function capitalizeFirstLetter(string) {
+  if (!string) return "";
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 const cachedGifUrls = new Set();
 
 const LazyModalWorkoutImage = ({ src, alt }) => {
@@ -791,8 +796,8 @@ const WorkoutPlan = ({
             {workoutPlan.exercises.map((exercise) => (
               <div key={exercise.id} className="bg-[#123347] p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-2 relative">
-                  <h3 className="text-xl font-semibold text-left">
-                    {exercise.name}
+                  <h3 className="font-semibold text-left mt-2 text-lg">
+                    {capitalizeFirstLetter(exercise.name)}
                   </h3>
                   <div
                     className="absolute -top-7 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
@@ -802,7 +807,7 @@ const WorkoutPlan = ({
                   </div>
                 </div>
 
-                <div className="flex mb-2">
+                <div className="flex mb-2 gap-4">
                   <div className="w-3/4 mr-2">
                     <LazyWorkoutItem
                       workout={exercise}
@@ -1072,7 +1077,7 @@ const WorkoutPlan = ({
                       alt={workout.name}
                     />
                     <p className="mt-10 text-center text-white">
-                      {workout.name}
+                      {capitalizeFirstLetter(workout.name)}
                     </p>
                   </div>
                 ))}
