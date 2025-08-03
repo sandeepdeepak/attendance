@@ -55,7 +55,7 @@ async function subscribeToPush() {
 
 // Call subscribe after SW registration
 navigator.serviceWorker.ready.then(() => {
-  subscribeToPush();
+  // subscribeToPush();
 });
 
 createRoot(document.getElementById("root")).render(
