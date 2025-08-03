@@ -4,6 +4,7 @@ import {
   FaCheck,
   FaTimes,
   FaExclamationTriangle,
+  FaCamera,
 } from "react-icons/fa";
 import "./FaceRecognition.css";
 import Webcam from "react-webcam";
@@ -13,16 +14,26 @@ import { API_URL } from "../../config";
 const FaceRecognition = ({ onBackClick, onMemberClick }) => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [countdown, setCountdown] = useState(3);
-  const [isCapturing, setIsCapturing] = useState(true);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [showResultTimer, setShowResultTimer] = useState(null);
   const [membershipExpired, setMembershipExpired] = useState(false);
   const [memberId, setMemberId] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+  const [showWebcam, setShowWebcam] = useState(false);
   const webcamRef = useRef(null);
 
-  // Start countdown when component mounts
+  // Start camera when user clicks the button
+  const startCamera = () => {
+    setCameraError(null);
+    setShowWebcam(true);
+    setIsCapturing(true);
+    setCountdown(3);
+  };
+
+  // Start countdown when camera is activated
   useEffect(() => {
     if (isCapturing && countdown > 0) {
       const timer = setTimeout(() => {
@@ -37,14 +48,43 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
     }
   }, [countdown, isCapturing]);
 
+  // Handle camera errors
+  useEffect(() => {
+    if (showWebcam) {
+      const checkCameraAvailability = async () => {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(
+            (device) => device.kind === "videoinput"
+          );
+
+          if (videoDevices.length === 0) {
+            setCameraError("No camera detected on your device");
+          }
+        } catch (err) {
+          console.error("Error checking camera:", err);
+          setCameraError("Could not access camera. Please check permissions.");
+        }
+      };
+
+      checkCameraAvailability();
+    }
+  }, [showWebcam]);
+
   const handleCapture = async () => {
     if (webcamRef.current) {
-      const image = webcamRef.current.getScreenshot();
-      setCapturedImage(image);
-      setIsCapturing(false);
-
-      // Send image to API for face recognition
       try {
+        const image = webcamRef.current.getScreenshot();
+        if (!image) {
+          setCameraError("Failed to capture image. Please try again.");
+          return;
+        }
+
+        setCapturedImage(image);
+        setIsCapturing(false);
+        setShowWebcam(false);
+
+        // Send image to API for face recognition
         setIsSearching(true);
         setSearchError(null);
 
@@ -367,7 +407,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                   </button>
                 )}
               </div>
-            ) : (
+            ) : showWebcam ? (
               <div className="relative w-full h-full">
                 <Webcam
                   audio={false}
@@ -375,11 +415,22 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
                   videoConstraints={{
-                    width: 256,
-                    height: 256,
-                    facingMode: "user",
+                    width: { ideal: 256 },
+                    height: { ideal: 256 },
+                    facingMode: { ideal: "user" },
                   }}
                   className="w-full h-full object-cover"
+                  onUserMediaError={(err) => {
+                    console.error("Webcam error:", err);
+                    setCameraError(
+                      `Camera error: ${
+                        err.name === "NotAllowedError"
+                          ? "Permission denied"
+                          : err.message || "Unknown error"
+                      }`
+                    );
+                    setShowWebcam(false);
+                  }}
                 />
                 {isCapturing && (
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -387,6 +438,27 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                       {countdown === 0 ? "" : countdown}
                     </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                {cameraError ? (
+                  <div className="text-center text-red-400">
+                    <p className="mb-3">{cameraError}</p>
+                    <button
+                      onClick={startCamera}
+                      className="bg-white text-black px-4 py-2 rounded-lg"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={startCamera}
+                    className="bg-white text-black px-6 py-3 rounded-lg flex items-center"
+                  >
+                    <FaCamera className="mr-2" /> Start Camera
+                  </button>
                 )}
               </div>
             )}
@@ -397,7 +469,9 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
         {capturedImage ? (
           renderSearchResults()
         ) : (
-          <h2 className="text-4xl font-light mt-4">Scan your face</h2>
+          <h2 className="text-4xl font-light mt-4">
+            {showWebcam ? "Scan your face" : "Tap to start camera"}
+          </h2>
         )}
       </div>
     </div>
