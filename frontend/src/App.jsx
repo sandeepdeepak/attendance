@@ -8,6 +8,7 @@ import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
 import MemberPlan from "./pages/MemberPlan/MemberPlan";
 import Login from "./pages/Login/Login";
+import HomePage from "./pages/HomePage/HomePage";
 import { API_URL } from "./config";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [gymOwner, setGymOwner] = useState(null);
   const [isVerifying, setIsVerifying] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   // Check for existing auth token on load
   useEffect(() => {
@@ -204,9 +206,59 @@ function App() {
     );
   }
 
-  // Show login if not authenticated
+  // Handle login button click from home page
+  const handleLoginClick = () => {
+    setShowLogin(true);
+  };
+
+  // Handle back to home from login page
+  const handleBackToHome = () => {
+    setShowLogin(false);
+  };
+
+  // Show face recognition, member details, login, or home page if not authenticated
   if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
+    if (currentPage === "faceRecognition") {
+      return (
+        <FaceRecognition
+          key={faceRecognitionKey}
+          onBackClick={() => setCurrentPage("home")}
+          onMemberClick={handleMemberClick}
+        />
+      );
+    } else if (currentPage === "memberDetails") {
+      return (
+        <MemberDetails
+          memberId={selectedMemberId}
+          onBackClick={() => setCurrentPage("faceRecognition")}
+          onMemberPlanClick={handleMemberPlanClick}
+          fromFaceRecognition={true}
+        />
+      );
+    } else if (currentPage === "memberPlan") {
+      return (
+        <MemberPlan
+          memberId={selectedMemberId}
+          selectedDate={selectedDate}
+          onBackClick={() => setCurrentPage("memberDetails")}
+          fromFaceRecognition={true}
+        />
+      );
+    } else if (showLogin) {
+      return (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onBackClick={handleBackToHome}
+        />
+      );
+    } else {
+      return (
+        <HomePage
+          onFaceRecognitionClick={handleFaceRecognitionClick}
+          onLoginClick={handleLoginClick}
+        />
+      );
+    }
   }
 
   // Show main app if authenticated

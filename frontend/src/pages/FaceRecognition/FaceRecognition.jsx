@@ -19,6 +19,7 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
   const [searchError, setSearchError] = useState(null);
   const [showResultTimer, setShowResultTimer] = useState(null);
   const [membershipExpired, setMembershipExpired] = useState(false);
+  const [memberId, setMemberId] = useState(null);
   const webcamRef = useRef(null);
 
   // Start countdown when component mounts
@@ -84,19 +85,17 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
             // Set the state for UI rendering
             setMembershipExpired(isExpired);
 
-            // Only set timer to return if membership is not expired
-            if (!isExpired) {
-              const timer = setTimeout(() => {
-                onBackClick(); // Return to dashboard after 2 seconds
-              }, 2000);
-              setShowResultTimer(timer);
+            // Store member ID for the "View Details" button
+            if (result.id) {
+              setMemberId(result.id);
+            } else if (result.member && result.member.id) {
+              setMemberId(result.member.id);
             }
           } else if (result.match) {
-            // If there's a match but no member details, set timer to return
-            const timer = setTimeout(() => {
-              onBackClick(); // Return to dashboard after 2 seconds
-            }, 2000);
-            setShowResultTimer(timer);
+            // If there's a match but no member details
+            if (result.id) {
+              setMemberId(result.id);
+            }
           }
         } else {
           // Simulate API response if axios is not available
@@ -120,11 +119,8 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
           };
           setSearchResult(mockResult);
 
-          // Set a timer to return to dashboard after 2 seconds
-          const timer = setTimeout(() => {
-            onBackClick(); // Return to dashboard
-          }, 2000);
-          setShowResultTimer(timer);
+          // Store member ID for the "View Details" button
+          setMemberId(mockResult.person.id);
         }
       } catch (error) {
         console.error("Error searching face:", error);
@@ -297,6 +293,18 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
                     : "✓ Attendance Recorded"}
                 </p>
                 <p className="text-sm">{formattedTime}</p>
+              </div>
+            )}
+
+            {/* View Member Details button */}
+            {memberId && (
+              <div className="mt-4">
+                <button
+                  onClick={() => onMemberClick(memberId)}
+                  className="bg-[#024a72] hover:bg-[#03395a] text-white px-6 py-3 rounded-lg font-bold"
+                >
+                  View Member Details
+                </button>
               </div>
             )}
           </div>

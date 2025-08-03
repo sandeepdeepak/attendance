@@ -145,6 +145,7 @@ const WorkoutPlan = ({
   selectedDate,
   onBackClick,
   hideHeader = false,
+  fromFaceRecognition = false,
 }) => {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -200,18 +201,28 @@ const WorkoutPlan = ({
   // Function to save workout plan to the database
   const saveWorkoutPlan = async () => {
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem("authToken");
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please login again.");
-      }
+      let config = {};
+      let endpoint = `${API_URL}/api/workout-plans`;
 
-      // Create axios config with auth header
-      const config = {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      };
+      // If coming from face recognition, use public endpoint
+      if (fromFaceRecognition) {
+        endpoint = `${API_URL}/api/workout-plans/public`;
+      } else {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+      }
 
       // Prepare exercises with setCount and repsCount defaulting to 1 and 10 if missing
       const exercisesToSave = workoutPlan.exercises.map((exercise) => ({
@@ -221,7 +232,7 @@ const WorkoutPlan = ({
       }));
 
       await axios.post(
-        `${API_URL}/api/workout-plans`,
+        endpoint,
         {
           memberId,
           date: selectedDate,
@@ -401,26 +412,33 @@ const WorkoutPlan = ({
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const authToken = localStorage.getItem("authToken");
-        if (!authToken) {
-          throw new Error(
-            "Authentication token not found. Please login again."
-          );
+        let config = {};
+
+        // If coming from face recognition, don't require authentication
+        if (!fromFaceRecognition) {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          if (!authToken) {
+            throw new Error(
+              "Authentication token not found. Please login again."
+            );
+          }
+
+          // Create axios config with auth header
+          config = {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          };
         }
 
-        // Create axios config with auth header
-        const config = {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        };
+        // Determine which API endpoint to use based on source
+        const memberEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/members/${memberId}/public`
+          : `${API_URL}/api/members/${memberId}`;
 
         // Fetch member details
-        const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`,
-          config
-        );
+        const memberResponse = await axios.get(memberEndpoint, config);
 
         if (memberResponse.data && memberResponse.data.member) {
           setMember(memberResponse.data.member);
@@ -436,7 +454,7 @@ const WorkoutPlan = ({
     if (memberId) {
       fetchMemberDetails();
     }
-  }, [memberId]);
+  }, [memberId, fromFaceRecognition]);
 
   // New useEffect to fetch workout plan on memberId or selectedDate change
   useEffect(() => {
@@ -446,25 +464,32 @@ const WorkoutPlan = ({
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const authToken = localStorage.getItem("authToken");
-        if (!authToken) {
-          throw new Error(
-            "Authentication token not found. Please login again."
-          );
+        let config = {};
+
+        // If coming from face recognition, don't require authentication
+        if (!fromFaceRecognition) {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          if (!authToken) {
+            throw new Error(
+              "Authentication token not found. Please login again."
+            );
+          }
+
+          // Create axios config with auth header
+          config = {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          };
         }
 
-        // Create axios config with auth header
-        const config = {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        };
+        // Determine which API endpoint to use based on source
+        const workoutPlanEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/workout-plans/${memberId}/${selectedDate}/public`
+          : `${API_URL}/api/workout-plans/${memberId}/${selectedDate}`;
 
-        const response = await axios.get(
-          `${API_URL}/api/workout-plans/${memberId}/${selectedDate}`,
-          config
-        );
+        const response = await axios.get(workoutPlanEndpoint, config);
 
         if (response.data && response.data.workoutPlan) {
           // Ensure setCount and repsCount are set for each exercise
@@ -492,7 +517,7 @@ const WorkoutPlan = ({
     };
 
     fetchWorkoutPlan();
-  }, [memberId, selectedDate]);
+  }, [memberId, selectedDate, fromFaceRecognition]);
 
   // Save workout plan whenever it changes
   useEffect(() => {
@@ -572,30 +597,35 @@ const WorkoutPlan = ({
       // Send to WhatsApp
       if (member && member.phoneNumber) {
         try {
-          // Get auth token from localStorage
-          const authToken = localStorage.getItem("authToken");
-          if (!authToken) {
-            throw new Error(
-              "Authentication token not found. Please login again."
-            );
-          }
-
-          // Create axios config with auth header
-          const config = {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
+          let endpoint = `${API_URL}/api/send-workout-plan-whatsapp`;
+          let config = {};
+          let data = {
+            memberId,
+            date: selectedDate,
+            phoneNumber: member.phoneNumber,
           };
 
-          const response = await axios.post(
-            `${API_URL}/api/send-workout-plan-whatsapp`,
-            {
-              memberId,
-              date: selectedDate,
-              phoneNumber: member.phoneNumber,
-            },
-            config
-          );
+          // If coming from face recognition, use public endpoint
+          if (fromFaceRecognition) {
+            endpoint = `${API_URL}/api/send-workout-plan-whatsapp/public`;
+          } else {
+            // Get auth token from localStorage
+            const authToken = localStorage.getItem("authToken");
+            if (!authToken) {
+              throw new Error(
+                "Authentication token not found. Please login again."
+              );
+            }
+
+            // Create axios config with auth header
+            config = {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            };
+          }
+
+          const response = await axios.post(endpoint, data, config);
 
           if (response.data.success) {
             setStatusMessage({

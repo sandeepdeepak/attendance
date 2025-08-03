@@ -6,7 +6,12 @@ import axios from "axios";
 import { API_URL } from "../../config";
 import "./MemberPlan.css";
 
-const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
+const MemberPlan = ({
+  memberId,
+  selectedDate,
+  onBackClick,
+  fromFaceRecognition = false,
+}) => {
   const [activeTab, setActiveTab] = useState("diet"); // "diet" or "workout"
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,26 +34,33 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const authToken = localStorage.getItem("authToken");
-        if (!authToken) {
-          throw new Error(
-            "Authentication token not found. Please login again."
-          );
+        let config = {};
+
+        // If coming from face recognition, don't require authentication
+        if (!fromFaceRecognition) {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          if (!authToken) {
+            throw new Error(
+              "Authentication token not found. Please login again."
+            );
+          }
+
+          // Create axios config with auth header
+          config = {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          };
         }
 
-        // Create axios config with auth header
-        const config = {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        };
+        // Determine which API endpoint to use based on source
+        const memberEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/members/${memberId}/public`
+          : `${API_URL}/api/members/${memberId}`;
 
         // Fetch member details
-        const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`,
-          config
-        );
+        const memberResponse = await axios.get(memberEndpoint, config);
 
         if (memberResponse.data && memberResponse.data.member) {
           setMember(memberResponse.data.member);
@@ -64,7 +76,7 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
     if (memberId) {
       fetchMemberDetails();
     }
-  }, [memberId]);
+  }, [memberId, fromFaceRecognition]);
 
   if (loading) {
     return (
@@ -165,6 +177,7 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
           selectedDate={selectedDate}
           onBackClick={onBackClick}
           hideHeader={true} // Hide the header in DietPlan since we have it in the parent
+          fromFaceRecognition={fromFaceRecognition}
         />
       ) : (
         <WorkoutPlan
@@ -172,6 +185,7 @@ const MemberPlan = ({ memberId, selectedDate, onBackClick }) => {
           selectedDate={selectedDate}
           onBackClick={onBackClick}
           hideHeader={true} // Hide the header in WorkoutPlan since we have it in the parent
+          fromFaceRecognition={fromFaceRecognition}
         />
       )}
     </div>

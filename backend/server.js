@@ -641,6 +641,48 @@ app.post("/api/search", upload.single("image"), async (req, res) => {
   }
 });
 
+// Get attendance records for a specific member (public version for face recognition)
+app.get("/api/attendance/:memberId/public", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const { date } = req.query; // Optional date filter in YYYY-MM-DD format
+
+    let scanParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+      },
+    };
+
+    // Add date filter if provided
+    if (date) {
+      scanParams.FilterExpression += " AND begins_with(#ts, :date)";
+      scanParams.ExpressionAttributeValues[":date"] = date;
+      scanParams.ExpressionAttributeNames = {
+        "#ts": "timestamp",
+      };
+    }
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // Sort by timestamp
+    const sortedRecords = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        )
+      : [];
+
+    res.json({
+      memberId,
+      records: sortedRecords,
+    });
+  } catch (error) {
+    console.error("Error getting attendance records:", error);
+    res.status(500).json({ error: "Failed to get attendance records" });
+  }
+});
+
 // Get attendance records for a specific member
 app.get("/api/attendance/:memberId", async (req, res) => {
   try {
@@ -1108,6 +1150,36 @@ app.get("/api/members", authenticateToken, async (req, res) => {
   }
 });
 
+// Get a specific member by ID (public version for face recognition)
+app.get("/api/members/:id/public", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the member with the given ID
+    const scanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // If member is found, return it
+    if (result.Items && result.Items.length > 0) {
+      return res.json({
+        member: result.Items[0],
+      });
+    }
+
+    return res.status(404).json({ error: "Member not found" });
+  } catch (error) {
+    console.error("Error getting member:", error);
+    res.status(500).json({ error: "Failed to get member" });
+  }
+});
+
 // Get a specific member by ID
 app.get("/api/members/:id", authenticateToken, async (req, res) => {
   try {
@@ -1473,7 +1545,7 @@ app.delete("/api/members/:id", async (req, res) => {
   }
 });
 
-// Delete all faces from a collection
+// Delete all faces from a collection (DELETE method)
 app.delete("/api/faces", async (req, res) => {
   try {
     const { collectionId = "my-face-collection" } = req.query;
@@ -1646,6 +1718,39 @@ app.post("/api/memberships", async (req, res) => {
   } catch (error) {
     console.error("Error creating membership:", error);
     res.status(500).json({ error: "Failed to create membership" });
+  }
+});
+
+// Get all membership records for a member (public version for face recognition)
+app.get("/api/memberships/:memberId/public", async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+    // Scan the memberships table for records with this memberId
+    const scanParams = {
+      TableName: MEMBERSHIPS_TABLE,
+      FilterExpression: "memberId = :memberId",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // Sort by createdAt in descending order (newest first)
+    const sortedMemberships = result.Items
+      ? result.Items.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      : [];
+
+    res.json({
+      memberId,
+      memberships: sortedMemberships,
+    });
+  } catch (error) {
+    console.error("Error getting memberships:", error);
+    res.status(500).json({ error: "Failed to get memberships" });
   }
 });
 
@@ -1974,6 +2079,51 @@ app.get("/api/attendance-today", async (req, res) => {
 });
 
 // Diet plan endpoints
+// Get diet plan for a specific member and date (public version for face recognition)
+app.get("/api/diet-plans/:memberId/:date/public", async (req, res) => {
+  try {
+    const { memberId, date } = req.params;
+
+    const params = {
+      TableName: DIET_PLANS_TABLE,
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (result.Item) {
+      res.json({
+        success: true,
+        dietPlan: result.Item,
+      });
+    } else {
+      res.json({
+        success: true,
+        dietPlan: {
+          memberId,
+          date,
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          nutritionTotals: {
+            calories: 0,
+            carbs: 0,
+            fats: 0,
+            proteins: 0,
+            fibre: 0,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error getting diet plan:", error);
+    res.status(500).json({ error: "Failed to get diet plan" });
+  }
+});
+
 // Get diet plan for a specific member and date
 app.get("/api/diet-plans/:memberId/:date", async (req, res) => {
   try {
@@ -2016,6 +2166,53 @@ app.get("/api/diet-plans/:memberId/:date", async (req, res) => {
   } catch (error) {
     console.error("Error getting diet plan:", error);
     res.status(500).json({ error: "Failed to get diet plan" });
+  }
+});
+
+// Save or update diet plan (public version for face recognition)
+app.post("/api/diet-plans/public", async (req, res) => {
+  try {
+    const { memberId, date, breakfast, lunch, dinner, nutritionTotals } =
+      req.body;
+
+    if (!memberId || !date) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date",
+      });
+    }
+
+    const dietPlanItem = {
+      memberId,
+      date,
+      breakfast: breakfast || [],
+      lunch: lunch || [],
+      dinner: dinner || [],
+      nutritionTotals: nutritionTotals || {
+        calories: 0,
+        carbs: 0,
+        fats: 0,
+        proteins: 0,
+        fibre: 0,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: DIET_PLANS_TABLE,
+      Item: dietPlanItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(200).json({
+      success: true,
+      message: "Diet plan saved successfully",
+      dietPlan: dietPlanItem,
+    });
+  } catch (error) {
+    console.error("Error saving diet plan:", error);
+    res.status(500).json({ error: "Failed to save diet plan" });
   }
 });
 
@@ -2063,6 +2260,148 @@ app.post("/api/diet-plans", async (req, res) => {
   } catch (error) {
     console.error("Error saving diet plan:", error);
     res.status(500).json({ error: "Failed to save diet plan" });
+  }
+});
+
+// Send diet plan to WhatsApp (public version for face recognition)
+app.post("/api/send-diet-plan-whatsapp/public", async (req, res) => {
+  try {
+    const { memberId, date, phoneNumber } = req.body;
+
+    if (!memberId || !date || !phoneNumber) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date, phoneNumber",
+      });
+    }
+
+    // Get diet plan from database
+    const params = {
+      TableName: DIET_PLANS_TABLE,
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Diet plan not found" });
+    }
+
+    const dietPlan = result.Item;
+
+    // Format the date for the message template
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Format phone number (ensure it has country code)
+    const formattedPhone = phoneNumber.startsWith("+")
+      ? phoneNumber
+      : `+91${phoneNumber}`; // Assuming Indian numbers
+
+    // Format food lists for each meal
+    const formatFoodList = (foods) => {
+      if (!foods || foods.length === 0) return "No items added";
+
+      return foods
+        .map(
+          (food) =>
+            `• ${food.quantity}x ${food.name} (${
+              food.totalCalories || food.calories
+            } kcal)`
+        )
+        .join("\n");
+    };
+
+    const breakfastText = formatFoodList(dietPlan.breakfast);
+    const lunchText = formatFoodList(dietPlan.lunch);
+    const dinnerText = formatFoodList(dietPlan.dinner);
+
+    // Get gym contact number from environment variable or use a default
+    const gymContactNumber =
+      process.env.GYM_CONTACT_NUMBER || "+91 98765 43210";
+
+    // Get member details
+    const memberScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const memberResult = await docClient.send(
+      new ScanCommand(memberScanParams)
+    );
+    const memberName =
+      memberResult.Items && memberResult.Items.length > 0
+        ? memberResult.Items[0].fullName
+        : "Member";
+
+    // Use child_process to execute the curl command
+    const { exec } = require("child_process");
+
+    // Get auth token from environment variable or use a default for development
+    const authToken = process.env.TWILIO_AUTH_TOKEN || "your_auth_token_here";
+    const twilioAccountId =
+      process.env.TWILIO_ACCOUNT_SID || "your_account_sid_here";
+
+    // Create the message body with full diet plan details
+    const messageBody = `FITNESS ZONE - YOUR PERSONALIZED DIET PLAN
+    
+📅 Date: ${formattedDate}
+
+Dear ${memberName},
+
+Here your customized diet plan to help you achieve your fitness goals:
+
+BREAKFAST 🍳
+${breakfastText}
+
+LUNCH 🥗
+${lunchText}
+
+DINNER 🍽️
+${dinnerText}
+
+DAILY NUTRITION SUMMARY
+• Calories: ${dietPlan.nutritionTotals.calories} kcal
+• Protein: ${dietPlan.nutritionTotals.proteins} g
+• Carbs: ${dietPlan.nutritionTotals.carbs} g
+• Fats: ${dietPlan.nutritionTotals.fats} g
+• Fiber: ${dietPlan.nutritionTotals.fibre} g
+
+Stay consistent with your diet plan and workout routine!
+
+For any questions, contact your trainer at ${gymContactNumber}.
+
+FITNESS ZONE - Building Better Bodies`;
+
+    console.log(messageBody);
+
+    // Create the curl command with a simple message body
+    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=${formattedPhone}' --data-urlencode 'From=+12526594159' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
+
+    // Execute the curl command
+    exec(curlCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing curl command: ${error}`);
+        return res
+          .status(500)
+          .json({ error: "Failed to send WhatsApp message" });
+      }
+
+      console.log(`WhatsApp message sent successfully: ${stdout}`);
+      res.json({ success: true, message: "Diet plan sent to WhatsApp" });
+    });
+  } catch (error) {
+    console.error("Error sending WhatsApp message:", error);
+    res.status(500).json({ error: "Failed to send WhatsApp message" });
   }
 });
 
@@ -2560,6 +2899,42 @@ app.get("/api/calculate-calories/:memberId", async (req, res) => {
 });
 
 // Workout plan endpoints
+// Get workout plan for a specific member and date (public version for face recognition)
+app.get("/api/workout-plans/:memberId/:date/public", async (req, res) => {
+  try {
+    const { memberId, date } = req.params;
+
+    const params = {
+      TableName: "workout_plans",
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (result.Item) {
+      res.json({
+        success: true,
+        workoutPlan: result.Item,
+      });
+    } else {
+      res.json({
+        success: true,
+        workoutPlan: {
+          memberId,
+          date,
+          exercises: [],
+        },
+      });
+    }
+  } catch (error) {
+    console.error("Error getting workout plan:", error);
+    res.status(500).json({ error: "Failed to get workout plan" });
+  }
+});
+
 // Get workout plan for a specific member and date
 app.get("/api/workout-plans/:memberId/:date", async (req, res) => {
   try {
@@ -2593,6 +2968,43 @@ app.get("/api/workout-plans/:memberId/:date", async (req, res) => {
   } catch (error) {
     console.error("Error getting workout plan:", error);
     res.status(500).json({ error: "Failed to get workout plan" });
+  }
+});
+
+// Save or update workout plan (public version for face recognition)
+app.post("/api/workout-plans/public", async (req, res) => {
+  try {
+    const { memberId, date, exercises } = req.body;
+
+    if (!memberId || !date) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date",
+      });
+    }
+
+    const workoutPlanItem = {
+      memberId,
+      date,
+      exercises: exercises || [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: "workout_plans",
+      Item: workoutPlanItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    res.status(200).json({
+      success: true,
+      message: "Workout plan saved successfully",
+      workoutPlan: workoutPlanItem,
+    });
+  } catch (error) {
+    console.error("Error saving workout plan:", error);
+    res.status(500).json({ error: "Failed to save workout plan" });
   }
 });
 
@@ -2630,6 +3042,134 @@ app.post("/api/workout-plans", async (req, res) => {
   } catch (error) {
     console.error("Error saving workout plan:", error);
     res.status(500).json({ error: "Failed to save workout plan" });
+  }
+});
+
+// Send workout plan to WhatsApp (public version for face recognition)
+app.post("/api/send-workout-plan-whatsapp/public", async (req, res) => {
+  try {
+    const { memberId, date, phoneNumber } = req.body;
+
+    if (!memberId || !date || !phoneNumber) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "memberId, date, phoneNumber",
+      });
+    }
+
+    // Get workout plan from database
+    const params = {
+      TableName: "workout_plans",
+      Key: {
+        memberId,
+        date,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    const workoutPlan = result.Item;
+
+    // Format the date for the message template
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    // Format phone number (ensure it has country code)
+    const formattedPhone = phoneNumber.startsWith("+")
+      ? phoneNumber
+      : `+91${phoneNumber}`; // Assuming Indian numbers
+
+    // Format exercise list
+    const formatExerciseList = (exercises) => {
+      if (!exercises || exercises.length === 0) return "No exercises added";
+
+      return exercises
+        .map(
+          (exercise, index) =>
+            `${index + 1}) ${exercise.name} \n   ${exercise.setCount} sets x ${
+              exercise.repsCount
+            } reps${exercise.weight > 0 ? ` @ ${exercise.weight}kg` : ""}${
+              exercise.notes ? `\n  Note: ${exercise.notes} \n` : ""
+            }`
+        )
+        .join("\n \n");
+    };
+
+    const exerciseText = formatExerciseList(workoutPlan.exercises);
+
+    // Get gym contact number from environment variable or use a default
+    const gymContactNumber =
+      process.env.GYM_CONTACT_NUMBER || "+91 98765 43210";
+
+    // Get member details
+    const memberScanParams = {
+      TableName: MEMBERS_TABLE,
+      FilterExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": memberId,
+      },
+    };
+
+    const memberResult = await docClient.send(
+      new ScanCommand(memberScanParams)
+    );
+    const memberName =
+      memberResult.Items && memberResult.Items.length > 0
+        ? memberResult.Items[0].fullName
+        : "Member";
+
+    // Use child_process to execute the curl command
+    const { exec } = require("child_process");
+
+    // Get auth token from environment variable or use a default for development
+    const authToken = process.env.TWILIO_AUTH_TOKEN || "your_auth_token_here";
+    const twilioAccountId =
+      process.env.TWILIO_ACCOUNT_SID || "your_account_sid_here";
+
+    // Create the message body with full workout plan details
+    const messageBody = `FITNESS ZONE - YOUR WORKOUT PLAN
+    
+📅 Date: ${formattedDate}
+
+Dear ${memberName},
+
+Here is your personalized workout plan:
+
+${exerciseText}
+
+Remember to warm up properly before starting your workout and cool down afterward.
+
+For any questions, contact your trainer at ${gymContactNumber}.
+
+FITNESS ZONE - Building Better Bodies`;
+
+    console.log(messageBody);
+
+    // Create the curl command
+    const curlCommand = `curl 'https://api.twilio.com/2010-04-01/Accounts/${twilioAccountId}/Messages.json' -X POST --data-urlencode 'To=${formattedPhone}' --data-urlencode 'From=+12526594159' --data-urlencode 'Body=${messageBody}' -u ${twilioAccountId}:${authToken}`;
+
+    // Execute the curl command
+    exec(curlCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing curl command: ${error}`);
+        return res
+          .status(500)
+          .json({ error: "Failed to send WhatsApp message" });
+      }
+
+      console.log(`WhatsApp message sent successfully: ${stdout}`);
+      res.json({ success: true, message: "Workout plan sent to WhatsApp" });
+    });
+  } catch (error) {
+    console.error("Error sending WhatsApp message:", error);
+    res.status(500).json({ error: "Failed to send WhatsApp message" });
   }
 });
 
@@ -3203,6 +3743,81 @@ app.post("/api/push-subscriptions", async (req, res) => {
   } catch (error) {
     console.error("Error saving subscription:", error);
     res.status(500).json({ error: "Failed to save subscription" });
+  }
+});
+
+// Delete all faces from a collection (POST method)
+app.post("/api/delete-all-faces", async (req, res) => {
+  try {
+    const { collectionId = "my-face-collection" } = req.body;
+
+    // Import the necessary commands
+    const {
+      ListFacesCommand,
+      DeleteFacesCommand,
+    } = require("@aws-sdk/client-rekognition");
+
+    // First, list all faces in the collection
+    const listFacesParams = {
+      CollectionId: collectionId,
+      MaxResults: 4096, // Maximum allowed by the API
+    };
+
+    const listFacesResult = await rekClient.send(
+      new ListFacesCommand(listFacesParams)
+    );
+
+    if (listFacesResult.Faces && listFacesResult.Faces.length > 0) {
+      // Extract face IDs
+      const faceIds = listFacesResult.Faces.map((face) => face.FaceId);
+
+      // Delete the faces
+      const deleteFacesParams = {
+        CollectionId: collectionId,
+        FaceIds: faceIds,
+      };
+
+      const deleteFacesResult = await rekClient.send(
+        new DeleteFacesCommand(deleteFacesParams)
+      );
+
+      // Also delete the corresponding entries from DynamoDB
+      const scanParams = {
+        TableName: MEMBERS_TABLE,
+      };
+
+      const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+      if (scanResult.Items && scanResult.Items.length > 0) {
+        // Delete each member
+        for (const member of scanResult.Items) {
+          const deleteParams = {
+            TableName: MEMBERS_TABLE,
+            Key: {
+              id: member.id,
+              phoneNumber: member.phoneNumber,
+            },
+          };
+
+          await docClient.send(new DeleteCommand(deleteParams));
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "All faces deleted successfully",
+        deletedFaces: deleteFacesResult.DeletedFaces.length,
+        deletedMembers: scanResult.Items ? scanResult.Items.length : 0,
+      });
+    } else {
+      res.json({
+        success: true,
+        message: "No faces found in the collection",
+      });
+    }
+  } catch (error) {
+    console.error("Error deleting faces:", error);
+    res.status(500).json({ error: "Failed to delete faces" });
   }
 });
 

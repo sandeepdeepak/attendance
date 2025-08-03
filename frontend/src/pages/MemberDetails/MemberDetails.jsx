@@ -4,7 +4,12 @@ import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
 
-const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
+const MemberDetails = ({
+  memberId,
+  onBackClick,
+  onMemberPlanClick,
+  fromFaceRecognition = false,
+}) => {
   const [member, setMember] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,46 +48,55 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
         setLoading(true);
         setError(null);
 
-        // Get auth token from localStorage
-        const authToken = localStorage.getItem("authToken");
-        if (!authToken) {
-          throw new Error(
-            "Authentication token not found. Please login again."
-          );
+        let config = {};
+
+        // If coming from face recognition, don't require authentication
+        if (!fromFaceRecognition) {
+          // Get auth token from localStorage
+          const authToken = localStorage.getItem("authToken");
+          if (!authToken) {
+            throw new Error(
+              "Authentication token not found. Please login again."
+            );
+          }
+
+          // Create axios config with auth header
+          config = {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          };
         }
 
-        // Create axios config with auth header
-        const config = {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        };
+        // Determine which API endpoint to use based on source
+        const memberEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/members/${memberId}/public`
+          : `${API_URL}/api/members/${memberId}`;
 
         // Fetch member details
-        const memberResponse = await axios.get(
-          `${API_URL}/api/members/${memberId}`,
-          config
-        );
+        const memberResponse = await axios.get(memberEndpoint, config);
 
         if (memberResponse.data && memberResponse.data.member) {
           setMember(memberResponse.data.member);
         }
 
         // Fetch membership history
-        const membershipResponse = await axios.get(
-          `${API_URL}/api/memberships/${memberId}`,
-          config
-        );
+        const membershipEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/memberships/${memberId}/public`
+          : `${API_URL}/api/memberships/${memberId}`;
+
+        const membershipResponse = await axios.get(membershipEndpoint, config);
 
         if (membershipResponse.data && membershipResponse.data.memberships) {
           setMembershipHistory(membershipResponse.data.memberships);
         }
 
         // Fetch attendance records
-        const attendanceResponse = await axios.get(
-          `${API_URL}/api/attendance/${memberId}`,
-          config
-        );
+        const attendanceEndpoint = fromFaceRecognition
+          ? `${API_URL}/api/attendance/${memberId}/public`
+          : `${API_URL}/api/attendance/${memberId}`;
+
+        const attendanceResponse = await axios.get(attendanceEndpoint, config);
 
         if (attendanceResponse.data && attendanceResponse.data.records) {
           const records = attendanceResponse.data.records;
@@ -100,7 +114,7 @@ const MemberDetails = ({ memberId, onBackClick, onMemberPlanClick }) => {
     if (memberId) {
       fetchMemberDetails();
     }
-  }, [memberId]);
+  }, [memberId, fromFaceRecognition]);
 
   // Calculate age from date of birth
   const calculateAge = (birthDate) => {

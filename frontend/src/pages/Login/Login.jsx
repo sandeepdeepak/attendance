@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { API_URL } from "../../config";
 import logoImage from "../../assets/logo.png";
+import { FaArrowLeft } from "react-icons/fa";
 import "./Login.css";
 
-const Login = ({ onLoginSuccess }) => {
+const Login = ({ onLoginSuccess, onBackClick }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +58,15 @@ const Login = ({ onLoginSuccess }) => {
 
   return (
     <div className="login-container">
+      {onBackClick && (
+        <button
+          onClick={onBackClick}
+          className="back-button"
+          aria-label="Back to home"
+        >
+          <FaArrowLeft size={20} />
+        </button>
+      )}
       <div className="login-logo-container">
         <div className="login-logo">
           <img src={logoImage} alt="Gym Logo" className="dumbbell-icon" />
