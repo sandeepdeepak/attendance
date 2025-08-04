@@ -1,0 +1,60 @@
+/* MemberProgress.css */
+.chart-container {
+  width: 100%;
+  height: 350px;
+  margin-top: 20px;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Responsive adjustments for the chart */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 300px;
+    margin-left: -10px;
+    margin-right: -10px;
+    width: calc(100% + 20px);
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    height: 280px;
+    margin-left: -15px;
+    margin-right: -15px;
+    width: calc(100% + 30px);
+  }
+
+  /* Make the chart more visible on small screens */
+  .recharts-cartesian-axis-tick-value {
+    font-size: 10px !important;
+  }
+
+  .recharts-legend-item-text {
+    font-size: 10px !important;
+  }
+}
+
+.no-data-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #a0aec0;
+  font-size: 16px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Recharts custom styles */
+.recharts-tooltip-cursor {
+  stroke: rgba(255, 255, 255, 0.2) !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: #a0aec0 !important;
+}
+
+.recharts-legend-item-text {
+  color: #ffffff !important;
+}

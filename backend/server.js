@@ -2286,6 +2286,149 @@ app.get("/api/diet-plans/:memberId/:date", async (req, res) => {
   }
 });
 
+// Get calorie data for a specific member and month (for progress chart)
+app.get("/api/calorie-progress/:memberId/:yearMonth", async (req, res) => {
+  try {
+    const { memberId, yearMonth } = req.params;
+
+    // Validate yearMonth format (YYYY-MM)
+    if (!yearMonth.match(/^\d{4}-\d{2}$/)) {
+      return res.status(400).json({
+        error: "Invalid yearMonth format. Expected format: YYYY-MM",
+      });
+    }
+
+    // Scan the diet plans table for the specified member and month
+    const scanParams = {
+      TableName: DIET_PLANS_TABLE,
+      FilterExpression:
+        "memberId = :memberId AND begins_with(#date, :yearMonth)",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+        ":yearMonth": yearMonth,
+      },
+      ExpressionAttributeNames: {
+        "#date": "date",
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    // Process the results to get daily calorie totals
+    const dailyCalories = {};
+
+    if (result.Items && result.Items.length > 0) {
+      result.Items.forEach((item) => {
+        if (
+          item.nutritionTotals &&
+          item.nutritionTotals.calories !== undefined
+        ) {
+          dailyCalories[item.date] = item.nutritionTotals.calories;
+        }
+      });
+    }
+
+    // Get the number of days in the month
+    const [year, month] = yearMonth.split("-").map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // Create an array with calorie data for each day of the month
+    const calorieData = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStr = day < 10 ? `0${day}` : `${day}`;
+      const date = `${yearMonth}-${dayStr}`;
+
+      calorieData.push({
+        date,
+        calories: dailyCalories[date] || 0,
+      });
+    }
+
+    res.json({
+      success: true,
+      memberId,
+      yearMonth,
+      calorieData,
+    });
+  } catch (error) {
+    console.error("Error getting calorie progress data:", error);
+    res.status(500).json({ error: "Failed to get calorie progress data" });
+  }
+});
+
+// Get calorie data for a specific member and month (public version for face recognition)
+app.get(
+  "/api/calorie-progress/:memberId/:yearMonth/public",
+  async (req, res) => {
+    try {
+      const { memberId, yearMonth } = req.params;
+
+      // Validate yearMonth format (YYYY-MM)
+      if (!yearMonth.match(/^\d{4}-\d{2}$/)) {
+        return res.status(400).json({
+          error: "Invalid yearMonth format. Expected format: YYYY-MM",
+        });
+      }
+
+      // Scan the diet plans table for the specified member and month
+      const scanParams = {
+        TableName: DIET_PLANS_TABLE,
+        FilterExpression:
+          "memberId = :memberId AND begins_with(#date, :yearMonth)",
+        ExpressionAttributeValues: {
+          ":memberId": memberId,
+          ":yearMonth": yearMonth,
+        },
+        ExpressionAttributeNames: {
+          "#date": "date",
+        },
+      };
+
+      const result = await docClient.send(new ScanCommand(scanParams));
+
+      // Process the results to get daily calorie totals
+      const dailyCalories = {};
+
+      if (result.Items && result.Items.length > 0) {
+        result.Items.forEach((item) => {
+          if (
+            item.nutritionTotals &&
+            item.nutritionTotals.calories !== undefined
+          ) {
+            dailyCalories[item.date] = item.nutritionTotals.calories;
+          }
+        });
+      }
+
+      // Get the number of days in the month
+      const [year, month] = yearMonth.split("-").map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      // Create an array with calorie data for each day of the month
+      const calorieData = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayStr = day < 10 ? `0${day}` : `${day}`;
+        const date = `${yearMonth}-${dayStr}`;
+
+        calorieData.push({
+          date,
+          calories: dailyCalories[date] || 0,
+        });
+      }
+
+      res.json({
+        success: true,
+        memberId,
+        yearMonth,
+        calorieData,
+      });
+    } catch (error) {
+      console.error("Error getting calorie progress data:", error);
+      res.status(500).json({ error: "Failed to get calorie progress data" });
+    }
+  }
+);
+
 // Save or update diet plan (public version for face recognition)
 app.post("/api/diet-plans/public", async (req, res) => {
   try {

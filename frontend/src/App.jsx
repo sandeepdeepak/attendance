@@ -8,6 +8,7 @@ import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
 import AttendanceDetails from "./pages/AttendanceDetails/AttendanceDetails";
 import MemberPlan from "./pages/MemberPlan/MemberPlan";
+import MemberProgress from "./pages/MemberProgress/MemberProgress";
 import Login from "./pages/Login/Login";
 import HomePage from "./pages/HomePage/HomePage";
 import { API_URL } from "./config";
@@ -100,6 +101,8 @@ function App() {
       setCurrentPage(previousPage);
     } else if (currentPage === "memberPlan") {
       setCurrentPage("memberDetails");
+    } else if (currentPage === "memberProgress") {
+      setCurrentPage("memberDetails");
     } else {
       setCurrentPage("dashboard");
     }
@@ -124,6 +127,11 @@ function App() {
     setSelectedMemberId(memberId);
     setSelectedDate(date);
     setCurrentPage("memberPlan");
+  };
+
+  const handleMemberProgressClick = (memberId) => {
+    setSelectedMemberId(memberId);
+    setCurrentPage("memberProgress");
   };
 
   // Handle navigation from face recognition to today's member plan
@@ -175,6 +183,7 @@ function App() {
             memberId={selectedMemberId}
             onBackClick={handleBackClick}
             onMemberPlanClick={handleMemberPlanClick}
+            onMemberProgressClick={handleMemberProgressClick}
           />
         );
       case "todayAttendance":
@@ -188,6 +197,14 @@ function App() {
           <MemberPlan
             memberId={selectedMemberId}
             selectedDate={selectedDate}
+            onBackClick={handleBackClick}
+          />
+        );
+
+      case "memberProgress":
+        return (
+          <MemberProgress
+            memberId={selectedMemberId}
             onBackClick={handleBackClick}
           />
         );
@@ -253,6 +270,7 @@ function App() {
           memberId={selectedMemberId}
           onBackClick={() => setCurrentPage("faceRecognition")}
           onMemberPlanClick={handleMemberPlanClick}
+          onMemberProgressClick={handleMemberProgressClick}
           fromFaceRecognition={true}
         />
       );
@@ -261,6 +279,14 @@ function App() {
         <MemberPlan
           memberId={selectedMemberId}
           selectedDate={selectedDate}
+          onBackClick={() => setCurrentPage("memberDetails")}
+          fromFaceRecognition={true}
+        />
+      );
+    } else if (currentPage === "memberProgress") {
+      return (
+        <MemberProgress
+          memberId={selectedMemberId}
           onBackClick={() => setCurrentPage("memberDetails")}
           fromFaceRecognition={true}
         />

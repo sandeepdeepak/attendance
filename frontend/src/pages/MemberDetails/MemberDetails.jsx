@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaArrowLeft, FaCalendar } from "react-icons/fa";
+import { FaArrowLeft, FaCalendar, FaChartBar } from "react-icons/fa";
 import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
@@ -8,6 +8,7 @@ const MemberDetails = ({
   memberId,
   onBackClick,
   onMemberPlanClick,
+  onMemberProgressClick,
   fromFaceRecognition = false,
 }) => {
   const [member, setMember] = useState(null);
@@ -502,12 +503,21 @@ const MemberDetails = ({
 
   return (
     <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
-      {/* Header with back button and member name */}
-      <div className="w-full flex items-center mb-8">
+      {/* Header with back button, member name, and progress icon */}
+      <div className="w-full flex items-center mb-8 relative">
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
         <h1 className="text-4xl font-bold">{member.fullName}</h1>
+        <button
+          className="absolute right-0 text-white p-2 bg-[#024a72] rounded-full"
+          onClick={() =>
+            onMemberProgressClick ? onMemberProgressClick(memberId) : null
+          }
+          title="View Progress"
+        >
+          <FaChartBar size={20} />
+        </button>
       </div>
 
       {/* Membership Extension Modal */}
