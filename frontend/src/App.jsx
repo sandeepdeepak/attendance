@@ -120,6 +120,14 @@ function App() {
     setCurrentPage("memberPlan");
   };
 
+  // Handle navigation from face recognition to today's member plan
+  const handleTodayMemberPlanClick = (memberId) => {
+    setSelectedMemberId(memberId);
+    // Set today's date
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+    setCurrentPage("memberPlan");
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case "dashboard":
@@ -140,6 +148,7 @@ function App() {
             key={faceRecognitionKey}
             onBackClick={handleBackClick}
             onMemberClick={handleMemberClick}
+            onTodayMemberPlanClick={handleTodayMemberPlanClick}
           />
         );
       case "addMember":
@@ -224,6 +233,7 @@ function App() {
           key={faceRecognitionKey}
           onBackClick={() => setCurrentPage("home")}
           onMemberClick={handleMemberClick}
+          onTodayMemberPlanClick={handleTodayMemberPlanClick}
         />
       );
     } else if (currentPage === "memberDetails") {

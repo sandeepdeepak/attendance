@@ -923,7 +923,15 @@ const DietPlan = ({
                             {capitalizeFirstLetter(food.name)}
                           </p>
                           <p className="text-gray-400 text-sm text-left">
-                            {food.totalCalories} kcal
+                            {food.totalCalories} kcal | {food.quantity}{" "}
+                            {food.serving_unit}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalProteins}g Proteins | {food.totalFibre}g
+                            Fibre
                           </p>
                         </div>
                         <div className="quantity-control h-7">
@@ -1003,7 +1011,15 @@ const DietPlan = ({
                             {capitalizeFirstLetter(food.name)}
                           </p>
                           <p className="text-gray-400 text-sm text-left">
-                            {food.totalCalories} kcal
+                            {food.totalCalories} kcal | {food.quantity}{" "}
+                            {food.serving_unit}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalProteins}g Proteins | {food.totalFibre}g
+                            Fibre
                           </p>
                         </div>
                         <div className="quantity-control h-7">
@@ -1083,7 +1099,15 @@ const DietPlan = ({
                             {capitalizeFirstLetter(food.name)}
                           </p>
                           <p className="text-gray-400 text-sm text-left">
-                            {food.totalCalories} kcal
+                            {food.totalCalories} kcal | {food.quantity}{" "}
+                            {food.serving_unit}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
+                          </p>
+                          <p className="text-gray-400 text-xs text-left">
+                            {food.totalProteins}g Proteins | {food.totalFibre}g
+                            Fibre
                           </p>
                         </div>
                         <div className="quantity-control h-7">

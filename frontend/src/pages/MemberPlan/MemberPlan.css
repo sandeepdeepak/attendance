@@ -1,3 +1,21 @@
+/* Fixed header and scrollable content layout */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background-color: #0a1f2e;
+  width: 100%;
+}
+
+.scrollable-content {
+  margin-top: 220px; /* Adjust based on the height of your fixed header */
+  overflow-y: auto;
+  height: calc(100vh - 220px); /* Viewport height minus header height */
+  padding: 0 1rem; /* Add horizontal padding to match the header */
+}
+
 .toggle-container {
   display: flex;
   justify-content: center;

@@ -115,79 +115,89 @@ const MemberPlan = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
-      {/* Header with back button and member name */}
-      <button className="text-white p-2" onClick={onBackClick}>
-        <FaArrowLeft size={18} />
-      </button>
-      <div className="flex items-start space-x-2">
-        <div className="items-center w-full">
-          <div className="text-xl font-bold flex-grow">{member.fullName}</div>
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col">
+      {/* Fixed header section */}
+      <div className="fixed-header px-4 py-4">
+        {/* Header with back button and member name */}
+        <button className="text-white p-2" onClick={onBackClick}>
+          <FaArrowLeft size={18} />
+        </button>
+        <div className="flex items-start space-x-2">
+          <div className="items-center w-full">
+            <div className="text-xl font-bold flex-grow">{member.fullName}</div>
 
-          <div className="text-center mb-4">
-            <h2 className="text-xl text-gray-400">
-              {formatDate(selectedDate)}
-            </h2>
+            <div className="text-center mb-4">
+              <h2 className="text-xl text-gray-400">
+                {formatDate(selectedDate)}
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle between Diet and Workout */}
+        <div className="toggle-container">
+          <div className="toggle-wrapper">
+            <button
+              className={`toggle-button ${
+                activeTab === "diet" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("diet")}
+            >
+              Diet Plan
+            </button>
+            <button
+              className={`toggle-button ${
+                activeTab === "workout" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("workout")}
+            >
+              Workout Plan
+            </button>
+            {/* Fallback element for browsers that don't support :has selector */}
+            <div
+              className="toggle-button-background"
+              style={{
+                position: "absolute",
+                top: "4px",
+                left: "4px",
+                width: "calc(50% - 4px)",
+                height: "calc(100% - 8px)",
+                backgroundColor: "white",
+                borderRadius: "9999px",
+                transition:
+                  "transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)",
+                zIndex: "1",
+                transform:
+                  activeTab === "workout"
+                    ? "translateX(100%)"
+                    : "translateX(0)",
+              }}
+            ></div>
           </div>
         </div>
       </div>
 
-      {/* Toggle between Diet and Workout */}
-      <div className="toggle-container mb-6">
-        <div className="toggle-wrapper">
-          <button
-            className={`toggle-button ${activeTab === "diet" ? "active" : ""}`}
-            onClick={() => setActiveTab("diet")}
-          >
-            Diet Plan
-          </button>
-          <button
-            className={`toggle-button ${
-              activeTab === "workout" ? "active" : ""
-            }`}
-            onClick={() => setActiveTab("workout")}
-          >
-            Workout Plan
-          </button>
-          {/* Fallback element for browsers that don't support :has selector */}
-          <div
-            className="toggle-button-background"
-            style={{
-              position: "absolute",
-              top: "4px",
-              left: "4px",
-              width: "calc(50% - 4px)",
-              height: "calc(100% - 8px)",
-              backgroundColor: "white",
-              borderRadius: "9999px",
-              transition:
-                "transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)",
-              zIndex: "1",
-              transform:
-                activeTab === "workout" ? "translateX(100%)" : "translateX(0)",
-            }}
-          ></div>
-        </div>
+      {/* Scrollable content area */}
+      <div className="scrollable-content">
+        {/* Render the active component */}
+        {activeTab === "diet" ? (
+          <DietPlan
+            memberId={memberId}
+            selectedDate={selectedDate}
+            onBackClick={onBackClick}
+            hideHeader={true} // Hide the header in DietPlan since we have it in the parent
+            fromFaceRecognition={fromFaceRecognition}
+          />
+        ) : (
+          <WorkoutPlan
+            memberId={memberId}
+            selectedDate={selectedDate}
+            onBackClick={onBackClick}
+            hideHeader={true} // Hide the header in WorkoutPlan since we have it in the parent
+            fromFaceRecognition={fromFaceRecognition}
+          />
+        )}
       </div>
-
-      {/* Render the active component */}
-      {activeTab === "diet" ? (
-        <DietPlan
-          memberId={memberId}
-          selectedDate={selectedDate}
-          onBackClick={onBackClick}
-          hideHeader={true} // Hide the header in DietPlan since we have it in the parent
-          fromFaceRecognition={fromFaceRecognition}
-        />
-      ) : (
-        <WorkoutPlan
-          memberId={memberId}
-          selectedDate={selectedDate}
-          onBackClick={onBackClick}
-          hideHeader={true} // Hide the header in WorkoutPlan since we have it in the parent
-          fromFaceRecognition={fromFaceRecognition}
-        />
-      )}
     </div>
   );
 };

@@ -11,7 +11,11 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { API_URL } from "../../config";
 
-const FaceRecognition = ({ onBackClick, onMemberClick }) => {
+const FaceRecognition = ({
+  onBackClick,
+  onMemberClick,
+  onTodayMemberPlanClick,
+}) => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [countdown, setCountdown] = useState(3);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -299,6 +303,14 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
             })
           : "";
 
+        // Automatically navigate to today's member plan if memberId is available
+        if (memberId) {
+          // Use setTimeout to allow the user to see the match result briefly before navigating
+          setTimeout(() => {
+            onTodayMemberPlanClick(memberId);
+          }, 1500); // 1.5 second delay before navigation
+        }
+
         return (
           <div className="mt-4 text-center">
             <div className="flex items-center justify-center text-green-500 mb-2">
@@ -336,17 +348,11 @@ const FaceRecognition = ({ onBackClick, onMemberClick }) => {
               </div>
             )}
 
-            {/* View Member Details button */}
-            {memberId && (
-              <div className="mt-4">
-                <button
-                  onClick={() => onMemberClick(memberId)}
-                  className="bg-[#024a72] hover:bg-[#03395a] text-white px-6 py-3 rounded-lg font-bold"
-                >
-                  View Member Details
-                </button>
-              </div>
-            )}
+            <div className="mt-4">
+              <p className="text-sm text-gray-400">
+                Redirecting to today's plan...
+              </p>
+            </div>
           </div>
         );
       } else {
