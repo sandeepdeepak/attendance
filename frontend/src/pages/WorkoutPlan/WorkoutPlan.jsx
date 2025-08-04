@@ -766,35 +766,39 @@ const WorkoutPlan = ({
         </>
       )}
 
-      {/* Template Buttons */}
-      <div className="flex gap-2 mb-6">
-        <button
-          className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
-          onClick={() => {
-            setShowTemplateModal(true);
-            fetchTemplates();
-          }}
-        >
-          <span className="text-[#e6a84b]">Load Template</span>
-        </button>
-        <button
-          className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
-          onClick={() => setShowSaveTemplateModal(true)}
-          disabled={!workoutPlan.exercises.length}
-        >
-          <span className="text-[#e8e8e8]">Save Template</span>
-        </button>
-      </div>
+      {/* Template Buttons - Only shown for admin users */}
+      {!fromFaceRecognition && (
+        <div className="flex gap-2 mb-6">
+          <button
+            className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+            onClick={() => {
+              setShowTemplateModal(true);
+              fetchTemplates();
+            }}
+          >
+            <span className="text-[#e6a84b]">Load Template</span>
+          </button>
+          <button
+            className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+            onClick={() => setShowSaveTemplateModal(true)}
+            disabled={!workoutPlan.exercises.length}
+          >
+            <span className="text-[#e8e8e8]">Save Template</span>
+          </button>
+        </div>
+      )}
 
-      {/* Add Workouts Button */}
-      <div className="mb-6">
-        <button
-          className="bg-[#036BA2] text-white py-3 px-4 rounded-lg w-full"
-          onClick={() => setShowWorkoutSelectionModal(true)}
-        >
-          Add Workouts
-        </button>
-      </div>
+      {/* Add Workouts Button - Only shown for admin users */}
+      {!fromFaceRecognition && (
+        <div className="mb-6">
+          <button
+            className="bg-[#036BA2] text-white py-3 px-4 rounded-lg w-full"
+            onClick={() => setShowWorkoutSelectionModal(true)}
+          >
+            Add Workouts
+          </button>
+        </div>
+      )}
 
       {/* Save Template Modal */}
       {showSaveTemplateModal && (
@@ -848,9 +852,9 @@ const WorkoutPlan = ({
 
       {/* Workout Plan */}
       <div className="bg-[#1C2937] rounded-lg p-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
+        {/* <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Workout Plan</h2>
-        </div>
+        </div> */}
 
         {workoutPlan.exercises.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
@@ -869,12 +873,15 @@ const WorkoutPlan = ({
                   <h3 className="font-semibold text-left mt-2 text-lg">
                     {capitalizeFirstLetter(exercise.name)}
                   </h3>
-                  <div
-                    className="absolute -top-7 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
-                    onClick={() => handleRemoveExercise(exercise.id)}
-                  >
-                    <FaTrash size={12} />
-                  </div>
+                  {/* Delete icon - Only shown for admin users */}
+                  {!fromFaceRecognition && (
+                    <div
+                      className="absolute -top-7 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
+                      onClick={() => handleRemoveExercise(exercise.id)}
+                    >
+                      <FaTrash size={12} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex mb-2 gap-4">
@@ -962,13 +969,15 @@ const WorkoutPlan = ({
       )}
 
       {/* Send button */}
-      <button
-        className="bg-white text-black py-4 rounded-lg text-xl font-bold"
-        onClick={handleSendWorkoutPlan}
-        disabled={workoutPlan.exercises.length === 0}
-      >
-        Send Workout Plan
-      </button>
+      {!fromFaceRecognition && (
+        <button
+          className="bg-white text-black py-4 rounded-lg text-xl font-bold"
+          onClick={handleSendWorkoutPlan}
+          disabled={workoutPlan.exercises.length === 0}
+        >
+          Send Workout Plan
+        </button>
+      )}
 
       {/* Workout Selection Modal */}
       {showWorkoutSelectionModal && (

@@ -768,31 +768,33 @@ const DietPlan = ({
       )}
 
       {/* Calorie Goal Section */}
-      {/* Template Buttons */}
-      <div className="flex gap-2 mb-6">
-        <button
-          className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
-          onClick={() => {
-            fetchTemplates();
-            setShowTemplateModal(true);
-          }}
-        >
-          <FaList className="mr-2 text-[#e6a84b]" />
-          <span className="text-[#e6a84b]">Load Template</span>
-        </button>
-        <button
-          className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
-          onClick={() => setShowSaveTemplateModal(true)}
-          disabled={
-            !dietPlan.breakfast.length &&
-            !dietPlan.lunch.length &&
-            !dietPlan.dinner.length
-          }
-        >
-          <FaSave className="mr-2 text-[#e8e8e8]" />
-          <span className="text-[#e8e8e8]">Save Template</span>
-        </button>
-      </div>
+      {/* Template Buttons - Only shown for admin users */}
+      {!fromFaceRecognition && (
+        <div className="flex gap-2 mb-6">
+          <button
+            className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+            onClick={() => {
+              fetchTemplates();
+              setShowTemplateModal(true);
+            }}
+          >
+            <FaList className="mr-2 text-[#e6a84b]" />
+            <span className="text-[#e6a84b]">Load Template</span>
+          </button>
+          <button
+            className="bg-[#2a7d4f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+            onClick={() => setShowSaveTemplateModal(true)}
+            disabled={
+              !dietPlan.breakfast.length &&
+              !dietPlan.lunch.length &&
+              !dietPlan.dinner.length
+            }
+          >
+            <FaSave className="mr-2 text-[#e8e8e8]" />
+            <span className="text-[#e8e8e8]">Save Template</span>
+          </button>
+        </div>
+      )}
 
       <div className="bg-[#1C2937] rounded-lg p-4 mb-6">
         <div className="flex justify-between items-center mb-2">
@@ -906,12 +908,15 @@ const DietPlan = ({
                     className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
-                      <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
-                        onClick={() => removeFood("breakfast", food.id)}
-                      >
-                        <FaTrash size={12} />
-                      </div>
+                      {/* Delete icon - Only shown for admin users */}
+                      {!fromFaceRecognition && (
+                        <div
+                          className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
+                          onClick={() => removeFood("breakfast", food.id)}
+                        >
+                          <FaTrash size={12} />
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <div className="pt-1">
                           <p className="text-white text-left">
@@ -950,12 +955,15 @@ const DietPlan = ({
                     </div>
                   </div>
                 ))}
-                <button
-                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
-                  onClick={() => openFoodSelector("breakfast")}
-                >
-                  Add More
-                </button>
+                {/* Add More button - Only shown for admin users */}
+                {!fromFaceRecognition && (
+                  <button
+                    className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
+                    onClick={() => openFoodSelector("breakfast")}
+                  >
+                    Add More
+                  </button>
+                )}
               </div>
             ) : (
               <div
@@ -980,12 +988,15 @@ const DietPlan = ({
                     className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
-                      <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
-                        onClick={() => removeFood("lunch", food.id)}
-                      >
-                        <FaTrash size={12} />
-                      </div>
+                      {/* Delete icon - Only shown for admin users */}
+                      {!fromFaceRecognition && (
+                        <div
+                          className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
+                          onClick={() => removeFood("lunch", food.id)}
+                        >
+                          <FaTrash size={12} />
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <div className="pt-1">
                           <p className="text-white text-left">
@@ -1024,12 +1035,15 @@ const DietPlan = ({
                     </div>
                   </div>
                 ))}
-                <button
-                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
-                  onClick={() => openFoodSelector("lunch")}
-                >
-                  Add More
-                </button>
+                {/* Add More button - Only shown for admin users */}
+                {!fromFaceRecognition && (
+                  <button
+                    className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
+                    onClick={() => openFoodSelector("lunch")}
+                  >
+                    Add More
+                  </button>
+                )}
               </div>
             ) : (
               <div
@@ -1054,12 +1068,15 @@ const DietPlan = ({
                     className="flex flex-col bg-[#123347] p-4 rounded-lg"
                   >
                     <div className="relative">
-                      <div
-                        className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
-                        onClick={() => removeFood("dinner", food.id)}
-                      >
-                        <FaTrash size={12} />
-                      </div>
+                      {/* Delete icon - Only shown for admin users */}
+                      {!fromFaceRecognition && (
+                        <div
+                          className="absolute -top-8 -left-6 text-red-500 bg-[#024a72] rounded-full p-[10px]"
+                          onClick={() => removeFood("dinner", food.id)}
+                        >
+                          <FaTrash size={12} />
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <div className="pt-1">
                           <p className="text-white text-left">
@@ -1098,12 +1115,15 @@ const DietPlan = ({
                     </div>
                   </div>
                 ))}
-                <button
-                  className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
-                  onClick={() => openFoodSelector("dinner")}
-                >
-                  Add More
-                </button>
+                {/* Add More button - Only shown for admin users */}
+                {!fromFaceRecognition && (
+                  <button
+                    className="bg-[#024a72] text-white py-2 px-4 rounded mt-2"
+                    onClick={() => openFoodSelector("dinner")}
+                  >
+                    Add More
+                  </button>
+                )}
               </div>
             ) : (
               <div
