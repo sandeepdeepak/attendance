@@ -406,9 +406,9 @@ const MemberProgress = ({
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold truncate">
+        <div className="md:text-3xl lg:text-4xl font-bold truncate">
           {member.fullName}'s Progress
-        </h1>
+        </div>
       </div>
 
       {/* Month navigation */}
@@ -535,48 +535,56 @@ const MemberProgress = ({
                   }}
                 />
                 <Tooltip
+                  position="bottom" // Position at the bottom of the cursor
+                  offset={20} // Add some offset to ensure it's visible
                   contentStyle={{
                     backgroundColor: "#1C2937",
                     border: "none",
                     borderRadius: "8px",
                     color: "white",
+                    padding: "10px",
+                    fontSize: "14px",
+                    maxWidth: "250px",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.5)",
                   }}
-                  labelStyle={{ color: "white" }}
+                  labelStyle={{
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    marginBottom: "5px",
+                  }}
+                  cursor={{ stroke: "#ffffff", strokeWidth: 1 }}
                   formatter={(value, name, props) => {
-                    // Round weight to 2 decimal places
-                    if (name === "weight")
-                      return [`${value.toFixed(2)} kg`, "Weight"];
+                    // Get the data point
+                    const data = props.payload;
 
-                    // For calories, show both consumed and recommended calories
-                    if (
-                      name === "Above Target" ||
-                      name === "Below Target" ||
-                      name === "At Target" ||
-                      name === "Calories"
-                    ) {
-                      const data = props.payload; // Get the data point
-
-                      // If we have recommended calories, show both consumed and recommended
-                      if (recommendedCalories) {
-                        return [
-                          <span>
-                            {data.calories} kcal
-                            <br />
-                            <span style={{ color: "#f39c12" }}>
-                              Target: {recommendedCalories} kcal
-                            </span>
-                          </span>,
-                          "Consumed Calories",
-                        ];
+                    // Create a compact tooltip with only the 3 required values
+                    if (data) {
+                      // For weight, show the value with 2 decimal places
+                      if (name === "weight") {
+                        return [`${value.toFixed(2)} kg`, "Weight"];
                       }
 
-                      // If no recommended calories, just show consumed calories
-                      return [`${data.calories} kcal`, "Consumed Calories"];
+                      // For calories (any type), show the consumed calories
+                      if (
+                        name === "Above Target" ||
+                        name === "Below Target" ||
+                        name === "At Target" ||
+                        name === "Calories"
+                      ) {
+                        return [`${data.calories} kcal`, "Consumed"];
+                      }
+
+                      // For recommended calories (reference line)
+                      if (name === "Target") {
+                        return [`${recommendedCalories} kcal`, "Target"];
+                      }
                     }
 
-                    return [`${value} kcal`, name];
+                    return [value, name];
                   }}
                   labelFormatter={(value) => `Day ${value}`}
+                  wrapperStyle={{ zIndex: 1000 }}
                 />
                 {/* Reference line for recommended calories */}
                 {recommendedCalories && (
@@ -665,17 +673,12 @@ const MemberProgress = ({
                       fillOpacity={0.8}
                       fill="url(#colorCaloriesYellow)"
                       activeDot={{
-                        r: 6,
-                        stroke: "white",
-                        strokeWidth: 2,
-                        fill: "#f39c12",
-                      }}
-                      dot={{
-                        r: 4,
+                        r: 5,
                         stroke: "white",
                         strokeWidth: 1,
                         fill: "#f39c12",
                       }}
+                      dot={false} // Hide regular dots for cleaner mobile view
                     />
                   </>
                 ) : (
@@ -689,17 +692,12 @@ const MemberProgress = ({
                     fillOpacity={0.8}
                     fill="url(#colorCalories)"
                     activeDot={{
-                      r: 6,
-                      stroke: "white",
-                      strokeWidth: 2,
-                      fill: "#3498db",
-                    }}
-                    dot={{
-                      r: 4,
+                      r: 5,
                       stroke: "white",
                       strokeWidth: 1,
                       fill: "#3498db",
                     }}
+                    dot={false} // Hide regular dots for cleaner mobile view
                   />
                 )}
                 <Legend

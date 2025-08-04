@@ -502,21 +502,23 @@ const MemberDetails = ({
   const isExpired = membershipEndDate ? new Date() > membershipEndDate : false;
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
-      {/* Header with back button, member name, and progress icon */}
-      <div className="w-full flex items-center mb-8 relative">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 pt-20 pb-8">
+      {/* Fixed Header with back button, member name, and progress icon */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-[#0a1f2e] flex items-center p-4 shadow-md fixed-header">
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <h1 className="text-4xl font-bold">{member.fullName}</h1>
+        <div className="text-2xl font-bold flex-1 ml-2 text-left">
+          {member.fullName}
+        </div>
         <button
-          className="absolute right-0 text-white p-2 bg-[#024a72] rounded-full"
+          className="text-white p-1 bg-[#024a72] rounded-full"
           onClick={() =>
             onMemberProgressClick ? onMemberProgressClick(memberId) : null
           }
           title="View Progress"
         >
-          <FaChartBar size={20} />
+          <FaChartBar size={18} />
         </button>
       </div>
 

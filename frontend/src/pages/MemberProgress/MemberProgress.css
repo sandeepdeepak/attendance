@@ -58,3 +58,28 @@
 .recharts-legend-item-text {
   color: #ffffff !important;
 }
+
+/* Enhanced tooltip styles */
+.recharts-tooltip-wrapper {
+  z-index: 1000 !important;
+  pointer-events: none;
+}
+
+.recharts-default-tooltip {
+  background-color: #1c2937 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Ensure tooltip is visible on mobile */
+@media (max-width: 480px) {
+  .recharts-tooltip-wrapper {
+    transform: translateY(20px) !important;
+  }
+
+  .recharts-default-tooltip {
+    max-width: 200px !important;
+    font-size: 12px !important;
+  }
+}
