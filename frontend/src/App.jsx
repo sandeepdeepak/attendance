@@ -6,6 +6,7 @@ import AddMember from "./pages/AddMember/AddMember";
 import AllMembers from "./pages/AllMembers/AllMembers";
 import MemberDetails from "./pages/MemberDetails/MemberDetails";
 import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
+import AttendanceDetails from "./pages/AttendanceDetails/AttendanceDetails";
 import MemberPlan from "./pages/MemberPlan/MemberPlan";
 import Login from "./pages/Login/Login";
 import HomePage from "./pages/HomePage/HomePage";
@@ -114,6 +115,11 @@ function App() {
     setCurrentPage("todayAttendance");
   };
 
+  const handleAttendanceDetailsClick = () => {
+    setPreviousPage(currentPage);
+    setCurrentPage("attendanceDetails");
+  };
+
   const handleMemberPlanClick = (memberId, date) => {
     setSelectedMemberId(memberId);
     setSelectedDate(date);
@@ -138,6 +144,7 @@ function App() {
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
+            onAttendanceDetailsClick={handleAttendanceDetailsClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
           />
@@ -173,6 +180,9 @@ function App() {
       case "todayAttendance":
         return <TodayAttendance onBackClick={handleBackClick} />;
 
+      case "attendanceDetails":
+        return <AttendanceDetails onBackClick={handleBackClick} />;
+
       case "memberPlan":
         return (
           <MemberPlan
@@ -190,6 +200,7 @@ function App() {
             onAllMembersClick={handleAllMembersClick}
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
+            onAttendanceDetailsClick={handleAttendanceDetailsClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
           />

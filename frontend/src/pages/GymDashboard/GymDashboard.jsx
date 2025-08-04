@@ -13,6 +13,7 @@ import {
   FaUpload,
   FaDownload,
   FaSignOutAlt,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -23,6 +24,7 @@ const GymDashboard = ({
   onAllMembersClick,
   onMemberClick,
   onTodayAttendanceClick,
+  onAttendanceDetailsClick,
   onLogout,
   gymOwner,
 }) => {
@@ -483,6 +485,12 @@ const GymDashboard = ({
           onClick={() => onAllMembersClick(null)}
         >
           <FaUsers /> All Members
+        </button>
+        <button
+          className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"
+          onClick={onAttendanceDetailsClick}
+        >
+          <FaCalendarAlt /> Attendance Details
         </button>
         <button
           className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"

@@ -2078,6 +2078,123 @@ app.get("/api/attendance-today", async (req, res) => {
   }
 });
 
+// Get monthly attendance details
+app.get("/api/attendance-monthly", authenticateToken, async (req, res) => {
+  try {
+    // Get gymId from the authenticated user
+    const { gymId } = req.user;
+    if (!gymId) {
+      return res.status(400).json({
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
+      });
+    }
+
+    // Get the month from query parameters (format: YYYY-MM)
+    const { month } = req.query;
+    console.log("Received month parameter:", month);
+
+    if (!month || !month.match(/^\d{4}-\d{2}$/)) {
+      return res.status(400).json({
+        error: "Invalid month format",
+        message: "Month should be in YYYY-MM format",
+      });
+    }
+
+    // Get all members for this gym
+    const allMembersResult = await docClient.send(
+      new ScanCommand({
+        TableName: MEMBERS_TABLE,
+        FilterExpression: "gymId = :gymId",
+        ExpressionAttributeValues: {
+          ":gymId": gymId,
+        },
+      })
+    );
+
+    const allMembers = allMembersResult.Items || [];
+
+    // Get all attendance records for the specified month
+    const attendanceParams = {
+      TableName: ATTENDANCE_TABLE,
+      FilterExpression: "begins_with(#dt, :month)",
+      ExpressionAttributeValues: {
+        ":month": month,
+      },
+      ExpressionAttributeNames: {
+        "#dt": "date",
+      },
+    };
+
+    console.log("Searching for attendance records with month:", month);
+    const attendanceResult = await docClient.send(
+      new ScanCommand(attendanceParams)
+    );
+
+    const attendanceRecords = attendanceResult.Items || [];
+    console.log(
+      `Found ${attendanceRecords.length} attendance records for month ${month}`
+    );
+
+    // Filter attendance records for members of this gym
+    const gymMemberIds = new Set(allMembers.map((member) => member.id));
+    const filteredAttendanceRecords = attendanceRecords.filter((record) =>
+      gymMemberIds.has(record.memberId)
+    );
+
+    // Group attendance records by member
+    const attendanceByMember = {};
+
+    for (const record of filteredAttendanceRecords) {
+      const { memberId, date, type } = record;
+
+      if (!attendanceByMember[memberId]) {
+        attendanceByMember[memberId] = [];
+      }
+
+      // Check if we already have a record for this date
+      const existingRecord = attendanceByMember[memberId].find(
+        (r) => r.date === date
+      );
+
+      if (!existingRecord) {
+        attendanceByMember[memberId].push({
+          date,
+          present: true,
+        });
+      }
+    }
+
+    // Prepare the response with member details
+    const attendanceWithMemberDetails = [];
+
+    for (const member of allMembers) {
+      const memberId = member.id;
+
+      attendanceWithMemberDetails.push({
+        memberId,
+        fullName: member.fullName,
+        phoneNumber: member.phoneNumber,
+        attendance: attendanceByMember[memberId] || [],
+      });
+    }
+
+    // Sort by member name
+    attendanceWithMemberDetails.sort((a, b) =>
+      a.fullName.localeCompare(b.fullName)
+    );
+
+    res.json({
+      month,
+      attendance: attendanceWithMemberDetails,
+      count: attendanceWithMemberDetails.length,
+    });
+  } catch (error) {
+    console.error("Error getting monthly attendance:", error);
+    res.status(500).json({ error: "Failed to get monthly attendance" });
+  }
+});
+
 // Diet plan endpoints
 // Get diet plan for a specific member and date (public version for face recognition)
 app.get("/api/diet-plans/:memberId/:date/public", async (req, res) => {
