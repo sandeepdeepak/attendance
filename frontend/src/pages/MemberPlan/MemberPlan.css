@@ -10,7 +10,7 @@
 }
 
 .scrollable-content {
-  margin-top: 220px; /* Adjust based on the height of your fixed header */
+  margin-top: 205px; /* Adjust based on the height of your fixed header */
   overflow-y: auto;
   height: calc(100vh - 220px); /* Viewport height minus header height */
   padding: 0 1rem; /* Add horizontal padding to match the header */

@@ -156,14 +156,41 @@ const WorkoutPlan = ({
   // State to track completed workouts
   const [completedWorkouts, setCompletedWorkouts] = useState({});
 
-  // Ensure exercises have setCount and repsCount initialized
+  // Ensure exercises have setCount, repsCount, and sets array initialized
   useEffect(() => {
     setWorkoutPlan((prevPlan) => {
-      const updatedExercises = prevPlan.exercises.map((exercise) => ({
-        ...exercise,
-        setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
-        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
-      }));
+      const updatedExercises = prevPlan.exercises.map((exercise) => {
+        const setCount =
+          exercise.setCount !== undefined ? exercise.setCount : 1;
+        const repsCount =
+          exercise.repsCount !== undefined ? exercise.repsCount : 10;
+
+        // Initialize sets array if it doesn't exist
+        let sets = exercise.sets || [];
+
+        // If sets array is empty or needs to be updated based on setCount
+        if (sets.length !== setCount) {
+          // Create or adjust sets array
+          sets = Array(setCount)
+            .fill()
+            .map((_, index) => {
+              // Preserve existing set data if available
+              return (
+                sets[index] || {
+                  weight: 5, // Default weight is 5kg
+                  reps: repsCount, // Default reps from exercise repsCount
+                }
+              );
+            });
+        }
+
+        return {
+          ...exercise,
+          setCount,
+          repsCount,
+          sets,
+        };
+      });
       return { ...prevPlan, exercises: updatedExercises };
     });
   }, []);
@@ -235,14 +262,26 @@ const WorkoutPlan = ({
         };
       }
 
-      // Prepare exercises with setCount and repsCount defaulting to 1 and 10 if missing
-      // Also include completion status
-      const exercisesToSave = workoutPlan.exercises.map((exercise) => ({
-        ...exercise,
-        setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
-        repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
-        completed: completedWorkouts[exercise.id] || false,
-      }));
+      // Prepare exercises with setCount, repsCount, sets array, and completion status
+      const exercisesToSave = workoutPlan.exercises.map((exercise) => {
+        // Ensure sets array is properly initialized
+        const sets =
+          exercise.sets ||
+          Array(exercise.setCount || 1)
+            .fill()
+            .map(() => ({
+              weight: 5, // Default weight
+              reps: exercise.repsCount || 10, // Default reps
+            }));
+
+        return {
+          ...exercise,
+          setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
+          repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
+          sets: sets,
+          completed: completedWorkouts[exercise.id] || false,
+        };
+      });
 
       await axios.post(
         endpoint,
@@ -581,9 +620,60 @@ const WorkoutPlan = ({
   const handleUpdateExercise = (exerciseId, field, value) => {
     setWorkoutPlan((prevPlan) => ({
       ...prevPlan,
-      exercises: prevPlan.exercises.map((exercise) =>
-        exercise.id === exerciseId ? { ...exercise, [field]: value } : exercise
-      ),
+      exercises: prevPlan.exercises.map((exercise) => {
+        if (exercise.id !== exerciseId) return exercise;
+
+        // If updating setCount, adjust the sets array
+        if (field === "setCount") {
+          const newSetCount = parseInt(value) || 1;
+          let newSets = [...(exercise.sets || [])];
+
+          // If increasing sets, add new sets with default values
+          if (newSetCount > newSets.length) {
+            const additionalSets = Array(newSetCount - newSets.length)
+              .fill()
+              .map(() => ({
+                weight: 5, // Default weight
+                reps: exercise.repsCount || 10, // Default reps
+              }));
+            newSets = [...newSets, ...additionalSets];
+          }
+          // If decreasing sets, truncate the array
+          else if (newSetCount < newSets.length) {
+            newSets = newSets.slice(0, newSetCount);
+          }
+
+          return {
+            ...exercise,
+            [field]: value,
+            sets: newSets,
+          };
+        }
+
+        // For other fields, just update normally
+        return { ...exercise, [field]: value };
+      }),
+    }));
+  };
+
+  // New function to update a specific set's weight or reps
+  const handleUpdateSet = (exerciseId, setIndex, field, value) => {
+    setWorkoutPlan((prevPlan) => ({
+      ...prevPlan,
+      exercises: prevPlan.exercises.map((exercise) => {
+        if (exercise.id !== exerciseId) return exercise;
+
+        const updatedSets = [...(exercise.sets || [])];
+        updatedSets[setIndex] = {
+          ...updatedSets[setIndex],
+          [field]: value,
+        };
+
+        return {
+          ...exercise,
+          sets: updatedSets,
+        };
+      }),
     }));
   };
 
@@ -604,11 +694,25 @@ const WorkoutPlan = ({
   const addSelectedWorkoutsToPlan = () => {
     const selectedWorkouts = allWorkouts
       .filter((workout) => selectedWorkoutIds.has(workout.id))
-      .map((workout) => ({
-        ...workout,
-        setCount: 1, // Default to 1 set
-        repsCount: 10, // Default to 10 reps
-      }));
+      .map((workout) => {
+        const setCount = 1; // Default to 1 set
+        const repsCount = 10; // Default to 10 reps
+
+        // Initialize sets array with default values
+        const sets = Array(setCount)
+          .fill()
+          .map(() => ({
+            weight: 5, // Default weight is 5kg
+            reps: repsCount, // Default reps
+          }));
+
+        return {
+          ...workout,
+          setCount,
+          repsCount,
+          sets,
+        };
+      });
 
     // Add selected workouts to current workout plan exercises
     setWorkoutPlan((prevPlan) => ({
@@ -851,7 +955,7 @@ const WorkoutPlan = ({
       )}
 
       {/* Workout Plan */}
-      <div className="bg-[#1C2937] rounded-lg p-4 mb-6">
+      <div className="bg-[#1C2937] rounded-lg p-4 mb-2">
         {/* <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Workout Plan</h2>
         </div> */}
@@ -884,7 +988,7 @@ const WorkoutPlan = ({
                   )}
                 </div>
 
-                <div className="flex mb-2 gap-4">
+                <div className="flex mb-2 items-center">
                   <div className="w-3/4 mr-2">
                     <LazyWorkoutItem
                       workout={exercise}
@@ -893,42 +997,87 @@ const WorkoutPlan = ({
                     />
                   </div>
                   <div className="w-3/4">
-                    <div className="grid grid-cols-1 gap-2 mb-2">
-                      <div>
-                        <label className="block text-gray-400 text-sm">
-                          Sets
-                        </label>
-                        <input
-                          type="number"
-                          value={exercise.setCount}
-                          onChange={(e) =>
-                            handleUpdateExercise(
-                              exercise.id,
-                              "setCount",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="bg-[#1e293b] text-white p-2 rounded w-full"
-                          min="1"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-400 text-sm">
-                          Reps
-                        </label>
-                        <input
-                          type="number"
-                          value={exercise.repsCount}
-                          onChange={(e) =>
-                            handleUpdateExercise(
-                              exercise.id,
-                              "repsCount",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="bg-[#1e293b] text-white p-2 rounded w-full"
-                          min="1"
-                        />
+                    <div className="mb-2 p-2">
+                      <label className="block text-gray-400 text-sm">
+                        Sets
+                      </label>
+                      <input
+                        type="number"
+                        value={exercise.setCount}
+                        onChange={(e) =>
+                          handleUpdateExercise(
+                            exercise.id,
+                            "setCount",
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                        className="bg-[#1e293b] text-white p-2 rounded w-full"
+                        min="1"
+                      />
+                    </div>
+
+                    {/* Sets details */}
+                    <div className="mt-3">
+                      <label className="block text-gray-400 text-sm mb-2">
+                        Set Details
+                      </label>
+                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {exercise.sets &&
+                          exercise.sets.map((set, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-[#0a1f2e] p-2 rounded"
+                            >
+                              <span className="text-xs text-gray-400 w-6 mt-3">
+                                #{index + 1}
+                              </span>
+                              <div className="flex-1">
+                                <label className="block text-gray-400 text-xs">
+                                  Weight
+                                </label>
+                                <select
+                                  value={set.weight}
+                                  onChange={(e) =>
+                                    handleUpdateSet(
+                                      exercise.id,
+                                      index,
+                                      "weight",
+                                      parseFloat(e.target.value)
+                                    )
+                                  }
+                                  className="bg-[#1e293b] text-white p-1 rounded w-20 text-sm text-right"
+                                >
+                                  {[
+                                    2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5,
+                                    25, 27.5, 30, 35, 40, 45, 50,
+                                  ].map((weight) => (
+                                    <option key={weight} value={weight}>
+                                      {weight} kg
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="flex-1">
+                                <label className="block text-gray-400 text-xs">
+                                  Reps
+                                </label>
+                                <input
+                                  type="number"
+                                  value={set.reps}
+                                  onChange={(e) =>
+                                    handleUpdateSet(
+                                      exercise.id,
+                                      index,
+                                      "reps",
+                                      parseInt(e.target.value) || 1
+                                    )
+                                  }
+                                  className="bg-[#1e293b] text-white p-1 rounded w-8 text-sm"
+                                  min="1"
+                                />
+                              </div>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   </div>
