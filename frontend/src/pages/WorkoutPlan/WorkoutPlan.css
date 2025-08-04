@@ -1,47 +1,38 @@
-/* WorkoutPlan.css */
+/* Animation for completed workouts */
+@keyframes completedPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
 
-/* Ensure consistent styling with the rest of the app */
-.exercise-card {
+.workout-completed {
+  border: 2px solid #52df8a !important;
+  animation: completedPulse 1.5s ease-in-out;
   transition: all 0.3s ease;
+  background-color: rgba(34, 197, 94, 0.1) !important;
 }
 
-.exercise-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.workout-checkbox:checked {
+  accent-color: #52df8a;
+  transform: scale(1.2);
+  transition: all 0.2s ease;
 }
 
-/* Custom scrollbar for overflow content */
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
+.workout-checkbox {
+  transition: all 0.2s ease;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: #2d3748;
-  border-radius: 10px;
+.workout-label {
+  transition: color 0.3s ease;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #4a5568;
-  border-radius: 10px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #718096;
-}
-
-/* Input focus styles */
-input:focus,
-textarea:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
-}
-
-/* Button hover effects */
-button:not(:disabled):hover {
-  opacity: 0.9;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.workout-completed .workout-label {
+  color: #52df8a !important;
+  font-weight: 600;
 }

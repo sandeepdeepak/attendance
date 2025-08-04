@@ -153,6 +153,8 @@ const WorkoutPlan = ({
   const [workoutPlan, setWorkoutPlan] = useState({
     exercises: [],
   });
+  // State to track completed workouts
+  const [completedWorkouts, setCompletedWorkouts] = useState({});
 
   // Ensure exercises have setCount and repsCount initialized
   useEffect(() => {
@@ -198,6 +200,15 @@ const WorkoutPlan = ({
     });
   };
 
+  // Function to toggle workout completion status
+  const toggleWorkoutCompletion = (exerciseId) => {
+    setCompletedWorkouts((prev) => {
+      const newCompletedWorkouts = { ...prev };
+      newCompletedWorkouts[exerciseId] = !prev[exerciseId];
+      return newCompletedWorkouts;
+    });
+  };
+
   // Function to save workout plan to the database
   const saveWorkoutPlan = async () => {
     try {
@@ -225,10 +236,12 @@ const WorkoutPlan = ({
       }
 
       // Prepare exercises with setCount and repsCount defaulting to 1 and 10 if missing
+      // Also include completion status
       const exercisesToSave = workoutPlan.exercises.map((exercise) => ({
         ...exercise,
         setCount: exercise.setCount !== undefined ? exercise.setCount : 1,
         repsCount: exercise.repsCount !== undefined ? exercise.repsCount : 10,
+        completed: completedWorkouts[exercise.id] || false,
       }));
 
       await axios.post(
@@ -515,6 +528,14 @@ const WorkoutPlan = ({
                 exercise.repsCount !== undefined ? exercise.repsCount : 10,
             })
           );
+
+          // Initialize completedWorkouts state from fetched data
+          const completionStatus = {};
+          exercisesWithCounts.forEach((exercise) => {
+            completionStatus[exercise.id] = exercise.completed || false;
+          });
+          setCompletedWorkouts(completionStatus);
+
           setWorkoutPlan({
             ...response.data.workoutPlan,
             exercises: exercisesWithCounts,
@@ -533,7 +554,7 @@ const WorkoutPlan = ({
     fetchWorkoutPlan();
   }, [memberId, selectedDate, fromFaceRecognition]);
 
-  // Save workout plan whenever it changes
+  // Save workout plan whenever it changes or completion status changes
   useEffect(() => {
     // Don't save during initial load
     if (loading) return;
@@ -546,7 +567,7 @@ const WorkoutPlan = ({
     }, 1000);
 
     return () => clearTimeout(saveTimeout);
-  }, [workoutPlan]);
+  }, [workoutPlan, completedWorkouts]);
 
   const handleRemoveExercise = (exerciseId) => {
     setWorkoutPlan((prevPlan) => ({
@@ -838,7 +859,12 @@ const WorkoutPlan = ({
         ) : (
           <div className="space-y-4">
             {workoutPlan.exercises.map((exercise) => (
-              <div key={exercise.id} className="bg-[#123347] p-4 rounded-lg">
+              <div
+                key={exercise.id}
+                className={`bg-[#123347] p-4 rounded-lg ${
+                  completedWorkouts[exercise.id] ? "workout-completed" : ""
+                }`}
+              >
                 <div className="flex justify-between items-center mb-2 relative">
                   <h3 className="font-semibold text-left mt-2 text-lg">
                     {capitalizeFirstLetter(exercise.name)}
@@ -899,6 +925,22 @@ const WorkoutPlan = ({
                       </div>
                     </div>
                   </div>
+                </div>
+                {/* Checkbox for marking workout as done */}
+                <div className="flex items-center justify-center mb-2">
+                  <input
+                    type="checkbox"
+                    id={`workout-done-${exercise.id}`}
+                    checked={completedWorkouts[exercise.id] || false}
+                    onChange={() => toggleWorkoutCompletion(exercise.id)}
+                    className="w-5 h-5 mr-2 accent-green-500 workout-checkbox"
+                  />
+                  <label
+                    htmlFor={`workout-done-${exercise.id}`}
+                    className="text-gray-300 cursor-pointer workout-label"
+                  >
+                    Mark as done
+                  </label>
                 </div>
               </div>
             ))}
