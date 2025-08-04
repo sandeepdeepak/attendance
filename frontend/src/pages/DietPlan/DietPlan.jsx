@@ -1175,12 +1175,14 @@ const DietPlan = ({
       )}
 
       {/* Send button */}
-      <button
-        className="bg-white text-black py-4 rounded-lg text-xl font-bold"
-        onClick={handleSendDietPlan}
-      >
-        Send Diet Plan
-      </button>
+      {!fromFaceRecognition && (
+        <button
+          className="bg-white text-black py-4 rounded-lg text-xl font-bold"
+          onClick={handleSendDietPlan}
+        >
+          Send Diet Plan
+        </button>
+      )}
 
       {/* Template Selection Modal */}
       {showTemplateModal && (
