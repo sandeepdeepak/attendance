@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaArrowLeft,
-  FaChartBar,
-  FaUtensils,
-  FaDumbbell,
-} from "react-icons/fa";
+import { FaArrowLeft, FaChartBar, FaUtensils, FaDumbbell } from "react-icons/fa";
 import axios from "axios";
 import { API_URL } from "../../config";
 import {
@@ -264,24 +259,17 @@ const MemberProgress = ({
       const detailsResponse = await axios.get(detailsEndpoint, config);
 
       if (detailsResponse.data && detailsResponse.data.success) {
-        console.log(
-          "Fetched daily details:",
-          detailsResponse.data.dailyDetails
-        );
+        console.log("Fetched daily details:", detailsResponse.data.dailyDetails);
         setDailyDetails(detailsResponse.data.dailyDetails);
-
+        
         // Set the selected day to today if it's in the current month, otherwise to the first day with data
         const today = new Date();
-        if (
-          today.getMonth() === currentMonth.getMonth() &&
-          today.getFullYear() === currentMonth.getFullYear()
-        ) {
+        if (today.getMonth() === currentMonth.getMonth() && 
+            today.getFullYear() === currentMonth.getFullYear()) {
           const todayStr = today.getDate().toString();
           setSelectedDay(todayStr);
         } else if (detailsResponse.data.dailyDetails.length > 0) {
-          const firstDay = new Date(detailsResponse.data.dailyDetails[0].date)
-            .getDate()
-            .toString();
+          const firstDay = new Date(detailsResponse.data.dailyDetails[0].date).getDate().toString();
           setSelectedDay(firstDay);
         }
       } else {
@@ -405,13 +393,13 @@ const MemberProgress = ({
   // Get the selected day's details
   const getSelectedDayDetails = () => {
     if (!selectedDay || !dailyDetails || dailyDetails.length === 0) return null;
-
+    
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth() + 1;
-    const dayStr = selectedDay.padStart(2, "0");
-    const dateStr = `${year}-${month < 10 ? "0" + month : month}-${dayStr}`;
-
-    return dailyDetails.find((detail) => detail.date === dateStr);
+    const dayStr = selectedDay.padStart(2, '0');
+    const dateStr = `${year}-${month < 10 ? '0' + month : month}-${dayStr}`;
+    
+    return dailyDetails.find(detail => detail.date === dateStr);
   };
 
   const selectedDayDetails = getSelectedDayDetails();
@@ -481,225 +469,24 @@ const MemberProgress = ({
         </button>
       </div>
 
-      {/* Daily Details Section */}
-      {selectedDay && (
-        <div className="bg-[#123347] rounded-lg p-3 sm:p-4 md:p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => {
-                const currentDay = parseInt(selectedDay);
-                if (currentDay > 1) {
-                  setSelectedDay((currentDay - 1).toString());
-                }
-              }}
-              className="bg-[#0a1f2e] hover:bg-[#1e293b] text-white px-3 py-1 rounded-lg"
-              disabled={parseInt(selectedDay) <= 1}
-            >
-              &lt;
-            </button>
-            <h2 className="text-xl font-bold">Day {selectedDay} Details</h2>
-            <button
-              onClick={() => {
-                const currentDay = parseInt(selectedDay);
-                const daysInMonth = new Date(
-                  currentMonth.getFullYear(),
-                  currentMonth.getMonth() + 1,
-                  0
-                ).getDate();
-                if (currentDay < daysInMonth) {
-                  setSelectedDay((currentDay + 1).toString());
-                }
-              }}
-              className="bg-[#0a1f2e] hover:bg-[#1e293b] text-white px-3 py-1 rounded-lg"
-              disabled={
-                parseInt(selectedDay) >=
-                new Date(
-                  currentMonth.getFullYear(),
-                  currentMonth.getMonth() + 1,
-                  0
-                ).getDate()
-              }
-            >
-              &gt;
-            </button>
-          </div>
-
-          {selectedDayDetails ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Meals Section */}
-              <div className="bg-[#0a1f2e] p-4 rounded-lg">
-                <h3 className="text-lg font-bold mb-3 flex items-center">
-                  <FaUtensils className="mr-2" /> Meals
-                </h3>
-
-                {/* Breakfast */}
-                <div className="mb-4">
-                  <h4 className="font-bold text-[#3498db] mb-2">Breakfast</h4>
-                  {selectedDayDetails.meals.breakfast &&
-                  selectedDayDetails.meals.breakfast.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {selectedDayDetails.meals.breakfast.map((item, index) => (
-                        <li key={`breakfast-${index}`} className="mb-1">
-                          {item.quantity}x {item.name} -{" "}
-                          {item.calories || item.totalCalories || 0} kcal
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-400">No breakfast recorded</p>
-                  )}
-                </div>
-
-                {/* Lunch */}
-                <div className="mb-4">
-                  <h4 className="font-bold text-[#3498db] mb-2">Lunch</h4>
-                  {selectedDayDetails.meals.lunch &&
-                  selectedDayDetails.meals.lunch.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {selectedDayDetails.meals.lunch.map((item, index) => (
-                        <li key={`lunch-${index}`} className="mb-1">
-                          {item.quantity}x {item.name} -{" "}
-                          {item.calories || item.totalCalories || 0} kcal
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-400">No lunch recorded</p>
-                  )}
-                </div>
-
-                {/* Dinner */}
-                <div className="mb-4">
-                  <h4 className="font-bold text-[#3498db] mb-2">Dinner</h4>
-                  {selectedDayDetails.meals.dinner &&
-                  selectedDayDetails.meals.dinner.length > 0 ? (
-                    <ul className="list-disc pl-5">
-                      {selectedDayDetails.meals.dinner.map((item, index) => (
-                        <li key={`dinner-${index}`} className="mb-1">
-                          {item.quantity}x {item.name} -{" "}
-                          {item.calories || item.totalCalories || 0} kcal
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-gray-400">No dinner recorded</p>
-                  )}
-                </div>
-
-                {/* Nutrition Totals */}
-                <div className="mt-6 pt-4 border-t border-gray-700">
-                  <h4 className="font-bold mb-2">Nutrition Totals</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <div className="bg-[#123347] p-2 rounded">
-                      <p className="text-sm text-gray-400">Calories</p>
-                      <p className="font-bold">
-                        {selectedDayDetails.meals.nutritionTotals.calories} kcal
-                      </p>
-                    </div>
-                    <div className="bg-[#123347] p-2 rounded">
-                      <p className="text-sm text-gray-400">Carbs</p>
-                      <p className="font-bold">
-                        {selectedDayDetails.meals.nutritionTotals.carbs} g
-                      </p>
-                    </div>
-                    <div className="bg-[#123347] p-2 rounded">
-                      <p className="text-sm text-gray-400">Proteins</p>
-                      <p className="font-bold">
-                        {selectedDayDetails.meals.nutritionTotals.proteins} g
-                      </p>
-                    </div>
-                    <div className="bg-[#123347] p-2 rounded">
-                      <p className="text-sm text-gray-400">Fats</p>
-                      <p className="font-bold">
-                        {selectedDayDetails.meals.nutritionTotals.fats} g
-                      </p>
-                    </div>
-                    <div className="bg-[#123347] p-2 rounded">
-                      <p className="text-sm text-gray-400">Fibre</p>
-                      <p className="font-bold">
-                        {selectedDayDetails.meals.nutritionTotals.fibre} g
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Workout Section */}
-              <div className="bg-[#0a1f2e] p-4 rounded-lg">
-                <h3 className="text-lg font-bold mb-3 flex items-center">
-                  <FaDumbbell className="mr-2" /> Workout
-                </h3>
-
-                {selectedDayDetails.workout &&
-                selectedDayDetails.workout.exercises &&
-                selectedDayDetails.workout.exercises.length > 0 ? (
-                  <div>
-                    {selectedDayDetails.workout.exercises.map(
-                      (exercise, index) => (
-                        <div
-                          key={`exercise-${index}`}
-                          className="mb-4 pb-4 border-b border-gray-700 last:border-0"
-                        >
-                          <h4 className="font-bold text-[#e74c3c]">
-                            {exercise.name}
-                          </h4>
-                          <div className="grid grid-cols-3 gap-2 mt-2">
-                            <div>
-                              <p className="text-xs text-gray-400">Sets</p>
-                              <p>{exercise.setCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400">Reps</p>
-                              <p>{exercise.repsCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400">Weight</p>
-                              <p>
-                                {exercise.weight > 0
-                                  ? `${exercise.weight} kg`
-                                  : "N/A"}
-                              </p>
-                            </div>
-                          </div>
-                          {exercise.notes && (
-                            <div className="mt-2">
-                              <p className="text-xs text-gray-400">Notes</p>
-                              <p className="text-sm">{exercise.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">
-                    No workout recorded for this day
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-center text-gray-400">
-              No details available for this day
-            </p>
-          )}
-        </div>
-      )}
-
       {/* Progress chart */}
       <div className="bg-[#123347] rounded-lg p-3 sm:p-4 md:p-6 mb-8">
         <h2 className="text-xl font-bold mb-4 flex items-center">
           <FaChartBar className="mr-2" /> Progress Tracking
         </h2>
 
-        {/* Chart content would go here */}
-        <div className="chart-container h-64 flex items-center justify-center">
-          {/* Recharts Combined Chart */}
+        {/* Recharts Combined Chart */}
+        <div className="chart-container">
           {calorieData && calorieData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={prepareChartData()}
                 margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                onClick={(data) => {
+                  if (data && data.activeLabel) {
+                    setSelectedDay(data.activeLabel.toString());
+                  }
+                }}
               >
                 <defs>
                   <linearGradient
@@ -1028,14 +815,4 @@ const MemberProgress = ({
         <div className="bg-[#123347] p-4 rounded-lg">
           <h3 className="text-lg font-bold mb-2">Current Weight</h3>
           <p className="text-3xl">
-            {weightData.length > 0
-              ? weightData[weightData.length - 1].weight.toFixed(1)
-              : member?.weight || "N/A"}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default MemberProgress;
+            {weightData.length >
