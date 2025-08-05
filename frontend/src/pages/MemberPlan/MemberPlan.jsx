@@ -176,7 +176,7 @@ const MemberPlan = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0a1f2e] rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">Weight Tracker</h2>
                 <button
                   className="text-gray-400 hover:text-white"
@@ -379,7 +379,7 @@ const WeightTracker = ({
 
   return (
     <div className="weight-tracker-container">
-      <div className="bg-[#123347] rounded-lg p-4 mb-6">
+      <div className="bg-[#123347] rounded-lg p-4 mb-4">
         <h2 className="text-xl font-bold mb-4 flex items-center">
           <FaWeight className="mr-2" /> Update Weight
         </h2>
@@ -453,7 +453,7 @@ const WeightTracker = ({
         )}
 
         {!loading && weightHistory.length > 0 && (
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
             {weightHistory.map((record, index) => (
               <div key={index} className="bg-[#0a1f2e] p-3 rounded-md">
                 <div className="flex justify-between items-center">
