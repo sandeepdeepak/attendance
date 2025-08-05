@@ -906,7 +906,8 @@ const MemberProgress = ({
                                   >
                                     <span>Set {setIndex + 1}</span>
                                     <span>
-                                      {set.weight} kg × {set.reps} reps
+                                      {set.weight} kg × {set.count || set.reps}{" "}
+                                      count
                                     </span>
                                   </div>
                                 ))}
@@ -919,16 +920,16 @@ const MemberProgress = ({
                                 <p>{exercise.setCount}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-400">Reps</p>
-                                <p>{exercise.repsCount}</p>
-                              </div>
-                              <div>
                                 <p className="text-xs text-gray-400">Weight</p>
                                 <p>
                                   {exercise.weight > 0
                                     ? `${exercise.weight} kg`
                                     : "N/A"}
                                 </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400">Count</p>
+                                <p>{exercise.count || exercise.repsCount}</p>
                               </div>
                             </div>
                           )}
