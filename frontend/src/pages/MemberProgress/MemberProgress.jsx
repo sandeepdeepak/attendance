@@ -643,24 +643,45 @@ const MemberProgress = ({
                           <h4 className="font-bold text-[#e74c3c]">
                             {exercise.name}
                           </h4>
-                          <div className="grid grid-cols-3 gap-2 mt-2">
-                            <div>
-                              <p className="text-xs text-gray-400">Sets</p>
-                              <p>{exercise.setCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400">Reps</p>
-                              <p>{exercise.repsCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-400">Weight</p>
-                              <p>
-                                {exercise.weight > 0
-                                  ? `${exercise.weight} kg`
-                                  : "N/A"}
+                          {exercise.sets && Array.isArray(exercise.sets) ? (
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-400 mb-1">
+                                Sets ({exercise.sets.length})
                               </p>
+                              <div className="flex flex-col gap-2">
+                                {exercise.sets.map((set, setIndex) => (
+                                  <div
+                                    key={`set-${setIndex}`}
+                                    className="bg-[#123347] p-2 rounded flex justify-between"
+                                  >
+                                    <span>Set {setIndex + 1}</span>
+                                    <span>
+                                      {set.weight} kg × {set.reps} reps
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                              <div>
+                                <p className="text-xs text-gray-400">Sets</p>
+                                <p>{exercise.setCount}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400">Reps</p>
+                                <p>{exercise.repsCount}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-400">Weight</p>
+                                <p>
+                                  {exercise.weight > 0
+                                    ? `${exercise.weight} kg`
+                                    : "N/A"}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                           {exercise.notes && (
                             <div className="mt-2">
                               <p className="text-xs text-gray-400">Notes</p>

@@ -1,212 +1,149 @@
-// API endpoint to get daily workout and meal details for a member's calorie progress
+// API endpoint to get workout and meal details for each day
 const express = require("express");
 const router = express.Router();
-const { authenticateToken } = require("./middleware/auth");
+const {
+  DynamoDBDocumentClient,
+  ScanCommand,
+} = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 
-// Sample data structure for daily details
-const sampleDailyDetails = [
-  {
-    date: "2025-05-01",
-    meals: {
-      breakfast: [
-        {
-          name: "Oatmeal with fruits",
-          quantity: 1,
-          calories: 350,
-          totalCalories: 350,
-        },
-        {
-          name: "Greek Yogurt",
-          quantity: 1,
-          calories: 150,
-          totalCalories: 150,
-        },
-      ],
-      lunch: [
-        {
-          name: "Grilled Chicken Salad",
-          quantity: 1,
-          calories: 450,
-          totalCalories: 450,
-        },
-        {
-          name: "Whole Grain Bread",
-          quantity: 2,
-          calories: 80,
-          totalCalories: 160,
-        },
-      ],
-      dinner: [
-        {
-          name: "Salmon with Vegetables",
-          quantity: 1,
-          calories: 550,
-          totalCalories: 550,
-        },
-        { name: "Brown Rice", quantity: 1, calories: 200, totalCalories: 200 },
-      ],
-      nutritionTotals: {
-        calories: 1860,
-        carbs: 180,
-        proteins: 120,
-        fats: 60,
-        fibre: 25,
-      },
-    },
-    workout: {
-      exercises: [
-        {
-          name: "Bench Press",
-          setCount: 4,
-          repsCount: 10,
-          weight: 80,
-          notes: "Increased weight by 5kg",
-        },
-        { name: "Squats", setCount: 3, repsCount: 12, weight: 100, notes: "" },
-        {
-          name: "Pull-ups",
-          setCount: 3,
-          repsCount: 8,
-          weight: 0,
-          notes: "Body weight only",
-        },
-      ],
-      caloriesBurned: 450,
-      duration: 60, // minutes
-    },
-  },
-  {
-    date: "2025-05-02",
-    meals: {
-      breakfast: [
-        {
-          name: "Protein Smoothie",
-          quantity: 1,
-          calories: 300,
-          totalCalories: 300,
-        },
-      ],
-      lunch: [
-        { name: "Turkey Wrap", quantity: 1, calories: 400, totalCalories: 400 },
-        { name: "Apple", quantity: 1, calories: 80, totalCalories: 80 },
-      ],
-      dinner: [
-        {
-          name: "Vegetable Stir Fry",
-          quantity: 1,
-          calories: 350,
-          totalCalories: 350,
-        },
-        { name: "Tofu", quantity: 1, calories: 150, totalCalories: 150 },
-      ],
-      nutritionTotals: {
-        calories: 1280,
-        carbs: 140,
-        proteins: 90,
-        fats: 40,
-        fibre: 20,
-      },
-    },
-    workout: {
-      exercises: [
-        {
-          name: "Deadlift",
-          setCount: 3,
-          repsCount: 8,
-          weight: 120,
-          notes: "Focus on form",
-        },
-        {
-          name: "Shoulder Press",
-          setCount: 4,
-          repsCount: 10,
-          weight: 40,
-          notes: "",
-        },
-      ],
-      caloriesBurned: 380,
-      duration: 45, // minutes
-    },
-  },
-];
+// Initialize DynamoDB client
+const region = "us-east-1";
+const dynamoClient = new DynamoDBClient({ region });
+const docClient = DynamoDBDocumentClient.from(dynamoClient);
 
-// GET /api/calorie-progress/:memberId/:yearMonth/details - Get daily details for a member's calorie progress
-router.get(
-  "/calorie-progress/:memberId/:yearMonth/details",
-  authenticateToken,
-  async (req, res) => {
-    try {
-      const { memberId, yearMonth } = req.params;
+// Constants for table names
+const DIET_PLANS_TABLE = "diet_plans";
+const WORKOUT_PLANS_TABLE = "workout_plans";
 
-      // In a real implementation, you would fetch this data from a database
-      // For now, we'll return sample data
+/**
+ * @route GET /api/calorie-progress/:memberId/:yearMonth/details
+ * @description Get workout and meal details for each day of the month
+ * @param {string} memberId - The ID of the member
+ * @param {string} yearMonth - The year and month in YYYY-MM format
+ * @returns {Object} Daily workout and meal details
+ */
+router.get("/:memberId/:yearMonth/details", async (req, res) => {
+  try {
+    const { memberId, yearMonth } = req.params;
 
-      // Adjust dates to match the requested month
-      const [year, month] = yearMonth.split("-");
-      const dailyDetails = sampleDailyDetails.map((detail) => {
-        // Create a copy of the detail object
-        const newDetail = JSON.parse(JSON.stringify(detail));
-
-        // Extract the day from the original date
-        const day = detail.date.split("-")[2];
-
-        // Create a new date with the requested year and month
-        newDetail.date = `${year}-${month}-${day}`;
-
-        return newDetail;
-      });
-
-      res.json({
-        success: true,
-        dailyDetails,
-      });
-    } catch (error) {
-      console.error("Error fetching calorie progress details:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch calorie progress details",
+    // Validate yearMonth format (YYYY-MM)
+    if (!yearMonth.match(/^\d{4}-\d{2}$/)) {
+      return res.status(400).json({
+        error: "Invalid yearMonth format. Expected format: YYYY-MM",
       });
     }
-  }
-);
 
-// GET /api/calorie-progress/:memberId/:yearMonth/details/public - Public endpoint for daily details
-router.get(
-  "/calorie-progress/:memberId/:yearMonth/details/public",
-  async (req, res) => {
-    try {
-      const { memberId, yearMonth } = req.params;
+    // Get the number of days in the month
+    const [year, month] = yearMonth.split("-").map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
 
-      // Same implementation as the authenticated endpoint
-      // In a real app, you might want to limit the data returned for public access
+    // 1. Get all diet plans for the specified member and month
+    const dietPlansParams = {
+      TableName: DIET_PLANS_TABLE,
+      FilterExpression:
+        "memberId = :memberId AND begins_with(#date, :yearMonth)",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+        ":yearMonth": yearMonth,
+      },
+      ExpressionAttributeNames: {
+        "#date": "date",
+      },
+    };
 
-      // Adjust dates to match the requested month
-      const [year, month] = yearMonth.split("-");
-      const dailyDetails = sampleDailyDetails.map((detail) => {
-        // Create a copy of the detail object
-        const newDetail = JSON.parse(JSON.stringify(detail));
+    const dietPlansResult = await docClient.send(
+      new ScanCommand(dietPlansParams)
+    );
+    const dietPlans = dietPlansResult.Items || [];
 
-        // Extract the day from the original date
-        const day = detail.date.split("-")[2];
+    // 2. Get all workout plans for the specified member and month
+    const workoutPlansParams = {
+      TableName: WORKOUT_PLANS_TABLE,
+      FilterExpression:
+        "memberId = :memberId AND begins_with(#date, :yearMonth)",
+      ExpressionAttributeValues: {
+        ":memberId": memberId,
+        ":yearMonth": yearMonth,
+      },
+      ExpressionAttributeNames: {
+        "#date": "date",
+      },
+    };
 
-        // Create a new date with the requested year and month
-        newDetail.date = `${year}-${month}-${day}`;
+    const workoutPlansResult = await docClient.send(
+      new ScanCommand(workoutPlansParams)
+    );
+    const workoutPlans = workoutPlansResult.Items || [];
 
-        return newDetail;
-      });
+    // 3. Combine diet and workout plans into daily details
+    const dailyDetails = {};
 
-      res.json({
-        success: true,
-        dailyDetails,
-      });
-    } catch (error) {
-      console.error("Error fetching public calorie progress details:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch calorie progress details",
-      });
+    // Initialize daily details for each day of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStr = day < 10 ? `0${day}` : `${day}`;
+      const date = `${yearMonth}-${dayStr}`;
+
+      dailyDetails[date] = {
+        date,
+        meals: {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          nutritionTotals: {
+            calories: 0,
+            carbs: 0,
+            proteins: 0,
+            fats: 0,
+            fibre: 0,
+          },
+        },
+        workout: {
+          exercises: [],
+        },
+      };
     }
+
+    // Add diet plans to daily details
+    dietPlans.forEach((plan) => {
+      if (plan.date && dailyDetails[plan.date]) {
+        dailyDetails[plan.date].meals = {
+          breakfast: plan.breakfast || [],
+          lunch: plan.lunch || [],
+          dinner: plan.dinner || [],
+          nutritionTotals: plan.nutritionTotals || {
+            calories: 0,
+            carbs: 0,
+            proteins: 0,
+            fats: 0,
+            fibre: 0,
+          },
+        };
+      }
+    });
+
+    // Add workout plans to daily details
+    workoutPlans.forEach((plan) => {
+      if (plan.date && dailyDetails[plan.date]) {
+        dailyDetails[plan.date].workout = {
+          exercises: plan.exercises || [],
+        };
+      }
+    });
+
+    // Convert the dailyDetails object to an array
+    const dailyDetailsArray = Object.values(dailyDetails);
+
+    res.json({
+      success: true,
+      memberId,
+      yearMonth,
+      dailyDetails: dailyDetailsArray,
+    });
+  } catch (error) {
+    console.error("Error getting calorie progress details:", error);
+    res.status(500).json({ error: "Failed to get calorie progress details" });
   }
-);
+});
 
 module.exports = router;
