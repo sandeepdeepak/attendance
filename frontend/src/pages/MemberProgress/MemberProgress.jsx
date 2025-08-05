@@ -661,10 +661,43 @@ const MemberProgress = ({
                     className: "hidden sm:block",
                   }}
                 />
-                {/* Custom tooltip that doesn't render anything */}
+                {/* Custom tooltip that shows only weight value with responsive positioning */}
                 <Tooltip
-                  content={() => null} // Return null to render nothing
                   cursor={{ stroke: "#ffffff", strokeWidth: 1 }}
+                  content={({ active, payload, coordinate }) => {
+                    if (active && payload && payload.length > 0 && coordinate) {
+                      // Find the weight data point
+                      const weightData = payload.find(
+                        (p) => p.dataKey === "weight"
+                      );
+                      if (weightData && weightData.value !== null) {
+                        // Calculate position based on chart dimensions
+                        return (
+                          <div
+                            className="weight-tooltip"
+                            style={{
+                              backgroundColor: "#0a1f2e",
+                              border: "1px solid #4a5568",
+                              borderRadius: "4px",
+                              padding: "8px",
+                              color: "#ffffff",
+                              position: "absolute",
+                              left: coordinate.x,
+                              top: coordinate.y - 40, // Position above the point
+                              transform: "translateX(-50%)", // Center horizontally
+                              zIndex: 1000,
+                              minWidth: "60px",
+                              textAlign: "center",
+                            }}
+                          >
+                            <p>{weightData.value.toFixed(1)} kg</p>
+                          </div>
+                        );
+                      }
+                    }
+                    return null;
+                  }}
+                  wrapperStyle={{ pointerEvents: "none", zIndex: 100 }}
                 />
                 {/* Reference line for recommended calories */}
                 {recommendedCalories && (
@@ -737,6 +770,7 @@ const MemberProgress = ({
                         fill: "#2ecc71",
                       }}
                       dot={false} // Hide regular dots for cleaner mobile view
+                      baseValue={recommendedCalories} // Start from recommended calories instead of 0
                     />
 
                     {/* For calories exactly equal to the recommended calories */}
