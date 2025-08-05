@@ -408,7 +408,8 @@ const MemberProgress = ({
 
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth() + 1;
-    const dayStr = selectedDay.padStart(2, "0");
+    // Ensure selectedDay is a string before using padStart
+    const dayStr = String(selectedDay).padStart(2, "0");
     const dateStr = `${year}-${month < 10 ? "0" + month : month}-${dayStr}`;
 
     return dailyDetails.find((detail) => detail.date === dateStr);
@@ -479,6 +480,255 @@ const MemberProgress = ({
         >
           Next &gt;
         </button>
+      </div>
+
+      {/* Progress chart */}
+      <div className="bg-[#123347] rounded-lg p-3 sm:p-4 md:p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          <FaChartBar className="mr-2" /> Progress Tracking
+        </h2>
+
+        {/* Chart content would go here */}
+        <div className="chart-container h-64 flex items-center justify-center">
+          {/* Recharts Combined Chart */}
+          {calorieData && calorieData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={prepareChartData()}
+                margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+                onMouseMove={(e) => {
+                  if (
+                    e &&
+                    e.activeTooltipIndex !== undefined &&
+                    e.activeLabel
+                  ) {
+                    // Update selectedDay when hovering over chart
+                    setSelectedDay(e.activeLabel);
+                  }
+                }}
+              >
+                <defs>
+                  <linearGradient
+                    id="colorCalories"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#3498db" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3498db" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorCaloriesGreen"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#2ecc71" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#2ecc71" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorCaloriesRed"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#e74c3c" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#e74c3c" stopOpacity={0.1} />
+                  </linearGradient>
+                  <linearGradient
+                    id="colorCaloriesYellow"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#f39c12" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#f39c12" stopOpacity={0.1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fill: "#a0aec0" }}
+                  tickLine={{ stroke: "#4a5568" }}
+                  axisLine={{ stroke: "#4a5568" }}
+                  ticks={Array.from({ length: 31 }, (_, i) => i + 1).filter(
+                    (day) => day === 1 || day % 5 === 0 || day === 31
+                  )} // Show only days 1, 5, 10, 15, 20, 25, 31 on mobile
+                  domain={[1, 31]}
+                  interval={0}
+                  tickMargin={5}
+                  padding={{ left: 5, right: 5 }}
+                />
+                {/* Left Y-axis for calories */}
+                <YAxis
+                  yAxisId="left"
+                  domain={[
+                    0,
+                    Math.max(2500, Math.ceil(maxCalories / 500) * 500),
+                  ]}
+                  tick={{ fill: "#a0aec0" }}
+                  tickLine={{ stroke: "#4a5568" }}
+                  axisLine={{ stroke: "#4a5568" }}
+                  label={{
+                    value: "Calories",
+                    angle: -90,
+                    position: "insideLeft",
+                    fill: "#a0aec0",
+                    fontSize: 10,
+                    className: "hidden sm:block",
+                  }}
+                />
+                {/* Right Y-axis for weight */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={[minWeight, maxWeight]}
+                  tick={{ fill: "#a0aec0" }}
+                  tickLine={{ stroke: "#4a5568" }}
+                  axisLine={{ stroke: "#4a5568" }}
+                  label={{
+                    value: "Weight (kg)",
+                    angle: 90,
+                    position: "insideRight",
+                    fill: "#a0aec0",
+                    fontSize: 10,
+                    className: "hidden sm:block",
+                  }}
+                />
+                {/* Custom tooltip that doesn't render anything */}
+                <Tooltip
+                  content={() => null} // Return null to render nothing
+                  cursor={{ stroke: "#ffffff", strokeWidth: 1 }}
+                />
+                {/* Reference line for recommended calories */}
+                {recommendedCalories && (
+                  <ReferenceLine
+                    yAxisId="left"
+                    y={recommendedCalories}
+                    stroke="#f39c12"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{
+                      value: `Target: ${recommendedCalories} kcal`,
+                      position: "insideTopRight",
+                      fill: "#f39c12",
+                      fontSize: 10,
+                    }}
+                  />
+                )}
+
+                {/* Weight data as bars */}
+                <Bar
+                  dataKey="weight"
+                  yAxisId="right"
+                  fill="#9b59b6"
+                  barSize={20}
+                  name="Weight"
+                />
+
+                {/* Show calorie data with different colors based on target */}
+                {recommendedCalories ? (
+                  // If we have recommended calories, use red for above and green for below
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey={(data) =>
+                        data.calories > recommendedCalories
+                          ? data.calories
+                          : recommendedCalories
+                      }
+                      yAxisId="left"
+                      name="Above Target"
+                      stroke="#e74c3c"
+                      fillOpacity={0.8}
+                      fill="url(#colorCaloriesRed)"
+                      activeDot={{
+                        r: 5,
+                        stroke: "white",
+                        strokeWidth: 1,
+                        fill: "#e74c3c",
+                      }}
+                      dot={false} // Hide regular dots for cleaner mobile view
+                      baseValue={recommendedCalories}
+                    />
+                    {/* For calories below the recommended calories */}
+                    <Area
+                      type="monotone"
+                      dataKey={(data) =>
+                        data.calories < recommendedCalories
+                          ? data.calories
+                          : null
+                      }
+                      yAxisId="left"
+                      name="Below Target"
+                      stroke="#2ecc71"
+                      fillOpacity={0.8}
+                      fill="url(#colorCaloriesGreen)"
+                      activeDot={{
+                        r: 5,
+                        stroke: "white",
+                        strokeWidth: 1,
+                        fill: "#2ecc71",
+                      }}
+                      dot={false} // Hide regular dots for cleaner mobile view
+                    />
+
+                    {/* For calories exactly equal to the recommended calories */}
+                    <Area
+                      type="monotone"
+                      dataKey={(data) =>
+                        data.calories === recommendedCalories
+                          ? data.calories
+                          : null
+                      }
+                      yAxisId="left"
+                      name="At Target"
+                      stroke="#f39c12"
+                      fillOpacity={0.8}
+                      fill="url(#colorCaloriesYellow)"
+                      activeDot={{
+                        r: 5,
+                        stroke: "white",
+                        strokeWidth: 1,
+                        fill: "#f39c12",
+                      }}
+                      dot={false} // Hide regular dots for cleaner mobile view
+                    />
+                  </>
+                ) : (
+                  // If no recommended calories, use a single color
+                  <Area
+                    type="monotone"
+                    dataKey="calories"
+                    yAxisId="left"
+                    name="Calories"
+                    stroke="#3498db"
+                    fillOpacity={0.8}
+                    fill="url(#colorCalories)"
+                    activeDot={{
+                      r: 5,
+                      stroke: "white",
+                      strokeWidth: 1,
+                      fill: "#3498db",
+                    }}
+                    dot={false} // Hide regular dots for cleaner mobile view
+                  />
+                )}
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  wrapperStyle={{ color: "white" }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="no-data-message">No progress data available</div>
+          )}
+        </div>
       </div>
 
       {/* Daily Details Section */}
@@ -706,312 +956,6 @@ const MemberProgress = ({
           )}
         </div>
       )}
-
-      {/* Progress chart */}
-      <div className="bg-[#123347] rounded-lg p-3 sm:p-4 md:p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4 flex items-center">
-          <FaChartBar className="mr-2" /> Progress Tracking
-        </h2>
-
-        {/* Chart content would go here */}
-        <div className="chart-container h-64 flex items-center justify-center">
-          {/* Recharts Combined Chart */}
-          {calorieData && calorieData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={prepareChartData()}
-                margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient
-                    id="colorCalories"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#3498db" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3498db" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorCaloriesGreen"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#2ecc71" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#2ecc71" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorCaloriesRed"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#e74c3c" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#e74c3c" stopOpacity={0.1} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorCaloriesYellow"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#f39c12" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#f39c12" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#4a5568" />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: "#a0aec0" }}
-                  tickLine={{ stroke: "#4a5568" }}
-                  axisLine={{ stroke: "#4a5568" }}
-                  ticks={Array.from({ length: 31 }, (_, i) => i + 1).filter(
-                    (day) => day === 1 || day % 5 === 0 || day === 31
-                  )} // Show only days 1, 5, 10, 15, 20, 25, 31 on mobile
-                  domain={[1, 31]}
-                  interval={0}
-                  tickMargin={5}
-                  padding={{ left: 5, right: 5 }}
-                />
-                {/* Left Y-axis for calories */}
-                <YAxis
-                  yAxisId="left"
-                  domain={[
-                    0,
-                    Math.max(2500, Math.ceil(maxCalories / 500) * 500),
-                  ]}
-                  tick={{ fill: "#a0aec0" }}
-                  tickLine={{ stroke: "#4a5568" }}
-                  axisLine={{ stroke: "#4a5568" }}
-                  label={{
-                    value: "Calories",
-                    angle: -90,
-                    position: "insideLeft",
-                    fill: "#a0aec0",
-                    fontSize: 10,
-                    className: "hidden sm:block",
-                  }}
-                />
-                {/* Right Y-axis for weight */}
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[minWeight, maxWeight]}
-                  tick={{ fill: "#a0aec0" }}
-                  tickLine={{ stroke: "#4a5568" }}
-                  axisLine={{ stroke: "#4a5568" }}
-                  label={{
-                    value: "Weight (kg)",
-                    angle: 90,
-                    position: "insideRight",
-                    fill: "#a0aec0",
-                    fontSize: 10,
-                    className: "hidden sm:block",
-                  }}
-                />
-                <Tooltip
-                  position="bottom" // Position at the bottom of the cursor
-                  offset={20} // Add some offset to ensure it's visible
-                  contentStyle={{
-                    backgroundColor: "#1C2937",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "white",
-                    padding: "10px",
-                    fontSize: "14px",
-                    maxWidth: "250px",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.5)",
-                  }}
-                  labelStyle={{
-                    color: "white",
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    marginBottom: "5px",
-                  }}
-                  cursor={{ stroke: "#ffffff", strokeWidth: 1 }}
-                  formatter={(value, name, props) => {
-                    // Create a compact tooltip with only the 3 required values
-                    if (data) {
-                      // For weight, show the value with 2 decimal places
-                      if (name.toLowerCase() === "weight") {
-                        return [`${value.toFixed(2)} kg`, "Weight"];
-                      }
-                      if (name === "Above Target") {
-                        return null; // Don't show this in tooltip
-                      }
-                      if (name === "Below Target") {
-                        return null; // Don't show this in tooltip
-                      }
-                    }
-
-                    return [value, name];
-                  }}
-                  labelFormatter={(value) => `Day ${value}`}
-                  wrapperStyle={{ zIndex: 1000 }}
-                />
-                {/* Reference line for recommended calories */}
-                {recommendedCalories && (
-                  <ReferenceLine
-                    yAxisId="left"
-                    y={recommendedCalories}
-                    stroke="#f39c12"
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    label={{
-                      value: `Target: ${recommendedCalories} kcal`,
-                      position: "insideTopRight",
-                      fill: "#f39c12",
-                      fontSize: 10,
-                    }}
-                  />
-                )}
-
-                {/* Weight data as bars */}
-                <Bar
-                  dataKey="weight"
-                  yAxisId="right"
-                  fill="#9b59b6"
-                  barSize={20}
-                  name="Weight"
-                />
-
-                {/* Show calorie data with different colors based on target */}
-                {recommendedCalories ? (
-                  // If we have recommended calories, use red for above and green for below
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey={(data) =>
-                        data.calories > recommendedCalories
-                          ? data.calories
-                          : recommendedCalories
-                      }
-                      yAxisId="left"
-                      name="Above Target"
-                      stroke="#e74c3c"
-                      fillOpacity={0.8}
-                      fill="url(#colorCaloriesRed)"
-                      activeDot={{
-                        r: 5,
-                        stroke: "white",
-                        strokeWidth: 1,
-                        fill: "#e74c3c",
-                      }}
-                      dot={false} // Hide regular dots for cleaner mobile view
-                      baseValue={recommendedCalories}
-                    />
-                    {/* For calories below the recommended calories */}
-                    <Area
-                      type="monotone"
-                      dataKey={(data) =>
-                        data.calories < recommendedCalories
-                          ? data.calories
-                          : null
-                      }
-                      yAxisId="left"
-                      name="Below Target"
-                      stroke="#2ecc71"
-                      fillOpacity={0.8}
-                      fill="url(#colorCaloriesGreen)"
-                      activeDot={{
-                        r: 5,
-                        stroke: "white",
-                        strokeWidth: 1,
-                        fill: "#2ecc71",
-                      }}
-                      dot={false} // Hide regular dots for cleaner mobile view
-                    />
-
-                    {/* For calories exactly equal to the recommended calories */}
-                    <Area
-                      type="monotone"
-                      dataKey={(data) =>
-                        data.calories === recommendedCalories
-                          ? data.calories
-                          : null
-                      }
-                      yAxisId="left"
-                      name="At Target"
-                      stroke="#f39c12"
-                      fillOpacity={0.8}
-                      fill="url(#colorCaloriesYellow)"
-                      activeDot={{
-                        r: 5,
-                        stroke: "white",
-                        strokeWidth: 1,
-                        fill: "#f39c12",
-                      }}
-                      dot={false} // Hide regular dots for cleaner mobile view
-                    />
-                  </>
-                ) : (
-                  // If no recommended calories, use a single color
-                  <Area
-                    type="monotone"
-                    dataKey="calories"
-                    yAxisId="left"
-                    name="Calories"
-                    stroke="#3498db"
-                    fillOpacity={0.8}
-                    fill="url(#colorCalories)"
-                    activeDot={{
-                      r: 5,
-                      stroke: "white",
-                      strokeWidth: 1,
-                      fill: "#3498db",
-                    }}
-                    dot={false} // Hide regular dots for cleaner mobile view
-                  />
-                )}
-                <Legend
-                  verticalAlign="top"
-                  height={36}
-                  wrapperStyle={{ color: "white" }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="no-data-message">No progress data available</div>
-          )}
-        </div>
-
-        <div className="chart-legend mt-4 flex flex-wrap justify-center gap-4 text-sm text-gray-400">
-          {recommendedCalories ? (
-            <>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-4 h-4 bg-[#2ecc71] rounded"></div>
-                <span>Calories Below Target</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-4 h-4 bg-[#e74c3c] rounded"></div>
-                <span>Calories Above Target</span>
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-4 h-4 bg-[#f39c12] rounded"></div>
-                <span>Calories At Target</span>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-4 h-4 bg-[#3498db] rounded"></div>
-              <span>Daily Calories</span>
-            </div>
-          )}
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-4 h-4 bg-[#9b59b6] rounded"></div>
-            <span>Weight (kg)</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-4 h-4 bg-[#f39c12] rounded"></div>
-            <span>Target Calories</span>
-          </div>
-        </div>
-      </div>
 
       {/* Summary statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
