@@ -102,9 +102,8 @@ const MemberProgress = ({
         if (memberResponse.data && memberResponse.data.member) {
           setMember(memberResponse.data.member);
 
-          // Generate some sample weight data for the month
-          // In a real app, this would come from an API
-          generateSampleWeightData(memberResponse.data.member);
+          // Fetch weight history data for the month
+          await fetchWeightHistory(memberResponse.data.member);
         }
 
         // Fetch recommended calories
@@ -125,34 +124,97 @@ const MemberProgress = ({
     }
   }, [memberId, fromFaceRecognition]);
 
-  // Generate sample weight data for the month
-  const generateSampleWeightData = (memberData) => {
-    if (!memberData || !memberData.weight) return;
+  // Fetch weight history data for the month
+  const fetchWeightHistory = async (memberData) => {
+    if (!memberData) return;
 
-    const baseWeight = parseFloat(memberData.weight);
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth() + 1;
-    const daysInMonth = new Date(year, month, 0).getDate();
+    try {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + 1;
+      const monthStr = month < 10 ? `0${month}` : `${month}`;
+      const yearMonth = `${year}-${monthStr}`;
 
-    // Create weight data with small variations
-    const weightEntries = [];
-    for (let day = 1; day <= daysInMonth; day++) {
-      // Only add weight for some days (e.g., every 3 days)
-      if (day % 3 === 0 || day === 1 || day === daysInMonth) {
-        const variation = (Math.random() * 2 - 1) / 2; // Random variation between -0.5 and +0.5
-        const dayWeight = (baseWeight + variation).toFixed(1);
+      let config = {};
+
+      // If not coming from face recognition, require authentication
+      if (!fromFaceRecognition) {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+      }
+
+      // Determine which API endpoint to use based on source
+      const endpoint = fromFaceRecognition
+        ? `${API_URL}/api/weight-history/${memberId}/public`
+        : `${API_URL}/api/weight-history/${memberId}`;
+
+      // Add date range filter for the current month
+      const startDate = `${yearMonth}-01`;
+      const endDate = `${yearMonth}-31`; // This will work for all months
+
+      const response = await axios.get(
+        `${endpoint}?startDate=${startDate}&endDate=${endDate}`,
+        config
+      );
+
+      if (response.data && response.data.success) {
+        // Format the weight history data for the chart
+        const weightEntries = response.data.weightHistory.map((record) => ({
+          date: record.date,
+          day: parseInt(record.date.split("-")[2]), // Extract day from date
+          weight: parseFloat(record.weight),
+        }));
+
+        setWeightData(weightEntries);
+      } else {
+        console.error("Failed to fetch weight history");
+        // If no weight data, use current weight as fallback
+        if (memberData.weight) {
+          const baseWeight = parseFloat(memberData.weight);
+          const today = new Date();
+          const day = today.getDate();
+          const dayStr = day < 10 ? `0${day}` : `${day}`;
+          const date = `${year}-${monthStr}-${dayStr}`;
+
+          setWeightData([
+            {
+              date,
+              day,
+              weight: baseWeight,
+            },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching weight history:", error);
+      // Use current weight as fallback if available
+      if (memberData.weight) {
+        const baseWeight = parseFloat(memberData.weight);
+        const today = new Date();
+        const day = today.getDate();
         const dayStr = day < 10 ? `0${day}` : `${day}`;
-        const date = `${year}-${month < 10 ? "0" + month : month}-${dayStr}`;
+        const date = `${year}-${monthStr}-${dayStr}`;
 
-        weightEntries.push({
-          date,
-          day,
-          weight: parseFloat(dayWeight),
-        });
+        setWeightData([
+          {
+            date,
+            day,
+            weight: baseWeight,
+          },
+        ]);
       }
     }
-
-    setWeightData(weightEntries);
   };
 
   // Fetch calorie data whenever the month changes
@@ -162,7 +224,7 @@ const MemberProgress = ({
 
       // Also update weight data when month changes
       if (member) {
-        generateSampleWeightData(member);
+        fetchWeightHistory(member);
       }
     }
   }, [currentMonth]);

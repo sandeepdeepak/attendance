@@ -77,6 +77,7 @@ const WORKOUT_PLANS_TABLE = "workout_plans";
 const WORKOUT_TEMPLATES_TABLE = "workout_templates";
 const GYM_OWNERS_TABLE = "gym_owners";
 const PUSH_SUBSCRIPTIONS_TABLE = "push_subscriptions";
+const WEIGHT_HISTORY_TABLE = "weight_history";
 
 // JWT Secret Key - should be in environment variables in production
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
@@ -155,6 +156,9 @@ async function initializeDynamoDB() {
     const pushSubscriptionsTableExists = listTablesResponse.TableNames.includes(
       PUSH_SUBSCRIPTIONS_TABLE
     );
+
+    const weightHistoryTableExists =
+      listTablesResponse.TableNames.includes(WEIGHT_HISTORY_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -373,6 +377,32 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${PUSH_SUBSCRIPTIONS_TABLE}`);
     } else {
       console.log(`Table ${PUSH_SUBSCRIPTIONS_TABLE} already exists`);
+    }
+
+    // Create weight history table if it doesn't exist
+    if (!weightHistoryTableExists) {
+      const createWeightHistoryTableParams = {
+        TableName: WEIGHT_HISTORY_TABLE,
+        KeySchema: [
+          { AttributeName: "memberId", KeyType: "HASH" }, // Partition key
+          { AttributeName: "date", KeyType: "RANGE" }, // Sort key
+        ],
+        AttributeDefinitions: [
+          { AttributeName: "memberId", AttributeType: "S" },
+          { AttributeName: "date", AttributeType: "S" },
+        ],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createWeightHistoryTableParams)
+      );
+      console.log(`Created table: ${WEIGHT_HISTORY_TABLE}`);
+    } else {
+      console.log(`Table ${WEIGHT_HISTORY_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -4084,6 +4114,10 @@ app.post("/api/delete-all-faces", async (req, res) => {
 // Import and use the calorie progress details API
 const calorieProgressDetailsRouter = require("./api-calorie-progress-details");
 app.use("/api", calorieProgressDetailsRouter);
+
+// Import and use the weight history API
+const weightHistoryRouter = require("./api-weight-history");
+app.use("/api", weightHistoryRouter);
 
 // Get calorie data for a specific member and month with workout and meal details
 app.get(
