@@ -814,29 +814,17 @@ const MemberProgress = ({
                   }}
                   cursor={{ stroke: "#ffffff", strokeWidth: 1 }}
                   formatter={(value, name, props) => {
-                    // Get the data point
-                    const data = props.payload;
-
                     // Create a compact tooltip with only the 3 required values
                     if (data) {
                       // For weight, show the value with 2 decimal places
-                      if (name === "weight") {
+                      if (name.toLowerCase() === "weight") {
                         return [`${value.toFixed(2)} kg`, "Weight"];
                       }
-
-                      // For calories (any type), show the consumed calories
-                      if (
-                        name === "Above Target" ||
-                        name === "Below Target" ||
-                        name === "At Target" ||
-                        name === "Calories"
-                      ) {
-                        return [`${data.calories} kcal`, "Consumed"];
+                      if (name === "Above Target") {
+                        return null; // Don't show this in tooltip
                       }
-
-                      // For recommended calories (reference line)
-                      if (name === "Target") {
-                        return [`${recommendedCalories} kcal`, "Target"];
+                      if (name === "Below Target") {
+                        return null; // Don't show this in tooltip
                       }
                     }
 
