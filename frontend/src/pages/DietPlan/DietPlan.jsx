@@ -70,6 +70,7 @@ const DietPlan = ({
       fibre: 4,
       serving_qty: 1,
       serving_unit: "cup",
+      serving_weight_grams: 240,
     },
     {
       id: "default-2",
@@ -81,6 +82,7 @@ const DietPlan = ({
       fibre: 3,
       serving_qty: 1,
       serving_unit: "medium",
+      serving_weight_grams: 150,
     },
     {
       id: "default-3",
@@ -92,6 +94,7 @@ const DietPlan = ({
       fibre: 2,
       serving_qty: 1,
       serving_unit: "medium",
+      serving_weight_grams: 120,
     },
     {
       id: "default-4",
@@ -103,6 +106,7 @@ const DietPlan = ({
       fibre: 3,
       serving_qty: 1,
       serving_unit: "medium",
+      serving_weight_grams: 130,
     },
     {
       id: "default-5",
@@ -114,6 +118,7 @@ const DietPlan = ({
       fibre: 3,
       serving_qty: 1,
       serving_unit: "piece",
+      serving_weight_grams: 40,
     },
   ];
 
@@ -151,6 +156,7 @@ const DietPlan = ({
           fibre: Math.round(food.nf_dietary_fiber || 0),
           serving_qty: food.serving_qty || 1,
           serving_unit: food.serving_unit || "g",
+          serving_weight_grams: food.serving_weight_grams || 0,
         }));
 
         setSearchResults(foods);
@@ -924,7 +930,10 @@ const DietPlan = ({
                           </p>
                           <p className="text-gray-400 text-sm text-left">
                             {food.totalCalories} kcal | {food.quantity}{" "}
-                            {food.serving_unit}
+                            {food.serving_unit}{" "}
+                            {food.serving_weight_grams
+                              ? `(${food.serving_weight_grams}g)`
+                              : ""}
                           </p>
                           <p className="text-gray-400 text-xs text-left">
                             {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
@@ -1012,7 +1021,10 @@ const DietPlan = ({
                           </p>
                           <p className="text-gray-400 text-sm text-left">
                             {food.totalCalories} kcal | {food.quantity}{" "}
-                            {food.serving_unit}
+                            {food.serving_unit}{" "}
+                            {food.serving_weight_grams
+                              ? `(${food.serving_weight_grams}g)`
+                              : ""}
                           </p>
                           <p className="text-gray-400 text-xs text-left">
                             {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
@@ -1100,7 +1112,10 @@ const DietPlan = ({
                           </p>
                           <p className="text-gray-400 text-sm text-left">
                             {food.totalCalories} kcal | {food.quantity}{" "}
-                            {food.serving_unit}
+                            {food.serving_unit}{" "}
+                            {food.serving_weight_grams
+                              ? `(${food.serving_weight_grams}g)`
+                              : ""}
                           </p>
                           <p className="text-gray-400 text-xs text-left">
                             {food.totalCarbs}g Carbs | {food.totalFats}g Fats{" "}
@@ -1257,7 +1272,7 @@ const DietPlan = ({
 
             <div className="flex gap-2 mt-6">
               <button
-                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#3e4652] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={() => setShowTemplateModal(false)}
               >
                 Cancel
@@ -1329,7 +1344,7 @@ const DietPlan = ({
               <input
                 type="text"
                 placeholder="Search foods"
-                className="bg-gray-800 text-white p-3 pl-10 rounded-lg w-full"
+                className="bg-[#3e4652] text-white p-3 pl-10 rounded-lg w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -1358,9 +1373,12 @@ const DietPlan = ({
                       onClick={() => addFoodToMeal(food)}
                     >
                       <div className="flex justify-between items-center">
-                        <p className="text-xl">
+                        <p className="text-xl text-left">
                           {capitalizeFirstLetter(food.name)} -{" "}
                           {food.serving_qty} {food.serving_unit}
+                          {food.serving_weight_grams
+                            ? ` (${food.serving_weight_grams}g)`
+                            : ""}
                         </p>
                         <p className="text-xl">{food.calories} kcal</p>
                       </div>
@@ -1384,7 +1402,7 @@ const DietPlan = ({
 
             {/* Cancel button */}
             <button
-              className="bg-gray-800 text-white py-4 rounded-lg text-xl font-bold w-full"
+              className="bg-[#3e4652] text-white py-4 rounded-lg text-xl font-bold w-full"
               onClick={closeFoodSelector}
             >
               Cancel

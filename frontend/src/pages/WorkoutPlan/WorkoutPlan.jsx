@@ -625,29 +625,34 @@ const WorkoutPlan = ({
 
         // If updating setCount, adjust the sets array
         if (field === "setCount") {
-          const newSetCount = parseInt(value) || 1;
-          let newSets = [...(exercise.sets || [])];
+          // Allow empty string during editing
+          const newSetCount = value === "" ? "" : parseInt(value) || 1;
 
-          // If increasing sets, add new sets with default values
-          if (newSetCount > newSets.length) {
-            const additionalSets = Array(newSetCount - newSets.length)
-              .fill()
-              .map(() => ({
-                weight: 5, // Default weight
-                reps: exercise.repsCount || 10, // Default reps
-              }));
-            newSets = [...newSets, ...additionalSets];
-          }
-          // If decreasing sets, truncate the array
-          else if (newSetCount < newSets.length) {
-            newSets = newSets.slice(0, newSetCount);
-          }
+          // Only adjust sets array if we have a valid number
+          if (typeof newSetCount === "number") {
+            let newSets = [...(exercise.sets || [])];
 
-          return {
-            ...exercise,
-            [field]: value,
-            sets: newSets,
-          };
+            // If increasing sets, add new sets with default values
+            if (newSetCount > newSets.length) {
+              const additionalSets = Array(newSetCount - newSets.length)
+                .fill()
+                .map(() => ({
+                  weight: 5, // Default weight
+                  reps: exercise.repsCount || 10, // Default reps
+                }));
+              newSets = [...newSets, ...additionalSets];
+            }
+            // If decreasing sets, truncate the array
+            else if (newSetCount < newSets.length) {
+              newSets = newSets.slice(0, newSetCount);
+            }
+
+            return {
+              ...exercise,
+              [field]: newSetCount,
+              sets: newSets,
+            };
+          }
         }
 
         // For other fields, just update normally
@@ -1008,9 +1013,18 @@ const WorkoutPlan = ({
                           handleUpdateExercise(
                             exercise.id,
                             "setCount",
-                            parseInt(e.target.value) || 1
+                            e.target.value
                           )
                         }
+                        onBlur={(e) => {
+                          // When input loses focus, ensure we have a valid number
+                          if (
+                            e.target.value === "" ||
+                            isNaN(parseInt(e.target.value))
+                          ) {
+                            handleUpdateExercise(exercise.id, "setCount", 1);
+                          }
+                        }}
                         className="bg-[#1e293b] text-white p-2 rounded w-full"
                         min="1"
                       />
@@ -1031,32 +1045,40 @@ const WorkoutPlan = ({
                               <span className="text-xs text-gray-400 w-6 mt-3">
                                 #{index + 1}
                               </span>
-                              <div className="flex-1">
-                                <label className="block text-gray-400 text-xs">
-                                  Weight
-                                </label>
-                                <select
-                                  value={set.weight}
-                                  onChange={(e) =>
-                                    handleUpdateSet(
-                                      exercise.id,
-                                      index,
-                                      "weight",
-                                      parseFloat(e.target.value)
-                                    )
-                                  }
-                                  className="bg-[#1e293b] text-white p-1 rounded w-20 text-sm text-right"
-                                >
-                                  {[
-                                    2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5,
-                                    25, 27.5, 30, 35, 40, 45, 50,
-                                  ].map((weight) => (
-                                    <option key={weight} value={weight}>
-                                      {weight} kg
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                              {/* Only show weight dropdown for specific equipment types */}
+                              {[
+                                "leverage machine",
+                                "barbell",
+                                "dumbbell",
+                                "weighted",
+                              ].includes(exercise.equipment) && (
+                                <div className="flex-1">
+                                  <label className="block text-gray-400 text-xs">
+                                    Weight
+                                  </label>
+                                  <select
+                                    value={set.weight}
+                                    onChange={(e) =>
+                                      handleUpdateSet(
+                                        exercise.id,
+                                        index,
+                                        "weight",
+                                        parseFloat(e.target.value)
+                                      )
+                                    }
+                                    className="bg-[#1e293b] text-white p-1 rounded w-20 text-sm text-right"
+                                  >
+                                    {[
+                                      2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5,
+                                      25, 27.5, 30, 35, 40, 45, 50,
+                                    ].map((weight) => (
+                                      <option key={weight} value={weight}>
+                                        {weight} kg
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
                               <div className="flex-1">
                                 <label className="block text-gray-400 text-xs">
                                   Reps
@@ -1069,9 +1091,31 @@ const WorkoutPlan = ({
                                       exercise.id,
                                       index,
                                       "reps",
-                                      parseInt(e.target.value) || 1
+                                      e.target.value
                                     )
                                   }
+                                  onBlur={(e) => {
+                                    // When input loses focus, ensure we have a valid number
+                                    if (
+                                      e.target.value === "" ||
+                                      isNaN(parseInt(e.target.value))
+                                    ) {
+                                      handleUpdateSet(
+                                        exercise.id,
+                                        index,
+                                        "reps",
+                                        1
+                                      );
+                                    } else {
+                                      // Convert to number when saving
+                                      handleUpdateSet(
+                                        exercise.id,
+                                        index,
+                                        "reps",
+                                        parseInt(e.target.value)
+                                      );
+                                    }
+                                  }}
                                   className="bg-[#1e293b] text-white p-1 rounded w-8 text-sm"
                                   min="1"
                                 />
