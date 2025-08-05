@@ -1162,7 +1162,7 @@ const WorkoutPlan = ({
       )}
 
       {/* Send button */}
-      {!fromFaceRecognition && (
+      {/* {!fromFaceRecognition && (
         <button
           className="bg-white text-black py-4 rounded-lg text-xl font-bold"
           onClick={handleSendWorkoutPlan}
@@ -1170,7 +1170,7 @@ const WorkoutPlan = ({
         >
           Send Workout Plan
         </button>
-      )}
+      )} */}
 
       {/* Workout Selection Modal */}
       {showWorkoutSelectionModal && (
