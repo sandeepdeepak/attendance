@@ -128,23 +128,6 @@ const Login = ({ onLoginSuccess, onBackClick }) => {
           </div>
         )}
       </form>
-
-      <div className="login-footer">
-        <p>
-          {isRegistering
-            ? "Already have an account?"
-            : "Don't have an account?"}{" "}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              toggleMode();
-            }}
-          >
-            {isRegistering ? "Sign in" : "Sign up"}
-          </a>
-        </p>
-      </div>
     </div>
   );
 };

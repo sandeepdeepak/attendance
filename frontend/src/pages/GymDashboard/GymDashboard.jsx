@@ -14,6 +14,7 @@ import {
   FaDownload,
   FaSignOutAlt,
   FaCalendarAlt,
+  FaCog,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -25,8 +26,10 @@ const GymDashboard = ({
   onMemberClick,
   onTodayAttendanceClick,
   onAttendanceDetailsClick,
+  onAdminClick,
   onLogout,
   gymOwner,
+  isAdmin,
 }) => {
   const [dashboardStats, setDashboardStats] = useState({
     todaysAttendance: 0,
@@ -498,6 +501,14 @@ const GymDashboard = ({
         >
           <FaRegUser /> Go to face scan
         </button>
+        {isAdmin && (
+          <button
+            className="flex items-center justify-center gap-2 bg-[#b91c1c] px-6 py-3 rounded-2xl text-white w-60"
+            onClick={onAdminClick}
+          >
+            <FaCog /> Admin Panel
+          </button>
+        )}
       </div>
     </div>
   );

@@ -128,6 +128,42 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Admin authentication middleware
+const authenticateAdmin = async (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
+
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+
+  try {
+    const verified = jwt.verify(token, JWT_SECRET);
+
+    // Check if the user is an admin
+    const params = {
+      TableName: GYM_OWNERS_TABLE,
+      Key: {
+        email: verified.email,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item || !result.Item.isAdmin) {
+      return res
+        .status(403)
+        .json({ error: "Access denied. Admin privileges required." });
+    }
+
+    req.user = verified;
+    next();
+  } catch (error) {
+    console.error("Admin authentication error:", error);
+    res.status(403).json({ error: "Invalid or expired token" });
+  }
+};
+
 // Initialize DynamoDB tables if they don't exist
 async function initializeDynamoDB() {
   try {
@@ -3977,6 +4013,7 @@ app.post("/api/auth/login", async (req, res) => {
         email: gymOwner.email,
         gymName: gymOwner.gymName,
         gymId: gymOwner.gymId,
+        isAdmin: gymOwner.isAdmin || false,
       },
     });
   } catch (error) {
@@ -3991,6 +4028,317 @@ app.get("/api/auth/verify", authenticateToken, (req, res) => {
     success: true,
     user: req.user,
   });
+});
+
+// Admin API endpoints
+// Get all gym owners
+app.get("/api/admin/gym-owners", authenticateAdmin, async (req, res) => {
+  try {
+    const params = {
+      TableName: GYM_OWNERS_TABLE,
+    };
+
+    const result = await docClient.send(new ScanCommand(params));
+
+    // Remove password field from each gym owner
+    const gymOwners = result.Items
+      ? result.Items.map((owner) => {
+          const { password, ...ownerWithoutPassword } = owner;
+          return ownerWithoutPassword;
+        })
+      : [];
+
+    res.json({
+      success: true,
+      gymOwners,
+    });
+  } catch (error) {
+    console.error("Error getting gym owners:", error);
+    res.status(500).json({ error: "Failed to get gym owners" });
+  }
+});
+
+// Get a specific gym owner by email
+app.get("/api/admin/gym-owners/:email", authenticateAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const params = {
+      TableName: GYM_OWNERS_TABLE,
+      Key: {
+        email,
+      },
+    };
+
+    const result = await docClient.send(new GetCommand(params));
+
+    if (!result.Item) {
+      return res.status(404).json({ error: "Gym owner not found" });
+    }
+
+    // Remove password field
+    const { password, ...gymOwnerWithoutPassword } = result.Item;
+
+    res.json({
+      success: true,
+      gymOwner: gymOwnerWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Error getting gym owner:", error);
+    res.status(500).json({ error: "Failed to get gym owner" });
+  }
+});
+
+// Create a new gym owner (admin only)
+app.post("/api/admin/gym-owners", authenticateAdmin, async (req, res) => {
+  try {
+    const { gymName, email, password, isAdmin } = req.body;
+
+    if (!gymName || !email || !password) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "gymName, email, password",
+      });
+    }
+
+    // Check if email already exists
+    const scanParams = {
+      TableName: GYM_OWNERS_TABLE,
+      FilterExpression: "email = :email",
+      ExpressionAttributeValues: {
+        ":email": email,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (scanResult.Items && scanResult.Items.length > 0) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Generate a unique gymId using UUID
+    const gymId = `gym_${uuidv4()}`;
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create gym owner record
+    const gymOwnerItem = {
+      email,
+      gymName,
+      gymId,
+      password: hashedPassword,
+      isAdmin: isAdmin === true, // Convert to boolean
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: GYM_OWNERS_TABLE,
+      Item: gymOwnerItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // Remove password from response
+    const { password: _, ...gymOwnerWithoutPassword } = gymOwnerItem;
+
+    res.status(201).json({
+      success: true,
+      message: "Gym owner created successfully",
+      gymOwner: gymOwnerWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Error creating gym owner:", error);
+    res.status(500).json({ error: "Failed to create gym owner" });
+  }
+});
+
+// Update a gym owner by email
+app.put("/api/admin/gym-owners/:email", authenticateAdmin, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { gymName, password, isAdmin } = req.body;
+
+    // Check if gym owner exists
+    const getParams = {
+      TableName: GYM_OWNERS_TABLE,
+      Key: {
+        email,
+      },
+    };
+
+    const getResult = await docClient.send(new GetCommand(getParams));
+
+    if (!getResult.Item) {
+      return res.status(404).json({ error: "Gym owner not found" });
+    }
+
+    const existingGymOwner = getResult.Item;
+
+    // Prepare updated gym owner
+    const updatedGymOwner = {
+      ...existingGymOwner,
+      gymName: gymName || existingGymOwner.gymName,
+      isAdmin: isAdmin !== undefined ? isAdmin : existingGymOwner.isAdmin,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Update password if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updatedGymOwner.password = await bcrypt.hash(password, salt);
+    }
+
+    const putParams = {
+      TableName: GYM_OWNERS_TABLE,
+      Item: updatedGymOwner,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // Remove password from response
+    const { password: _, ...gymOwnerWithoutPassword } = updatedGymOwner;
+
+    res.json({
+      success: true,
+      message: "Gym owner updated successfully",
+      gymOwner: gymOwnerWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Error updating gym owner:", error);
+    res.status(500).json({ error: "Failed to update gym owner" });
+  }
+});
+
+// Delete a gym owner by email
+app.delete(
+  "/api/admin/gym-owners/:email",
+  authenticateAdmin,
+  async (req, res) => {
+    try {
+      const { email } = req.params;
+
+      // Check if gym owner exists
+      const getParams = {
+        TableName: GYM_OWNERS_TABLE,
+        Key: {
+          email,
+        },
+      };
+
+      const getResult = await docClient.send(new GetCommand(getParams));
+
+      if (!getResult.Item) {
+        return res.status(404).json({ error: "Gym owner not found" });
+      }
+
+      // Don't allow deleting the last admin
+      if (getResult.Item.isAdmin) {
+        // Count how many admins exist
+        const scanParams = {
+          TableName: GYM_OWNERS_TABLE,
+          FilterExpression: "isAdmin = :isAdmin",
+          ExpressionAttributeValues: {
+            ":isAdmin": true,
+          },
+        };
+
+        const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+        if (scanResult.Items && scanResult.Items.length <= 1) {
+          return res.status(400).json({
+            error: "Cannot delete the last admin account",
+          });
+        }
+      }
+
+      const deleteParams = {
+        TableName: GYM_OWNERS_TABLE,
+        Key: {
+          email,
+        },
+      };
+
+      await docClient.send(new DeleteCommand(deleteParams));
+
+      res.json({
+        success: true,
+        message: "Gym owner deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting gym owner:", error);
+      res.status(500).json({ error: "Failed to delete gym owner" });
+    }
+  }
+);
+
+// Create initial admin user if none exists
+app.post("/api/admin/setup", async (req, res) => {
+  try {
+    // Check if any admin user already exists
+    const scanParams = {
+      TableName: GYM_OWNERS_TABLE,
+      FilterExpression: "isAdmin = :isAdmin",
+      ExpressionAttributeValues: {
+        ":isAdmin": true,
+      },
+    };
+
+    const scanResult = await docClient.send(new ScanCommand(scanParams));
+
+    if (scanResult.Items && scanResult.Items.length > 0) {
+      return res.status(400).json({
+        error: "Admin user already exists",
+        message: "Cannot create initial admin as one already exists",
+      });
+    }
+
+    const { email, password, gymName } = req.body;
+
+    if (!email || !password || !gymName) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: "email, password, gymName",
+      });
+    }
+
+    // Generate a unique gymId using UUID
+    const gymId = `gym_${uuidv4()}`;
+
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create admin gym owner record
+    const adminItem = {
+      email,
+      gymName,
+      gymId,
+      password: hashedPassword,
+      isAdmin: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    const putParams = {
+      TableName: GYM_OWNERS_TABLE,
+      Item: adminItem,
+    };
+
+    await docClient.send(new PutCommand(putParams));
+
+    // Remove password from response
+    const { password: _, ...adminWithoutPassword } = adminItem;
+
+    res.status(201).json({
+      success: true,
+      message: "Initial admin user created successfully",
+      admin: adminWithoutPassword,
+    });
+  } catch (error) {
+    console.error("Error creating initial admin:", error);
+    res.status(500).json({ error: "Failed to create initial admin" });
+  }
 });
 
 // Simple hello endpoint

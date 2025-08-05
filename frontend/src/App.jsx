@@ -9,6 +9,7 @@ import TodayAttendance from "./pages/TodayAttendance/TodayAttendance";
 import AttendanceDetails from "./pages/AttendanceDetails/AttendanceDetails";
 import MemberPlan from "./pages/MemberPlan/MemberPlan";
 import MemberProgress from "./pages/MemberProgress/MemberProgress";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Login from "./pages/Login/Login";
 import HomePage from "./pages/HomePage/HomePage";
 import { API_URL } from "./config";
@@ -25,6 +26,7 @@ function App() {
   const [gymOwner, setGymOwner] = useState(null);
   const [isVerifying, setIsVerifying] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Check for existing auth token on load
   useEffect(() => {
@@ -42,8 +44,13 @@ function App() {
           });
 
           if (response.ok) {
+            const parsedGymOwner = JSON.parse(storedGymOwner);
             setIsAuthenticated(true);
-            setGymOwner(JSON.parse(storedGymOwner));
+            setGymOwner(parsedGymOwner);
+
+            // Check if the user is an admin
+            setIsAdmin(parsedGymOwner.isAdmin === true);
+            console.log("User is admin:", parsedGymOwner.isAdmin === true);
           } else {
             // Token invalid, clear storage
             localStorage.removeItem("authToken");
@@ -70,7 +77,12 @@ function App() {
   const handleLoginSuccess = (owner) => {
     setIsAuthenticated(true);
     setGymOwner(owner);
+    setIsAdmin(owner.isAdmin || false);
     setCurrentPage("dashboard");
+  };
+
+  const handleAdminClick = () => {
+    setCurrentPage("admin");
   };
 
   const handleLogout = () => {
@@ -153,8 +165,10 @@ function App() {
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
             onAttendanceDetailsClick={handleAttendanceDetailsClick}
+            onAdminClick={handleAdminClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
+            isAdmin={isAdmin}
           />
         );
       case "faceRecognition":
@@ -206,6 +220,14 @@ function App() {
           <MemberProgress
             memberId={selectedMemberId}
             onBackClick={handleBackClick}
+          />
+        );
+
+      case "admin":
+        return (
+          <AdminDashboard
+            onBackClick={handleBackClick}
+            onLogout={handleLogout}
           />
         );
 

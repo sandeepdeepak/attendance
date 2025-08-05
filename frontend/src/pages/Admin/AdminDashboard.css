@@ -1,0 +1,304 @@
+/* Admin Dashboard Styles */
+.admin-dashboard {
+  min-height: 100vh;
+  background-color: #0a1f2e;
+  color: white;
+  padding: 1rem;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1e3a52;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.admin-back-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-right: 1rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+}
+
+.admin-back-button:hover {
+  background-color: #1e3a52;
+}
+
+.admin-logout-button {
+  background-color: #b91c1c;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-logout-button:hover {
+  background-color: #991b1b;
+}
+
+.admin-actions {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admin-add-button {
+  background-color: #024a72;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.admin-add-button:hover {
+  background-color: #035d8f;
+}
+
+.admin-loading,
+.admin-error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+.admin-error {
+  color: #f87171;
+}
+
+/* Gym Owners List Styles */
+.gym-owners-list {
+  background-color: #123347;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.gym-owners-list h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.gym-owners-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gym-owners-table th,
+.gym-owners-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #1e3a52;
+}
+
+.gym-owners-table th {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-button,
+.delete-button,
+.password-button,
+.confirm-button,
+.cancel-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-button {
+  color: #60a5fa;
+}
+
+.password-button {
+  color: #fbbf24;
+}
+
+.delete-button {
+  color: #f87171;
+}
+
+.edit-button:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+.password-button:hover {
+  background-color: rgba(251, 191, 36, 0.1);
+}
+
+.delete-button:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+.delete-button:disabled {
+  color: #6b7280;
+  cursor: not-allowed;
+  background: none;
+}
+
+.delete-confirmation {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.confirm-button {
+  color: #34d399;
+}
+
+.cancel-button {
+  color: #f87171;
+}
+
+.confirm-button:hover {
+  background-color: rgba(52, 211, 153, 0.1);
+}
+
+.cancel-button:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+/* Gym Owner Form Styles */
+.gym-owner-form,
+.change-password-form {
+  background-color: #123347;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.gym-owner-form h2,
+.change-password-form h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.form-error {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group label span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.form-group input[type="email"],
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1e3a52;
+  background-color: #0a1f2e;
+  color: white;
+  font-size: 1rem;
+}
+
+.form-group input:disabled {
+  background-color: #1e293b;
+  cursor: not-allowed;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.submit-button,
+.cancel-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.submit-button {
+  background-color: #024a72;
+  color: white;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #64748b;
+  color: white;
+}
+
+.submit-button:hover {
+  background-color: #035d8f;
+}
+
+.cancel-button:hover {
+  background-color: rgba(100, 116, 139, 0.1);
+}
+
+.submit-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
