@@ -3,6 +3,42 @@
  */
 
 /**
+ * Resizes an image to the specified dimensions
+ * @param {string} imageUrl - URL of the image to resize
+ * @param {number} width - Target width
+ * @param {number} height - Target height
+ * @returns {Promise<string>} - Promise resolving to a data URL of the resized image
+ */
+const resizeImage = async (imageUrl, width, height) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // Enable CORS for the image
+
+    img.onload = () => {
+      // Create a canvas element
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      // Draw the image on the canvas with the desired dimensions
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert the canvas to a data URL
+      const dataUrl = canvas.toDataURL("image/png");
+      resolve(dataUrl);
+    };
+
+    img.onerror = (error) => {
+      console.error("Error loading image:", error);
+      reject(error);
+    };
+
+    img.src = imageUrl;
+  });
+};
+
+/**
  * Updates the PWA manifest with gym owner information
  * @param {Object} gymOwner - The gym owner object with properties like gymName and logoUrl
  */
@@ -42,33 +78,91 @@ export const updatePWAManifest = async (gymOwner) => {
 
     // Update favicon and apple touch icon if gym owner has a logo
     if (gymOwner.logoUrl) {
-      // Update favicon
-      let favicon = document.querySelector('link[rel="icon"]');
-      if (favicon) {
-        favicon.href = gymOwner.logoUrl;
-      }
+      try {
+        // Resize the gym owner's logo to PWA icon dimensions
+        const icon192 = await resizeImage(gymOwner.logoUrl, 192, 192);
+        const icon512 = await resizeImage(gymOwner.logoUrl, 512, 512);
 
-      // Add apple touch icon
-      let appleTouchIcon = document.querySelector(
-        'link[rel="apple-touch-icon"]'
-      );
-      if (!appleTouchIcon) {
-        appleTouchIcon = document.createElement("link");
-        appleTouchIcon.rel = "apple-touch-icon";
-        document.head.appendChild(appleTouchIcon);
-      }
-      appleTouchIcon.href = gymOwner.logoUrl;
+        // Create a link element for the 192x192 PWA icon
+        let pwaIcon192 = document.querySelector('link[rel="pwa-icon-192"]');
+        if (!pwaIcon192) {
+          pwaIcon192 = document.createElement("link");
+          pwaIcon192.rel = "pwa-icon-192";
+          document.head.appendChild(pwaIcon192);
+        }
+        pwaIcon192.href = icon192;
 
-      // Add apple touch startup image
-      let appleStartupImage = document.querySelector(
-        'link[rel="apple-touch-startup-image"]'
-      );
-      if (!appleStartupImage) {
-        appleStartupImage = document.createElement("link");
-        appleStartupImage.rel = "apple-touch-startup-image";
-        document.head.appendChild(appleStartupImage);
+        // Create a link element for the 512x512 PWA icon
+        let pwaIcon512 = document.querySelector('link[rel="pwa-icon-512"]');
+        if (!pwaIcon512) {
+          pwaIcon512 = document.createElement("link");
+          pwaIcon512.rel = "pwa-icon-512";
+          document.head.appendChild(pwaIcon512);
+        }
+        pwaIcon512.href = icon512;
+
+        // Update favicon
+        let favicon = document.querySelector('link[rel="icon"]');
+        if (favicon) {
+          favicon.href = icon192;
+        }
+
+        // Add apple touch icon
+        let appleTouchIcon = document.querySelector(
+          'link[rel="apple-touch-icon"]'
+        );
+        if (!appleTouchIcon) {
+          appleTouchIcon = document.createElement("link");
+          appleTouchIcon.rel = "apple-touch-icon";
+          document.head.appendChild(appleTouchIcon);
+        }
+        appleTouchIcon.href = icon192;
+
+        // Add apple touch startup image
+        let appleStartupImage = document.querySelector(
+          'link[rel="apple-touch-startup-image"]'
+        );
+        if (!appleStartupImage) {
+          appleStartupImage = document.createElement("link");
+          appleStartupImage.rel = "apple-touch-startup-image";
+          document.head.appendChild(appleStartupImage);
+        }
+        appleStartupImage.href = icon512;
+
+        // Send the icons to the service worker
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "UPDATE_PWA_ICONS",
+            icon192,
+            icon512,
+            gymOwner: {
+              name: gymOwner.gymName,
+              path: gymOwnerPath,
+            },
+          });
+          console.log("Sent PWA icons to service worker");
+        } else {
+          console.warn("Service worker not ready yet, icons not updated");
+
+          // Wait for the service worker to be ready
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.active.postMessage({
+              type: "UPDATE_PWA_ICONS",
+              icon192,
+              icon512,
+              gymOwner: {
+                name: gymOwner.gymName,
+                path: gymOwnerPath,
+              },
+            });
+            console.log("Sent PWA icons to service worker (after ready)");
+          });
+        }
+
+        console.log("PWA icons updated with gym owner logo");
+      } catch (error) {
+        console.error("Error updating PWA icons:", error);
       }
-      appleStartupImage.href = gymOwner.logoUrl;
     }
 
     console.log("PWA metadata updated for gym owner:", gymOwner.gymName);

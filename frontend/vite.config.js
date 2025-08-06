@@ -10,7 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      strategies: "generateSW",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "custom-sw.js",
       manifest: {
         name: "SD GYM",
         short_name: "SD GYM",
