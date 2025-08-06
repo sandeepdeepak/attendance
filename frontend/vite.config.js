@@ -9,7 +9,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      filename: "manifest.webmanifest", // Ensure consistent filename
+      injectRegister: "auto",
+      strategies: "generateSW",
       manifest: {
         name: "SD GYM",
         short_name: "SD GYM",
@@ -17,6 +18,7 @@ export default defineConfig({
           "Managing gym members and attendance and thier diet plans and workout plans",
         theme_color: "#024a72",
         start_url: "/",
+        scope: "/",
         display: "standalone",
         background_color: "#ffffff",
         icons: [
@@ -40,6 +42,23 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}"],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/gym-attendance\.com\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "gym-api-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       },
       devOptions: {
         enabled: true, // Enable SW in dev for easier testing
