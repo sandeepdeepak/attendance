@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { API_URL } from "../../config";
 
 const GymOwnerForm = ({ gymOwner, isEdit, onSubmitSuccess, onCancel }) => {
@@ -10,6 +10,9 @@ const GymOwnerForm = ({ gymOwner, isEdit, onSubmitSuccess, onCancel }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(gymOwner?.logoUrl || null);
+  const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -17,6 +20,55 @@ const GymOwnerForm = ({ gymOwner, isEdit, onSubmitSuccess, onCancel }) => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoUpload = async () => {
+    if (!logoFile) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("logo", logoFile);
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/admin/gym-owners/${gymOwner.email}/logo`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to upload logo");
+      }
+
+      const data = await response.json();
+      return data.gymOwner.logoUrl;
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      setError(error.message);
+      return null;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -69,6 +121,14 @@ const GymOwnerForm = ({ gymOwner, isEdit, onSubmitSuccess, onCancel }) => {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to save gym owner");
+      }
+
+      // If we're editing and have a logo file, upload it
+      if (isEdit && logoFile) {
+        const logoUrl = await handleLogoUpload();
+        if (logoUrl) {
+          console.log("Logo uploaded successfully:", logoUrl);
+        }
       }
 
       // Success!
@@ -137,6 +197,54 @@ const GymOwnerForm = ({ gymOwner, isEdit, onSubmitSuccess, onCancel }) => {
             Admin User
           </label>
         </div>
+
+        {isEdit && (
+          <div className="form-group logo-upload-group">
+            <label>Gym Logo:</label>
+            <div className="logo-upload-container">
+              {logoPreview && (
+                <div className="logo-preview">
+                  <img src={logoPreview} alt="Gym Logo Preview" />
+                </div>
+              )}
+              <div className="logo-upload-actions">
+                <input
+                  type="file"
+                  id="logoFile"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  style={{ display: "none" }}
+                />
+                <button
+                  type="button"
+                  className="upload-button"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  {logoPreview ? "Change Logo" : "Upload Logo"}
+                </button>
+                {logoPreview && (
+                  <button
+                    type="button"
+                    className="remove-button"
+                    onClick={() => {
+                      setLogoPreview(null);
+                      setLogoFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    Remove Logo
+                  </button>
+                )}
+              </div>
+              <p className="logo-help-text">
+                Recommended size: 200x200 pixels. Max file size: 2MB.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="form-actions">
           <button type="submit" className="submit-button" disabled={loading}>

@@ -7,6 +7,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const { uploadFileToS3 } = require("./s3Service");
 
 // Load environment variables from .env file
 try {
@@ -4153,6 +4154,72 @@ app.post("/api/admin/gym-owners", authenticateAdmin, async (req, res) => {
     res.status(500).json({ error: "Failed to create gym owner" });
   }
 });
+
+// Upload gym owner logo
+app.post(
+  "/api/admin/gym-owners/:email/logo",
+  authenticateAdmin,
+  upload.single("logo"),
+  async (req, res) => {
+    try {
+      const { email } = req.params;
+      const logoFile = req.file;
+
+      if (!logoFile) {
+        return res.status(400).json({ error: "No logo file provided" });
+      }
+
+      // Check if gym owner exists
+      const getParams = {
+        TableName: GYM_OWNERS_TABLE,
+        Key: {
+          email,
+        },
+      };
+
+      const getResult = await docClient.send(new GetCommand(getParams));
+
+      if (!getResult.Item) {
+        return res.status(404).json({ error: "Gym owner not found" });
+      }
+
+      const existingGymOwner = getResult.Item;
+
+      // Upload the logo to S3
+      const logoUrl = await uploadFileToS3(
+        logoFile.buffer,
+        `${email}-logo-${Date.now()}.${logoFile.mimetype.split("/")[1]}`,
+        logoFile.mimetype
+      );
+
+      // Update the gym owner record with the logo URL
+      const updatedGymOwner = {
+        ...existingGymOwner,
+        logoUrl,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const putParams = {
+        TableName: GYM_OWNERS_TABLE,
+        Item: updatedGymOwner,
+      };
+
+      await docClient.send(new PutCommand(putParams));
+
+      // Remove password from response
+      const { password: _, ...gymOwnerWithoutPassword } = updatedGymOwner;
+
+      res.json({
+        success: true,
+        message: "Gym owner logo uploaded successfully",
+        gymOwner: gymOwnerWithoutPassword,
+      });
+    } catch (error) {
+      console.error("Error uploading gym owner logo:", error);
+      res.status(500).json({ error: "Failed to upload gym owner logo" });
+    }
+  }
+);
 
 // Update a gym owner by email
 app.put("/api/admin/gym-owners/:email", authenticateAdmin, async (req, res) => {

@@ -98,6 +98,7 @@ const GymOwnersList = ({ onEditClick, onChangePasswordClick }) => {
         <table className="gym-owners-table">
           <thead>
             <tr>
+              <th>Logo</th>
               <th>Email</th>
               <th>Gym Name</th>
               <th>Admin</th>
@@ -107,10 +108,21 @@ const GymOwnersList = ({ onEditClick, onChangePasswordClick }) => {
           <tbody>
             {gymOwners.map((owner) => (
               <tr key={owner.email}>
+                <td className="logo-cell">
+                  {owner.logoUrl ? (
+                    <img
+                      src={owner.logoUrl}
+                      alt={`${owner.gymName} Logo`}
+                      className="gym-logo-thumbnail"
+                    />
+                  ) : (
+                    <div className="no-logo-placeholder">No Logo</div>
+                  )}
+                </td>
                 <td>{owner.email}</td>
                 <td>{owner.gymName}</td>
                 <td>{owner.isAdmin ? "Yes" : "No"}</td>
-                <td className="actions-cell">
+                <td className="actions-cell h-25">
                   <button
                     className="edit-button"
                     onClick={() => onEditClick(owner)}
