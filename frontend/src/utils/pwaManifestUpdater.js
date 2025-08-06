@@ -129,7 +129,7 @@ export const updatePWAManifest = async (gymOwner) => {
         }
         appleStartupImage.href = icon512;
 
-        // Send the icons to the service worker
+        // Send the icons and gym owner info to the service worker
         if (navigator.serviceWorker && navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({
             type: "UPDATE_PWA_ICONS",
@@ -140,7 +140,7 @@ export const updatePWAManifest = async (gymOwner) => {
               path: gymOwnerPath,
             },
           });
-          console.log("Sent PWA icons to service worker");
+          console.log("Sent PWA icons and gym owner info to service worker");
         } else {
           console.warn("Service worker not ready yet, icons not updated");
 
@@ -155,7 +155,9 @@ export const updatePWAManifest = async (gymOwner) => {
                 path: gymOwnerPath,
               },
             });
-            console.log("Sent PWA icons to service worker (after ready)");
+            console.log(
+              "Sent PWA icons and gym owner info to service worker (after ready)"
+            );
           });
         }
 

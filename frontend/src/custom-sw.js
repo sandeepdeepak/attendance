@@ -1,12 +1,13 @@
 // This is a custom service worker that will be used by the VitePWA plugin
 
-// Store for dynamically generated PWA icons
+// Store for dynamically generated PWA icons and manifest
 const DYNAMIC_ICON_CACHE = "dynamic-pwa-icons";
+const DYNAMIC_MANIFEST_CACHE = "dynamic-pwa-manifest";
 
 // Listen for the message event to receive icon updates from the main thread
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "UPDATE_PWA_ICONS") {
-    const { icon192, icon512 } = event.data;
+    const { icon192, icon512, gymOwner } = event.data;
 
     // Store the icons in the cache
     caches.open(DYNAMIC_ICON_CACHE).then((cache) => {
@@ -27,6 +28,35 @@ self.addEventListener("message", (event) => {
 
       console.log("PWA icons cached in service worker");
     });
+
+    // Update the manifest with the gym owner's name
+    if (gymOwner && gymOwner.name) {
+      // Fetch the current manifest
+      fetch("/manifest.webmanifest")
+        .then((response) => response.json())
+        .then((manifest) => {
+          // Update the manifest with the gym owner's name
+          manifest.name = gymOwner.name;
+          manifest.short_name = gymOwner.name;
+
+          // Store the updated manifest in the cache
+          caches.open(DYNAMIC_MANIFEST_CACHE).then((cache) => {
+            cache.put(
+              "/manifest.webmanifest",
+              new Response(JSON.stringify(manifest), {
+                headers: { "Content-Type": "application/manifest+json" },
+              })
+            );
+            console.log(
+              "PWA manifest updated with gym owner name:",
+              gymOwner.name
+            );
+          });
+        })
+        .catch((error) => {
+          console.error("Error updating manifest:", error);
+        });
+    }
   }
 });
 
@@ -49,7 +79,7 @@ function dataURItoBlob(dataURI) {
   return new Blob([ab], { type: mimeString });
 }
 
-// Intercept fetch requests for PWA icons
+// Intercept fetch requests for PWA icons and manifest
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -67,6 +97,23 @@ self.addEventListener("fetch", (event) => {
 
         // Otherwise, fetch the default icon
         return fetch(event.request);
+      })
+    );
+  }
+
+  // Check if the request is for the manifest
+  if (url.pathname.endsWith("/manifest.webmanifest")) {
+    event.respondWith(
+      caches.open(DYNAMIC_MANIFEST_CACHE).then((cache) => {
+        return cache.match("/manifest.webmanifest").then((response) => {
+          // If we have a cached version of the manifest, return it
+          if (response) {
+            return response;
+          }
+
+          // Otherwise, fetch the default manifest
+          return fetch(event.request);
+        });
       })
     );
   }
