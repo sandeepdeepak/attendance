@@ -27,11 +27,18 @@ export const updatePWAManifest = async (gymOwner) => {
     const response = await fetch(manifestUrl);
     const manifest = await response.json();
 
+    // Get the current path for the gym owner
+    const path = window.location.pathname;
+    const pathSegments = path.split("/").filter((segment) => segment);
+    const gymOwnerPath = pathSegments.length > 0 ? `/${pathSegments[0]}` : "/";
+
     // Create a new manifest with updated properties
     const updatedManifest = {
       ...manifest,
       name: gymOwner.gymName || manifest.name,
       short_name: gymOwner.gymName || manifest.short_name,
+      start_url: gymOwnerPath, // Set the start_url to the gym owner's path
+      scope: "/", // Ensure the scope includes the start_url
     };
 
     // If the gym owner has a logo, update the icons

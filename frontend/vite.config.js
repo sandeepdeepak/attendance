@@ -16,6 +16,9 @@ export default defineConfig({
         description:
           "Managing gym members and attendance and thier diet plans and workout plans",
         theme_color: "#024a72",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
         icons: [
           {
             src: "pwa-192x192.png",
