@@ -48,10 +48,23 @@ export const updatePWAManifest = async (gymOwner) => {
   try {
     console.log("Updating PWA manifest with gym owner:", gymOwner);
 
-    // Get the current path for the gym owner
-    const path = window.location.pathname;
-    const pathSegments = path.split("/").filter((segment) => segment);
-    const gymOwnerPath = pathSegments.length > 0 ? `/${pathSegments[0]}` : "/";
+    // Get the path for the gym owner
+    // First try to extract from email if available (e.g., "kofitness" from "kofitness@gym.com")
+    let gymOwnerPath = "/";
+
+    if (gymOwner.email) {
+      const emailParts = gymOwner.email.split("@");
+      if (emailParts.length > 0 && emailParts[0]) {
+        gymOwnerPath = `/${emailParts[0]}`;
+      }
+    } else {
+      // Fallback to using the URL path
+      const path = window.location.pathname;
+      const pathSegments = path.split("/").filter((segment) => segment);
+      gymOwnerPath = pathSegments.length > 0 ? `/${pathSegments[0]}` : "/";
+    }
+
+    console.log("Using gym owner path:", gymOwnerPath);
 
     // Create a meta tag for the gym owner's name
     let appNameMeta = document.querySelector('meta[name="application-name"]');

@@ -29,8 +29,9 @@ self.addEventListener("message", (event) => {
       console.log("PWA icons cached in service worker");
     });
 
-    // Update the manifest with the gym owner's name
+    // Update the manifest with the gym owner's name and path
     if (gymOwner && gymOwner.name) {
+      console.log("gymOwner:", gymOwner);
       // Fetch the current manifest
       fetch("/manifest.webmanifest")
         .then((response) => response.json())
@@ -38,6 +39,13 @@ self.addEventListener("message", (event) => {
           // Update the manifest with the gym owner's name
           manifest.name = gymOwner.name;
           manifest.short_name = gymOwner.name;
+
+          // Update the start_url to point to the gym owner's path
+          if (gymOwner.path && gymOwner.path !== "/") {
+            manifest.start_url = gymOwner.path;
+            manifest.id = gymOwner.path;
+            console.log("Updated manifest start_url and id to:", gymOwner.path);
+          }
 
           // Store the updated manifest in the cache
           caches.open(DYNAMIC_MANIFEST_CACHE).then((cache) => {
