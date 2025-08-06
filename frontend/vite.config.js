@@ -9,6 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      filename: "manifest.webmanifest", // Ensure consistent filename
       manifest: {
         name: "SD GYM",
         short_name: "SD GYM",

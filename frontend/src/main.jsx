@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import { API_URL } from "./config";
+import { updatePWAManifest } from "./utils/pwaManifestUpdater";
 
 // Helper function to convert VAPID key
 function urlBase64ToUint8Array(base64String) {
@@ -53,10 +54,49 @@ async function subscribeToPush() {
   }
 }
 
-// Call subscribe after SW registration
-navigator.serviceWorker.ready.then(() => {
-  // subscribeToPush();
-});
+// Initialize PWA functionality
+const initializePWA = async () => {
+  try {
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        // subscribeToPush();
+        console.log("Service worker ready");
+      });
+
+      // Extract the path from the URL to check for gym owner
+      const path = window.location.pathname;
+      const pathSegments = path.split("/").filter((segment) => segment);
+
+      // If there's a path segment that might be a gym owner identifier
+      if (pathSegments.length > 0) {
+        const identifier = pathSegments[0];
+
+        // Try to fetch gym owner information
+        try {
+          const response = await fetch(
+            `${API_URL}/api/gym-owner/${identifier}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.gymOwner) {
+              // Pre-initialize the PWA manifest with gym owner info
+              // This is a backup in case the HomePage component hasn't loaded yet
+              updatePWAManifest(data.gymOwner);
+            }
+          }
+        } catch (error) {
+          console.error("Error pre-initializing PWA manifest:", error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing PWA:", error);
+  }
+};
+
+// Initialize PWA
+initializePWA();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

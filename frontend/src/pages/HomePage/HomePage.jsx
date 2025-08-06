@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./HomePage.css";
 import { FaArrowRight } from "react-icons/fa";
 import { API_URL } from "../../config";
+import { updatePWAManifest } from "../../utils/pwaManifestUpdater";
 
 const HomePage = ({ onFaceRecognitionClick, onLoginClick }) => {
   const [gymOwner, setGymOwner] = useState(null);
@@ -40,6 +41,9 @@ const HomePage = ({ onFaceRecognitionClick, onLoginClick }) => {
                 linkElement.href = data.gymOwner.logoUrl;
               }
             }
+
+            // Update PWA manifest with gym owner information
+            updatePWAManifest(data.gymOwner);
           }
         }
       } catch (error) {
