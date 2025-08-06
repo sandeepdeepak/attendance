@@ -194,11 +194,21 @@ const GymDashboard = ({
 
   return (
     <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
-      {/* Gym Owner Name */}
+      {/* Gym Owner Logo and Name */}
       <div className="absolute top-4 left-4 flex items-center">
-        <div className="bg-[#1e293b] rounded-full p-2 mr-2">
-          <FaUser size={16} className="text-white" />
-        </div>
+        {gymOwner?.logoUrl ? (
+          <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-[#1e293b] flex items-center justify-center">
+            <img
+              src={gymOwner.logoUrl}
+              alt={`${gymOwner.gymName} logo`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="bg-[#1e293b] rounded-full p-2 mr-2">
+            <FaUser size={16} className="text-white" />
+          </div>
+        )}
         <div className="text-white text-sm">
           {gymOwner?.gymName || "Gym Owner"}
         </div>

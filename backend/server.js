@@ -4015,6 +4015,7 @@ app.post("/api/auth/login", async (req, res) => {
         gymName: gymOwner.gymName,
         gymId: gymOwner.gymId,
         isAdmin: gymOwner.isAdmin || false,
+        logoUrl: gymOwner.logoUrl || null,
       },
     });
   } catch (error) {
@@ -4411,6 +4412,46 @@ app.post("/api/admin/setup", async (req, res) => {
 // Simple hello endpoint
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello" });
+});
+
+// Get gym owner by identifier (from email prefix)
+app.get("/api/gym-owner/:identifier", async (req, res) => {
+  try {
+    const { identifier } = req.params;
+
+    if (!identifier) {
+      return res
+        .status(400)
+        .json({ error: "Gym owner identifier is required" });
+    }
+
+    // Search for gym owner with email that starts with the identifier
+    const scanParams = {
+      TableName: GYM_OWNERS_TABLE,
+      FilterExpression: "begins_with(email, :identifier)",
+      ExpressionAttributeValues: {
+        ":identifier": `${identifier}@`,
+      },
+    };
+
+    const result = await docClient.send(new ScanCommand(scanParams));
+
+    if (!result.Items || result.Items.length === 0) {
+      return res.status(404).json({ error: "Gym owner not found" });
+    }
+
+    // Return the first matching gym owner (without sensitive information)
+    const gymOwner = result.Items[0];
+    const { password, ...gymOwnerInfo } = gymOwner;
+
+    res.json({
+      success: true,
+      gymOwner: gymOwnerInfo,
+    });
+  } catch (error) {
+    console.error("Error getting gym owner:", error);
+    res.status(500).json({ error: "Failed to get gym owner information" });
+  }
 });
 
 // API endpoint to save push notification subscription
