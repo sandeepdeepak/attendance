@@ -36,16 +36,34 @@ self.addEventListener("message", (event) => {
       fetch("/manifest.webmanifest")
         .then((response) => response.json())
         .then((manifest) => {
+          console.log("Original manifest:", JSON.stringify(manifest));
           // Update the manifest with the gym owner's name
           manifest.name = gymOwner.name;
           manifest.short_name = gymOwner.name;
 
           // Update the start_url to point to the gym owner's path
           if (gymOwner.path && gymOwner.path !== "/") {
-            manifest.start_url = gymOwner.path;
-            manifest.id = gymOwner.path;
-            console.log("Updated manifest start_url and id to:", gymOwner.path);
+            // Get the base URL from the service worker scope
+            const baseUrl = self.registration.scope;
+
+            // Remove trailing slash from baseUrl if it exists
+            const normalizedBaseUrl = baseUrl.endsWith("/")
+              ? baseUrl.slice(0, -1)
+              : baseUrl;
+
+            // Create the full URL for start_url (baseUrl + path)
+            // Make sure we don't double up on slashes
+            const fullUrl = gymOwner.path.startsWith("/")
+              ? `${normalizedBaseUrl}${gymOwner.path}`
+              : `${normalizedBaseUrl}/${gymOwner.path}`;
+
+            manifest.start_url = fullUrl;
+            manifest.id = fullUrl;
+            console.log("Updated manifest start_url and id to:", fullUrl);
           }
+
+          // Log the updated manifest
+          console.log("Updated manifest:", JSON.stringify(manifest));
 
           // Store the updated manifest in the cache
           caches.open(DYNAMIC_MANIFEST_CACHE).then((cache) => {
