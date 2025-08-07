@@ -460,8 +460,8 @@ const GymDashboard = ({
       )}
 
       {/* <div>
-        <h1 className="text-4xl font-bold mb-2 mt-4"> SD GYM</h1>
-        <p className="text-gray-400 mb-6 text-lg">SD GYM</p>
+        <h1 className="text-4xl font-bold mb-2 mt-4"> GYM</h1>
+        <p className="text-gray-400 mb-6 text-lg">GYM</p>
       </div> */}
 
       <div className="grid grid-cols-2 gap-4 mb-6 mt-20">

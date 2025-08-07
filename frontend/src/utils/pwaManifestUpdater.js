@@ -73,7 +73,7 @@ export const updatePWAManifest = async (gymOwner) => {
       appNameMeta.name = "application-name";
       document.head.appendChild(appNameMeta);
     }
-    appNameMeta.content = gymOwner.gymName || "SD GYM";
+    appNameMeta.content = gymOwner.gymName || "GYM";
 
     // Create a meta tag for the gym owner's short name
     let shortNameMeta = document.querySelector(
@@ -84,7 +84,7 @@ export const updatePWAManifest = async (gymOwner) => {
       shortNameMeta.name = "apple-mobile-web-app-title";
       document.head.appendChild(shortNameMeta);
     }
-    shortNameMeta.content = gymOwner.gymName || "SD GYM";
+    shortNameMeta.content = gymOwner.gymName || "GYM";
 
     // Update the page title
     document.title = gymOwner.gymName || document.title;

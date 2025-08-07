@@ -14,8 +14,8 @@ export default defineConfig({
       srcDir: "src",
       filename: "custom-sw.js",
       manifest: {
-        name: "SD GYM",
-        short_name: "SD GYM",
+        name: "GYM",
+        short_name: "GYM",
         description:
           "Managing gym members and attendance and thier diet plans and workout plans",
         theme_color: "#024a72",
