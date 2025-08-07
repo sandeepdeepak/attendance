@@ -57,10 +57,10 @@ const HomePage = ({ onFaceRecognitionClick, onLoginClick }) => {
 
     // Reset to default title and favicon when component unmounts
     return () => {
-      document.title = "Vite + React"; // Reset to default title
+      document.title = "Diet & Workouts"; // Reset to default title
       const linkElement = document.querySelector("link[rel='icon']");
       if (linkElement) {
-        linkElement.href = "/vite.svg"; // Reset to default favicon
+        linkElement.href = "/pwa-192x192.png"; // Reset to default favicon
       }
     };
   }, []);
