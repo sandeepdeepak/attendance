@@ -25,14 +25,21 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [gymOwner, setGymOwner] = useState(null);
   const [isVerifying, setIsVerifying] = useState(true);
-  const [showLogin, setShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(true); // Default to showing login
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check for existing auth token on load
+  // Check for existing auth token and URL path on load
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("authToken");
       const storedGymOwner = localStorage.getItem("gymOwner");
+
+      // Check if URL path is /members and set showLogin accordingly
+      const path = window.location.pathname;
+      const pathSegments = path.split("/").filter((segment) => segment);
+      if (pathSegments.length > 0 && pathSegments[0] === "members") {
+        setShowLogin(false); // Show HomePage for /members route
+      }
 
       if (token && storedGymOwner) {
         try {
