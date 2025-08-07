@@ -54,6 +54,12 @@
   color: #64748b; /* Light blue-gray color for the icon */
 }
 
+.gym-owner-logo {
+  max-height: 100px;
+  max-width: 100px;
+  object-fit: contain;
+}
+
 .login-title {
   font-size: 64px;
   font-weight: bold;

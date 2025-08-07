@@ -77,9 +77,9 @@ const HomePage = ({ onFaceRecognitionClick, onLoginClick }) => {
         </div>
       )}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-2">
+        {/* <h1 className="text-4xl font-bold mb-2">
           {gymOwner ? `Welcome to ${gymOwner.gymName}` : "Welcome to Gym"}
-        </h1>
+        </h1> */}
         <p className="text-xl">
           Track your workouts and manage your fitness journey
         </p>

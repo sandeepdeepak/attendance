@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { API_URL } from "../../config";
 import logoImage from "../../assets/logo.png";
 import { FaArrowLeft } from "react-icons/fa";
@@ -11,6 +11,37 @@ const Login = ({ onLoginSuccess, onBackClick }) => {
   const [error, setError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [gymName, setGymName] = useState("");
+  const [gymOwner, setGymOwner] = useState(null);
+
+  useEffect(() => {
+    const fetchGymOwnerInfo = async () => {
+      try {
+        // Extract the path from the URL
+        const path = window.location.pathname;
+
+        // Check if there's a path segment after the base URL
+        const pathSegments = path.split("/").filter((segment) => segment);
+
+        if (pathSegments.length > 0) {
+          const identifier = pathSegments[0]; // Get the first path segment
+
+          // Fetch gym owner information using the identifier
+          const response = await fetch(
+            `${API_URL}/api/gym-owner/${identifier}`
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            setGymOwner(data.gymOwner);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching gym owner information:", error);
+      }
+    };
+
+    fetchGymOwnerInfo();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +100,15 @@ const Login = ({ onLoginSuccess, onBackClick }) => {
       )}
       <div className="login-logo-container">
         <div className="login-logo">
-          <img src={logoImage} alt="Gym Logo" className="dumbbell-icon" />
+          {gymOwner && gymOwner.logoUrl ? (
+            <img
+              src={gymOwner.logoUrl}
+              alt={`${gymOwner.gymName} Logo`}
+              className="gym-owner-logo"
+            />
+          ) : (
+            <img src={logoImage} alt="Gym Logo" className="dumbbell-icon" />
+          )}
         </div>
         <div className="text-xl login-subtitle">
           Manage Workout and Diet plans
