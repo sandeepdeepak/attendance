@@ -10,9 +10,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      strategies: "injectManifest",
-      srcDir: "src",
-      filename: "custom-sw.js",
+      // Using generateSW strategy (default) instead of injectManifest
       manifest: {
         name: "GYM",
         short_name: "GYM",
@@ -62,6 +60,13 @@ export default defineConfig({
             },
           },
         ],
+        // Add custom service worker code
+        swDest: "dist/sw.js",
+        skipWaiting: true,
+        clientsClaim: true,
+        // Add event listeners for message, fetch, push, and notificationclick
+        additionalManifestEntries: [],
+        importScripts: ["custom-sw-events.js"],
       },
       devOptions: {
         enabled: true, // Enable SW in dev for easier testing

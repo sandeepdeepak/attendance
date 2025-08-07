@@ -1,7 +1,4 @@
-// This is a custom service worker that will be used by the VitePWA plugin
-
-// Precache manifest will be injected here by Workbox
-self.__WB_MANIFEST;
+// Custom service worker event handlers
 
 // Store for dynamically generated PWA icons and manifest
 const DYNAMIC_ICON_CACHE = "dynamic-pwa-icons";
