@@ -49,6 +49,12 @@ const DietPlan = ({
   const [calorieGoal, setCalorieGoal] = useState("loss"); // Default to weight loss
   const [calculatedCalories, setCalculatedCalories] = useState(null);
   const [isLoadingCalories, setIsLoadingCalories] = useState(false);
+  const [recommendedNutrition, setRecommendedNutrition] = useState({
+    proteins: 0,
+    carbs: 0,
+    fats: 0,
+    fibre: 0,
+  });
 
   // Template state variables
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -436,12 +442,38 @@ const DietPlan = ({
     }
   }, [memberId, selectedDate, fromFaceRecognition]);
 
+  // Calculate recommended nutrition values based on calories
+  const calculateRecommendedNutrition = (calories) => {
+    // Standard macronutrient distribution
+    // Protein: 20-30% of calories (4 calories per gram)
+    // Carbs: 45-65% of calories (4 calories per gram)
+    // Fats: 20-35% of calories (9 calories per gram)
+    // Fiber: 14g per 1000 calories
+
+    const proteins = Math.round((calories * 0.25) / 4); // 25% of calories from protein
+    const carbs = Math.round((calories * 0.5) / 4); // 50% of calories from carbs
+    const fats = Math.round((calories * 0.25) / 9); // 25% of calories from fats
+    const fibre = Math.round((calories / 1000) * 14); // 14g per 1000 calories
+
+    return { proteins, carbs, fats, fibre };
+  };
+
   // Call this when component loads and when goal changes
   useEffect(() => {
     if (member && member.height && member.weight) {
       fetchCalculatedCalories();
     }
   }, [member, calorieGoal]);
+
+  // Update recommended nutrition values when calories change
+  useEffect(() => {
+    if (calculatedCalories && calculatedCalories.dailyCalories) {
+      const nutrition = calculateRecommendedNutrition(
+        calculatedCalories.dailyCalories
+      );
+      setRecommendedNutrition(nutrition);
+    }
+  }, [calculatedCalories]);
 
   // Save diet plan whenever it changes
   useEffect(() => {
@@ -1177,26 +1209,132 @@ const DietPlan = ({
       </div>
 
       {/* Nutrition information */}
-      <div className="grid grid-cols-5 gap-2 mb-8 text-center">
-        <div>
-          <p className="text-xl">Calories</p>
-          <p className="text-2xl">{nutritionTotals.calories}</p>
+      <div className="flex flex-col gap-4 mb-8">
+        <h3 className="text-xl font-bold">Nutrition Summary</h3>
+
+        {/* Calories */}
+        <div className="bg-[#1C2937] rounded-lg p-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-lg">Calories</p>
+            <p className="text-lg">
+              {nutritionTotals.calories} /{" "}
+              {calculatedCalories?.dailyCalories || 0} kcal
+            </p>
+          </div>
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-[#324158]">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round(
+                    (nutritionTotals.calories /
+                      (calculatedCalories?.dailyCalories || 1)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#036BA2]"
+            ></div>
+          </div>
         </div>
-        <div>
-          <p className="text-xl">Carbs</p>
-          <p className="text-2xl">{nutritionTotals.carbs}</p>
+
+        {/* Proteins */}
+        <div className="bg-[#1C2937] rounded-lg p-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-lg">Proteins</p>
+            <p className="text-lg">
+              {nutritionTotals.proteins} / {recommendedNutrition.proteins} g
+            </p>
+          </div>
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-[#324158]">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round(
+                    (nutritionTotals.proteins /
+                      (recommendedNutrition.proteins || 1)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#4CAF50]"
+            ></div>
+          </div>
         </div>
-        <div>
-          <p className="text-xl">Fats</p>
-          <p className="text-2xl">{nutritionTotals.fats}</p>
+
+        {/* Carbs */}
+        <div className="bg-[#1C2937] rounded-lg p-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-lg">Carbs</p>
+            <p className="text-lg">
+              {nutritionTotals.carbs} / {recommendedNutrition.carbs} g
+            </p>
+          </div>
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-[#324158]">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round(
+                    (nutritionTotals.carbs /
+                      (recommendedNutrition.carbs || 1)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#FF9800]"
+            ></div>
+          </div>
         </div>
-        <div>
-          <p className="text-xl">Proteins</p>
-          <p className="text-2xl">{nutritionTotals.proteins}</p>
+
+        {/* Fats */}
+        <div className="bg-[#1C2937] rounded-lg p-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-lg">Fats</p>
+            <p className="text-lg">
+              {nutritionTotals.fats} / {recommendedNutrition.fats} g
+            </p>
+          </div>
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-[#324158]">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round(
+                    (nutritionTotals.fats / (recommendedNutrition.fats || 1)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#FFC107]"
+            ></div>
+          </div>
         </div>
-        <div>
-          <p className="text-xl">Fibre</p>
-          <p className="text-2xl">{nutritionTotals.fibre}</p>
+
+        {/* Fibre */}
+        <div className="bg-[#1C2937] rounded-lg p-4">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-lg">Fibre</p>
+            <p className="text-lg">
+              {nutritionTotals.fibre} / {recommendedNutrition.fibre} g
+            </p>
+          </div>
+          <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-[#324158]">
+            <div
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round(
+                    (nutritionTotals.fibre /
+                      (recommendedNutrition.fibre || 1)) *
+                      100
+                  )
+                )}%`,
+              }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#9C27B0]"
+            ></div>
+          </div>
         </div>
       </div>
 
