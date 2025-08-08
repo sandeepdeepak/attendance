@@ -508,7 +508,7 @@ const MemberDetails = ({
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <div className="text-2xl font-bold flex-1 ml-2 text-left">
+        <div className="text-xl font-bold flex-1 ml-2 text-left">
           {member.fullName}
         </div>
         <button
@@ -765,7 +765,7 @@ const MemberDetails = ({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap justify-start gap-2 mb-8">
+      <div className="flex flex-wrap justify-between gap-2 mb-8 text-sm">
         <div className="flex items-center">
           <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
           <span>Attended</span>
@@ -809,18 +809,6 @@ const MemberDetails = ({
           </div>
         </div>
       )}
-
-      {/* Attendance statistics */}
-      <div className="flex justify-between">
-        <div>
-          <p className="text-gray-400 text-left">Total Days</p>
-          <p className="text-xl">{stats.totalDays}</p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Attended</p>
-          <p className="text-xl">{stats.attendedDays}</p>
-        </div>
-      </div>
     </div>
   );
 };
