@@ -70,25 +70,72 @@ import { allWorkouts } from "./all-workouts";
 
 const loadedGifCache = new Set();
 
-// Regular workout item without lazy loading for added workouts
-const WorkoutItem = ({ workout, isSelected, onClick }) => {
+const LazyWorkoutItem = ({ workout, isSelected, onClick }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isCached, setIsCached] = useState(loadedGifCache.has(workout.gifUrl));
+  const ref = useRef();
+
+  const observerCallback = useCallback(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          console.log(`LazyWorkoutItem visible: ${workout.name}`);
+          setIsVisible(true);
+        }
+      });
+    },
+    [workout.name]
+  );
+
+  useEffect(() => {
+    if (isCached) return; // no need to observe if cached
+
+    const observer = new IntersectionObserver(observerCallback, {
+      rootMargin: "-100px",
+      threshold: 0.1,
+    });
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [observerCallback, isCached]);
+
+  const handleImageLoad = () => {
+    loadedGifCache.add(workout.gifUrl);
+    setIsCached(true);
+  };
+
   return (
     <div
+      ref={ref}
       className={`cursor-pointer border rounded-lg p-1 flex flex-col items-center ${
         isSelected ? "border-blue-500 bg-blue-900" : "border-gray-700"
       }`}
       onClick={onClick}
     >
-      <img
-        src={workout.gifUrl}
-        alt={workout.name}
-        className="w-full h-34 object-contain rounded"
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src =
-            "https://gym-meals-and-workout-planner.s3.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
-        }}
-      />
+      {isVisible || isCached ? (
+        <>
+          <img
+            src={workout.gifUrl}
+            alt={workout.name}
+            className="w-full h-34 object-contain rounded"
+            loading="lazy"
+            onLoad={handleImageLoad}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src =
+                "https://gym-meals-and-workout-planner.s3.us-east-2.amazonaws.com/assets/gym-workouts/0.gif";
+            }}
+          />
+          {/* <p className="mt-2 text-center text-white">{workout.name}</p> */}
+        </>
+      ) : (
+        <div style={{ height: "96px", width: "100%" }}></div>
+      )}
     </div>
   );
 };
@@ -948,7 +995,7 @@ const WorkoutPlan = ({
 
                 <div className="flex mb-2 items-center">
                   <div className="w-3/4 mr-2">
-                    <WorkoutItem
+                    <LazyWorkoutItem
                       workout={exercise}
                       isSelected={false}
                       onClick={() => {}}
