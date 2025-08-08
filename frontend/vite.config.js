@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 2000, // Increased from default (500kb) to 2000kb
+  },
   plugins: [
     react(),
     tailwindcss(),
