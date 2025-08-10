@@ -1399,9 +1399,11 @@ const DietPlan = ({
             </h2>
 
             <div className="mb-4">
-              <label className="block text-gray-400 mb-2">Diet Type</label>
+              <label className="block text-gray-400 mb-2 text-left">
+                Diet Type
+              </label>
               <select
-                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                className="bg-[#0a1f2e] text-white p-3 rounded-lg w-full"
                 value={preferences.dietType}
                 onChange={(e) =>
                   setPreferences({ ...preferences, dietType: e.target.value })
@@ -1418,11 +1420,11 @@ const DietPlan = ({
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-400 mb-2">
+              <label className="block text-gray-400 mb-2 text-left">
                 South Indian Regional Cuisine
               </label>
               <select
-                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                className="bg-[#0a1f2e] text-white p-3 rounded-lg w-full"
                 value={preferences.cuisine}
                 onChange={(e) =>
                   setPreferences({ ...preferences, cuisine: e.target.value })
@@ -1447,11 +1449,11 @@ const DietPlan = ({
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-400 mb-2">
+              <label className="block text-gray-400 mb-2 text-left">
                 Non-Vegetarian Preference
               </label>
               <select
-                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                className="bg-[#0a1f2e] text-white p-3 rounded-lg w-full"
                 value={preferences.nonVegType}
                 onChange={(e) =>
                   setPreferences({ ...preferences, nonVegType: e.target.value })
@@ -1468,9 +1470,11 @@ const DietPlan = ({
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-400 mb-2">Meal Style</label>
+              <label className="block text-gray-400 mb-2 text-left">
+                Meal Style
+              </label>
               <select
-                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                className="bg-[#0a1f2e] text-white p-3 rounded-lg w-full"
                 value={preferences.mealStyle}
                 onChange={(e) =>
                   setPreferences({ ...preferences, mealStyle: e.target.value })
@@ -1487,12 +1491,12 @@ const DietPlan = ({
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-400 mb-2">
+              <label className="block text-gray-400 mb-2 text-left">
                 Foods to Avoid (comma separated)
               </label>
               <input
                 type="text"
-                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                className="bg-[#0a1f2e] text-white p-3 rounded-lg w-full"
                 placeholder="e.g., nuts, dairy, shellfish"
                 value={preferences.avoidFoods}
                 onChange={(e) =>
@@ -1503,7 +1507,7 @@ const DietPlan = ({
 
             <div className="flex gap-2 mt-6">
               <button
-                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                className="bg-[#0a1f2e] text-white py-3 rounded-lg text-lg font-bold flex-1"
                 onClick={() => setShowPreferencesModal(false)}
               >
                 Cancel
@@ -1587,7 +1591,9 @@ const DietPlan = ({
             </h2>
 
             <div className="mb-4">
-              <label className="block text-gray-400 mb-2">Template Name</label>
+              <label className="block text-gray-400 mb-2 text-left">
+                Template Name
+              </label>
               <input
                 type="text"
                 value={templateName}
@@ -1598,7 +1604,7 @@ const DietPlan = ({
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-400 mb-2">
+              <label className="block text-gray-400 mb-2 text-left">
                 Description (Optional)
               </label>
               <textarea
