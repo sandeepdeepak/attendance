@@ -49,7 +49,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}"],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/gym-attendance\.com\/.*/i,
+            urlPattern: /^https:\/\/ko-fitness.gym-attendance\.com\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "gym-api-cache",
