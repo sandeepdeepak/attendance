@@ -4575,6 +4575,69 @@ app.use("/api", calorieProgressDetailsRouter);
 const weightHistoryRouter = require("./api-weight-history");
 app.use("/api", weightHistoryRouter);
 
+// Import the Bedrock service for meal plan generation
+const { generateMealPlan } = require("./bedrockService");
+
+// API endpoint to generate meal plans using AWS Bedrock with Anthropic Claude
+app.post("/api/generate-meal-plan", authenticateToken, async (req, res) => {
+  try {
+    const { memberId, date, calorieGoal, macroTargets, preferences } = req.body;
+
+    // Validate required parameters
+    if (!calorieGoal || !macroTargets) {
+      return res.status(400).json({
+        error: "Missing required parameters",
+        required: "calorieGoal, macroTargets",
+      });
+    }
+
+    // Call Bedrock service to generate meal plan
+    const mealPlan = await generateMealPlan(
+      calorieGoal,
+      macroTargets,
+      preferences || {}
+    );
+
+    res.json({
+      success: true,
+      mealPlan,
+    });
+  } catch (error) {
+    console.error("Error generating meal plan:", error);
+    res.status(500).json({ error: "Failed to generate meal plan" });
+  }
+});
+
+// Public version of the meal plan generation endpoint (for face recognition)
+app.post("/api/generate-meal-plan/public", async (req, res) => {
+  try {
+    const { memberId, date, calorieGoal, macroTargets, preferences } = req.body;
+
+    // Validate required parameters
+    if (!calorieGoal || !macroTargets) {
+      return res.status(400).json({
+        error: "Missing required parameters",
+        required: "calorieGoal, macroTargets",
+      });
+    }
+
+    // Call Bedrock service to generate meal plan
+    const mealPlan = await generateMealPlan(
+      calorieGoal,
+      macroTargets,
+      preferences || {}
+    );
+
+    res.json({
+      success: true,
+      mealPlan,
+    });
+  } catch (error) {
+    console.error("Error generating meal plan:", error);
+    res.status(500).json({ error: "Failed to generate meal plan" });
+  }
+});
+
 // Get calorie data for a specific member and month with workout and meal details
 app.get(
   "/api/calorie-progress/:memberId/:yearMonth/details",

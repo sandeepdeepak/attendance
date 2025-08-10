@@ -12,6 +12,7 @@ import {
   FaSave,
   FaList,
   FaTrash,
+  FaMagic,
 } from "react-icons/fa";
 import axios from "axios";
 import "./DietPlan.css";
@@ -63,6 +64,17 @@ const DietPlan = ({
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
+
+  // Meal plan generation state variables
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [preferences, setPreferences] = useState({
+    dietType: "",
+    cuisine: "",
+    nonVegType: "",
+    mealStyle: "",
+    avoidFoods: "",
+  });
 
   // Default popular South Indian dishes to show before search
   const popularSouthIndianFoods = [
@@ -582,23 +594,98 @@ const DietPlan = ({
     });
   };
 
-  // Function to check if all meal types are empty and reset nutrition totals if needed
-  const checkAndResetNutritionTotals = () => {
-    const allMealsEmpty =
-      dietPlan.breakfast.length === 0 &&
-      dietPlan.lunch.length === 0 &&
-      dietPlan.dinner.length === 0;
+  // Function to handle meal plan generation
+  const handleGenerateMealPlan = async () => {
+    setShowPreferencesModal(false);
+    setIsGenerating(true);
 
-    if (allMealsEmpty) {
-      setNutritionTotals({
-        calories: 0,
-        carbs: 0,
-        fats: 0,
-        proteins: 0,
-        fibre: 0,
-        serving_qty: 0,
-        serving_unit: "",
+    try {
+      let endpoint = `${API_URL}/api/generate-meal-plan`;
+      let config = {};
+
+      // If coming from face recognition, use public endpoint
+      if (fromFaceRecognition) {
+        endpoint = `${API_URL}/api/generate-meal-plan/public`;
+      } else {
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        // Create axios config with auth header
+        config = {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        };
+      }
+
+      const response = await axios.post(
+        endpoint,
+        {
+          memberId,
+          date: selectedDate,
+          calorieGoal: calculatedCalories?.dailyCalories,
+          macroTargets: recommendedNutrition,
+          preferences,
+        },
+        config
+      );
+
+      if (response.data && response.data.success) {
+        // Update the diet plan with the generated meals
+        const { breakfast, lunch, dinner } = response.data.mealPlan;
+
+        // Calculate total nutrition values
+        let totalCalories = 0;
+        let totalCarbs = 0;
+        let totalFats = 0;
+        let totalProteins = 0;
+        let totalFibre = 0;
+
+        // Sum up nutrition from all meals
+        [...breakfast, ...lunch, ...dinner].forEach((food) => {
+          totalCalories += food.calories;
+          totalCarbs += food.carbs;
+          totalFats += food.fats;
+          totalProteins += food.proteins;
+          totalFibre += food.fibre || 0;
+        });
+
+        // Update diet plan
+        setDietPlan({
+          breakfast,
+          lunch,
+          dinner,
+        });
+
+        // Update nutrition totals
+        setNutritionTotals({
+          calories: totalCalories,
+          carbs: totalCarbs,
+          fats: totalFats,
+          proteins: totalProteins,
+          fibre: totalFibre,
+          serving_qty: 0,
+          serving_unit: "",
+        });
+
+        setStatusMessage({
+          text: "Meal plan generated successfully!",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating meal plan:", error);
+      setStatusMessage({
+        text: "Failed to generate meal plan. Please try again.",
+        type: "error",
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -659,85 +746,6 @@ const DietPlan = ({
     searchQuery && searchResults.length > 0
       ? searchResults
       : popularSouthIndianFoods;
-
-  const handleSendDietPlan = async () => {
-    try {
-      // Clear any previous status messages
-      setStatusMessage({ text: "", type: "" });
-
-      // Save the current diet plan
-      await saveDietPlan();
-
-      // Send to WhatsApp
-      if (member && member.phoneNumber) {
-        try {
-          let endpoint = `${API_URL}/api/send-diet-plan-whatsapp`;
-          let config = {};
-          let data = {
-            memberId,
-            date: selectedDate,
-            phoneNumber: member.phoneNumber,
-          };
-
-          // If coming from face recognition, use public endpoint
-          if (fromFaceRecognition) {
-            endpoint = `${API_URL}/api/send-diet-plan-whatsapp/public`;
-          } else {
-            // Get auth token from localStorage
-            const authToken = localStorage.getItem("authToken");
-            if (!authToken) {
-              throw new Error(
-                "Authentication token not found. Please login again."
-              );
-            }
-
-            // Create axios config with auth header
-            config = {
-              headers: {
-                Authorization: `Bearer ${authToken}`,
-              },
-            };
-          }
-
-          const response = await axios.post(endpoint, data, config);
-
-          if (response.data.success) {
-            setStatusMessage({
-              text: "Diet plan sent successfully to WhatsApp!",
-              type: "success",
-            });
-            // Wait 2 seconds before going back
-            setTimeout(() => {
-              onBackClick();
-            }, 2000);
-          } else {
-            throw new Error("Failed to send to WhatsApp");
-          }
-        } catch (whatsappError) {
-          console.error("Error sending to WhatsApp:", whatsappError);
-          setStatusMessage({
-            text: "Diet plan saved but could not be sent to WhatsApp. Please try again later.",
-            type: "error",
-          });
-        }
-      } else {
-        setStatusMessage({
-          text: "Diet plan saved successfully!",
-          type: "success",
-        });
-        // Wait 2 seconds before going back
-        setTimeout(() => {
-          onBackClick();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error sending diet plan:", error);
-      setStatusMessage({
-        text: "Failed to save diet plan. Please try again.",
-        type: "error",
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -805,10 +813,9 @@ const DietPlan = ({
         </>
       )}
 
-      {/* Calorie Goal Section */}
-      {/* Template Buttons - Only shown for admin users */}
+      {/* Template and Generate Meal Plan Buttons - Only shown for admin users */}
       {!fromFaceRecognition && (
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           <button
             className="bg-[#4d3a1f] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
             onClick={() => {
@@ -830,6 +837,14 @@ const DietPlan = ({
           >
             <FaSave className="mr-2 text-[#e8e8e8]" />
             <span className="text-[#e8e8e8]">Save Template</span>
+          </button>
+          <button
+            className="bg-[#024a72] py-3 px-4 rounded-lg flex-1 flex items-center justify-center"
+            onClick={() => setShowPreferencesModal(true)}
+            disabled={!calculatedCalories?.dailyCalories}
+          >
+            <FaMagic className="mr-2 text-[#e8e8e8]" />
+            <span className="text-[#e8e8e8]">Generate Meal Plan</span>
           </button>
         </div>
       )}
@@ -1351,6 +1366,20 @@ const DietPlan = ({
         </div>
       )}
 
+      {/* Loading indicator for meal plan generation */}
+      {isGenerating && (
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 className="text-2xl font-bold mb-2">Generating Meal Plan</h2>
+            <p className="text-gray-400">
+              Our AI is creating a personalized meal plan based on your
+              nutritional needs...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Send button */}
       {/* {!fromFaceRecognition && (
         <button
@@ -1360,6 +1389,135 @@ const DietPlan = ({
           Send Diet Plan
         </button>
       )} */}
+
+      {/* Meal Preferences Modal */}
+      {showPreferencesModal && (
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
+          <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              Meal Preferences
+            </h2>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">Diet Type</label>
+              <select
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                value={preferences.dietType}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, dietType: e.target.value })
+                }
+              >
+                <option value="">No Restriction</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+                <option value="keto">Keto</option>
+                <option value="paleo">Paleo</option>
+                <option value="low-carb">Low Carb</option>
+                <option value="high-protein">High Protein</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">
+                South Indian Regional Cuisine
+              </label>
+              <select
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                value={preferences.cuisine}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, cuisine: e.target.value })
+                }
+              >
+                <option value="">No Specific Region</option>
+                <option value="tamil-nadu">Tamil Nadu</option>
+                <option value="kerala">Kerala</option>
+                <option value="karnataka">Karnataka</option>
+                <option value="andhra">Andhra</option>
+                <option value="telangana">Telangana</option>
+                <option value="chettinad">Chettinad</option>
+                <option value="udupi">Udupi</option>
+                <option value="mangalorean">Mangalorean</option>
+                <option value="hyderabadi">Hyderabadi</option>
+                <option value="north-indian">North Indian</option>
+                <option value="mediterranean">Mediterranean</option>
+                <option value="asian">Asian</option>
+                <option value="mexican">Mexican</option>
+                <option value="italian">Italian</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">
+                Non-Vegetarian Preference
+              </label>
+              <select
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                value={preferences.nonVegType}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, nonVegType: e.target.value })
+                }
+              >
+                <option value="">No Preference</option>
+                <option value="chicken">Chicken (Kozhi/Koli)</option>
+                <option value="mutton">Mutton/Lamb (Aatukari)</option>
+                <option value="fish">Fish (Meen)</option>
+                <option value="seafood">Seafood (Prawns, Crab)</option>
+                <option value="egg">Egg dishes</option>
+                <option value="mixed">Mixed non-veg</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-400 mb-2">Meal Style</label>
+              <select
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                value={preferences.mealStyle}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, mealStyle: e.target.value })
+                }
+              >
+                <option value="">No Specific Style</option>
+                <option value="breakfast">
+                  Traditional South Indian breakfast
+                </option>
+                <option value="tiffin">South Indian tiffin items</option>
+                <option value="thali">South Indian thali/meals</option>
+                <option value="street-food">South Indian street food</option>
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-400 mb-2">
+                Foods to Avoid (comma separated)
+              </label>
+              <input
+                type="text"
+                className="bg-gray-800 text-white p-3 rounded-lg w-full"
+                placeholder="e.g., nuts, dairy, shellfish"
+                value={preferences.avoidFoods}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, avoidFoods: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                className="bg-gray-800 text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={() => setShowPreferencesModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-[#024a72] text-white py-3 rounded-lg text-lg font-bold flex-1"
+                onClick={handleGenerateMealPlan}
+              >
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Template Selection Modal */}
       {showTemplateModal && (
