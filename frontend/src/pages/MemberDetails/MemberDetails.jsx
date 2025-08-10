@@ -502,7 +502,7 @@ const MemberDetails = ({
   const isExpired = membershipEndDate ? new Date() > membershipEndDate : false;
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 pt-20 pb-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 pt-20 pb-8">
       {/* Fixed Header with back button, member name, and progress icon */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-[#0a1f2e] flex items-center p-4 shadow-md fixed-header">
         <button className="text-white p-2" onClick={onBackClick}>
@@ -655,7 +655,7 @@ const MemberDetails = ({
       )}
 
       {/* Member details */}
-      <div className="grid grid-cols-2 gap-2 mb-6 ms-2">
+      <div className="grid grid-cols-2 gap-2 mb-6 ms-2 w-full max-w-md">
         <div>
           <p className="text-gray-400 text-left">Age</p>
           <p className="text-left">{calculateAge(member.dateOfBirth)}</p>
@@ -715,7 +715,7 @@ const MemberDetails = ({
       </div>
 
       {/* Calendar header with navigation */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 w-full max-w-md">
         <button
           onClick={goToPreviousMonth}
           className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
@@ -732,7 +732,7 @@ const MemberDetails = ({
       </div>
 
       {/* Calendar weekday headers */}
-      <div className="grid grid-cols-7 gap-2 mb-2 text-center">
+      <div className="grid grid-cols-7 gap-2 mb-2 text-center w-full max-w-md">
         <div className="text-xl">S</div>
         <div className="text-xl">M</div>
         <div className="text-xl">T</div>
@@ -743,7 +743,7 @@ const MemberDetails = ({
       </div>
 
       {/* Calendar days */}
-      <div className="grid grid-cols-7 gap-2 mb-8">
+      <div className="grid grid-cols-7 gap-2 mb-8 w-full max-w-md">
         {generateCalendarDays().map((day, index) => {
           if (day === null) {
             // Empty cell for days before the 1st of the month
@@ -765,7 +765,7 @@ const MemberDetails = ({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap justify-between gap-2 mb-8 text-sm">
+      <div className="flex flex-wrap justify-between gap-2 mb-8 text-sm w-full max-w-md">
         <div className="flex items-center">
           <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
           <span>Attended</span>
@@ -782,7 +782,7 @@ const MemberDetails = ({
 
       {/* Membership History */}
       {membershipHistory.length > 0 && (
-        <div className="mb-8">
+        <div className="mb-8 w-full max-w-md">
           <h2 className="text-xl font-bold mb-3">Membership History</h2>
           <div className="bg-[#123347] rounded-lg p-4">
             <table className="w-full">

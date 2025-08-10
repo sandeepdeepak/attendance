@@ -174,25 +174,25 @@ const AllMembers = ({
   }
 
   return (
-    <div className="h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 overflow-hidden">
-      <div className="flex">
+    <div className="h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-6 overflow-hidden">
+      <div className="flex items-center w-full max-w-md">
         {/* Back button */}
         <div className="flex-shrink-0 mb-4">
           <button className="text-white p-2" onClick={onBackClick}>
-            <FaArrowLeft size={24} />
+            <FaArrowLeft size={20} />
           </button>
         </div>
 
         {/* Header with title and count */}
-        <div className="flex-shrink-0 w-full flex justify-start mb-8 mt-1">
-          <div className="text-2xl font-bold text-center">
+        <div className="flex-shrink-0 w-full flex justify-start mb-4 mt-1">
+          <div className="text-xl font-bold text-center">
             {title} {members.length > 0 ? `(${members.length})` : ""}
           </div>
         </div>
       </div>
 
       {/* Members list */}
-      <div className="flex-1 h-[calc(100vh-12rem)] overflow-auto">
+      <div className="flex-1 w-full max-w-md h-[calc(100vh-10rem)] overflow-auto">
         {loading ? (
           <div className="flex justify-center items-center h-full">
             <p className="text-xl">Loading members...</p>
@@ -206,21 +206,21 @@ const AllMembers = ({
             <p className="text-xl">No members found</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center cursor-pointer bg-[#024a72] p-2 rounded-2xl transition-colors"
+                className="flex items-center cursor-pointer bg-[#024a72] p-3 rounded-xl transition-colors"
                 onClick={() => onMemberClick(member.id)}
               >
-                <div className="w-16 h-16 bg-[#1e293b] rounded-full flex items-center justify-center mr-4">
-                  <FaUser size={32} className="text-gray-400" />
+                <div className="w-12 h-12 bg-[#1e293b] rounded-full flex items-center justify-center mr-3">
+                  <FaUser size={24} className="text-gray-400" />
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-medium text-left text-white">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-medium text-left text-white truncate">
                     {member.fullName}
                   </h2>
-                  <p className="text-gray-300 text-left">
+                  <p className="text-gray-300 text-left text-sm truncate">
                     {member.phoneNumber}
                   </p>
                 </div>
@@ -259,7 +259,7 @@ const AllMembers = ({
                       {/* Dropdown menu */}
                       <div
                         id={`dropdown-${member.id}`}
-                        className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10 hidden"
+                        className="absolute right-0 mt-2 w-40 bg-gray-800 rounded-md shadow-lg z-10 hidden"
                       >
                         <div className="py-1">
                           <button
@@ -288,11 +288,11 @@ const AllMembers = ({
       {/* Edit Member Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-75 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Edit Member</h2>
+          <div className="bg-gray-800 rounded-lg p-4 w-full max-w-xs">
+            <h2 className="text-xl font-bold mb-3">Edit Member</h2>
 
             <form onSubmit={handleUpdateMember}>
-              <div className="mb-4">
+              <div className="mb-3">
                 <label className="block text-sm font-medium mb-1">
                   Full Name
                 </label>
@@ -301,12 +301,12 @@ const AllMembers = ({
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-[#1e293b] rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white text-sm"
                   required
                 />
               </div>
 
-              <div className="mb-4">
+              <div className="mb-3">
                 <label className="block text-sm font-medium mb-1">
                   Phone Number
                 </label>
@@ -315,12 +315,12 @@ const AllMembers = ({
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-[#1e293b] rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white text-sm"
                   required
                 />
               </div>
 
-              <div className="mb-4">
+              <div className="mb-3">
                 <label className="block text-sm font-medium mb-1">
                   Date of Birth
                 </label>
@@ -329,18 +329,18 @@ const AllMembers = ({
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-[#1e293b] rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white text-sm"
                   required
                 />
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Gender</label>
                 <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full p-2 bg-[#1e293b] rounded text-white"
+                  className="w-full p-2 bg-[#1e293b] rounded text-white text-sm"
                   required
                 >
                   <option value="">Select Gender</option>
@@ -350,21 +350,21 @@ const AllMembers = ({
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingMember(null);
                   }}
-                  className="px-4 py-2 bg-gray-600 rounded hover:bg-[#1e293b] transition-colors"
+                  className="px-3 py-1.5 bg-gray-600 rounded text-sm hover:bg-[#1e293b] transition-colors"
                   disabled={updating}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#024a72] rounded hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="px-3 py-1.5 bg-[#024a72] rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center"
                   disabled={updating}
                 >
                   {updating ? (

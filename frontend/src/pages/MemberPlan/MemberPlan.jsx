@@ -116,7 +116,7 @@ const MemberPlan = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center">
       {/* Fixed header section */}
       <div className="fixed-header px-4 py-4">
         {/* Header with back button and member name */}

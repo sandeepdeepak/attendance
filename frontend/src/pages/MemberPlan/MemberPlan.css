@@ -85,4 +85,6 @@
 /* Adjust scrollable content to account for the header layout */
 .scrollable-content {
   margin-top: 265px; /* Adjusted for the header layout */
+  width: 100%;
+  max-width: 448px; /* Same as max-w-md in Tailwind (28rem) */
 }
