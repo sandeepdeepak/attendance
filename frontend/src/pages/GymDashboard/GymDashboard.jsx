@@ -473,14 +473,14 @@ const GymDashboard = ({
           stats.map((stat, index) => (
             <div
               key={index}
-              className={`bg-[#123347] rounded-2xl p-6 flex flex-col items-center justify-center w-40 h-40 ${
+              className={`bg-[#123347] rounded-xl p-6 flex flex-col items-center justify-center w-35 h-35 ${
                 stat.onClick ? "cursor-pointer hover:bg-[#252525]" : ""
               }`}
               onClick={stat.onClick}
             >
               <div className="text-gray-300 mb-2">{stat.icon}</div>
               <p className="text-center text-sm mb-1">{stat.label}</p>
-              <p className="text-3xl font-semibold">{stat.value}</p>
+              <p className="text-2xl font-semibold">{stat.value}</p>
             </div>
           ))
         )}
