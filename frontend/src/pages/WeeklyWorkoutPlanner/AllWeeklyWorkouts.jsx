@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { API_URL } from "../../config";
 import {
@@ -9,7 +9,9 @@ import {
   FaTrash,
   FaEye,
   FaUsers,
+  FaFilePdf,
 } from "react-icons/fa";
+import jsPDF from "jspdf";
 import "./WeeklyWorkoutPlanner.css";
 
 const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
@@ -27,6 +29,8 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
   const [selectedMembers, setSelectedMembers] = useState({});
   const [startDates, setStartDates] = useState({});
   const [assigningPlan, setAssigningPlan] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(null);
+  const planRefs = useRef({});
 
   // Fetch all weekly workout plans when component mounts
   useEffect(() => {
@@ -207,6 +211,296 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
     }
   };
 
+  // Function to generate and download PDF for a workout plan
+  const generatePDF = async (plan) => {
+    try {
+      setGeneratingPdf(plan.planId);
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // PDF dimensions
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - 2 * margin;
+
+      // Add title
+      pdf.setFillColor(10, 31, 46); // Dark blue background
+      pdf.rect(0, 0, pageWidth, 30, "F");
+      pdf.setTextColor(255, 255, 255); // White text
+      pdf.setFontSize(18);
+      pdf.text(plan.templateName, pageWidth / 2, 15, { align: "center" });
+
+      // Add summary information
+      pdf.setTextColor(0, 0, 0); // Black text
+      pdf.setFontSize(12);
+      pdf.text(
+        `Total Exercises: ${countTotalExercises(plan.weeklyPlan)}`,
+        margin,
+        40
+      );
+      pdf.text(
+        `Days Planned: ${
+          Object.values(plan.weeklyPlan).filter(
+            (day) => day.exercises && day.exercises.length > 0
+          ).length
+        }`,
+        margin,
+        48
+      );
+
+      const bodyParts = getBodyPartsSummary(plan.weeklyPlan);
+      if (bodyParts.length > 0) {
+        pdf.text(`Body Parts: ${bodyParts.join(", ")}`, margin, 56);
+      }
+
+      pdf.text(`Last Updated: ${formatDate(plan.updatedAt)}`, margin, 64);
+
+      // Add horizontal line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, 70, pageWidth - margin, 70);
+
+      // Add workout details for each day
+      const days = [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ];
+      let yPosition = 80;
+
+      days.forEach((day) => {
+        const dayPlan = plan.weeklyPlan[day];
+        if (!dayPlan || !dayPlan.exercises || dayPlan.exercises.length === 0) {
+          return; // Skip days with no exercises
+        }
+
+        // Format day name with first letter capitalized
+        const formattedDay = day.charAt(0).toUpperCase() + day.slice(1);
+
+        // Add day header
+        pdf.setFillColor(2, 74, 114); // Blue background for day header
+        pdf.rect(margin, yPosition - 6, contentWidth, 10, "F");
+        pdf.setTextColor(255, 255, 255); // White text
+        pdf.setFontSize(14);
+        pdf.text(formattedDay, margin + 5, yPosition);
+        yPosition += 10;
+
+        // Add exercises
+        pdf.setTextColor(0, 0, 0); // Black text
+        pdf.setFontSize(10);
+
+        dayPlan.exercises.forEach((exercise, exIndex) => {
+          // Check if we need a new page
+          if (yPosition > pageHeight - 20) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+
+          pdf.setFontSize(11);
+          pdf.setFont(undefined, "bold");
+          pdf.text(
+            `${exIndex + 1}. ${exercise.name || "Unnamed Exercise"}`,
+            margin + 5,
+            yPosition
+          );
+          pdf.setFont(undefined, "normal");
+          pdf.setFontSize(10);
+          yPosition += 6;
+
+          if (exercise.bodyPart) {
+            pdf.text(`Body Part: ${exercise.bodyPart}`, margin + 10, yPosition);
+            yPosition += 5;
+          }
+
+          // Display sets, reps, and weight information
+          if (exercise.sets) {
+            if (typeof exercise.sets === "object") {
+              // If sets is an object, display each set on a separate line
+              pdf.text("Sets:", margin + 10, yPosition);
+              yPosition += 5;
+
+              try {
+                // Try to parse the sets object
+                const setsObj = exercise.sets;
+
+                // Handle sets as an array of objects or a single object
+                if (Array.isArray(setsObj)) {
+                  setsObj.forEach((set, index) => {
+                    if (typeof set === "object" && set !== null) {
+                      // Extract key information from the set object
+                      const setInfo = [];
+                      if (set.reps) setInfo.push(`Reps: ${set.reps}`);
+                      if (set.weight) setInfo.push(`Weight: ${set.weight}`);
+
+                      pdf.text(
+                        `  Set ${index + 1}: ${
+                          setInfo.join(", ") || JSON.stringify(set)
+                        }`,
+                        margin + 10,
+                        yPosition
+                      );
+                    } else {
+                      pdf.text(
+                        `  Set ${index + 1}: ${set}`,
+                        margin + 10,
+                        yPosition
+                      );
+                    }
+                    yPosition += 5;
+                  });
+                } else if (typeof setsObj === "object" && setsObj !== null) {
+                  // Handle as a key-value object where keys might be set numbers
+                  Object.entries(setsObj).forEach(([setKey, value]) => {
+                    if (typeof value === "object" && value !== null) {
+                      // Extract key information from the value object
+                      const setInfo = [];
+                      if (value.reps) setInfo.push(`Reps: ${value.reps}`);
+                      if (value.weight) setInfo.push(`Weight: ${value.weight}`);
+
+                      pdf.text(
+                        `  Set ${setKey}: ${
+                          setInfo.join(", ") || JSON.stringify(value)
+                        }`,
+                        margin + 10,
+                        yPosition
+                      );
+                    } else {
+                      pdf.text(
+                        `  Set ${setKey}: ${value}`,
+                        margin + 10,
+                        yPosition
+                      );
+                    }
+                    yPosition += 5;
+                  });
+                }
+              } catch (err) {
+                console.error("Error parsing sets:", err);
+                // Fallback if parsing fails
+                const setsStr = JSON.stringify(exercise.sets).replace(
+                  /[{}"]/g,
+                  ""
+                );
+                pdf.text(`  ${setsStr}`, margin + 10, yPosition);
+                yPosition += 5;
+              }
+            } else {
+              pdf.text(`Sets: ${exercise.sets}`, margin + 10, yPosition);
+              yPosition += 5;
+            }
+          }
+
+          // Display reps information
+          if (exercise.reps) {
+            if (typeof exercise.reps === "object") {
+              pdf.text("Reps:", margin + 10, yPosition);
+              yPosition += 5;
+
+              try {
+                const repsObj = exercise.reps;
+                Object.entries(repsObj).forEach(([, value], index) => {
+                  pdf.text(
+                    `  Set ${index + 1}: ${value}`,
+                    margin + 10,
+                    yPosition
+                  );
+                  yPosition += 5;
+                });
+              } catch (err) {
+                console.log("Error parsing reps:", err);
+                const repsStr = JSON.stringify(exercise.reps).replace(
+                  /[{}"]/g,
+                  ""
+                );
+                pdf.text(`  ${repsStr}`, margin + 10, yPosition);
+                yPosition += 5;
+              }
+            } else {
+              pdf.text(`Reps: ${exercise.reps}`, margin + 10, yPosition);
+              yPosition += 5;
+            }
+          }
+
+          // Display weight information
+          if (exercise.weight) {
+            if (typeof exercise.weight === "object") {
+              pdf.text("Weight:", margin + 10, yPosition);
+              yPosition += 5;
+
+              try {
+                const weightObj = exercise.weight;
+                Object.entries(weightObj).forEach(([, value], index) => {
+                  pdf.text(
+                    `  Set ${index + 1}: ${value}`,
+                    margin + 10,
+                    yPosition
+                  );
+                  yPosition += 5;
+                });
+              } catch (err) {
+                console.log("Error parsing weight:", err);
+                const weightStr = JSON.stringify(exercise.weight).replace(
+                  /[{}"]/g,
+                  ""
+                );
+                pdf.text(`  ${weightStr}`, margin + 10, yPosition);
+                yPosition += 5;
+              }
+            } else {
+              pdf.text(`Weight: ${exercise.weight}`, margin + 10, yPosition);
+              yPosition += 5;
+            }
+          }
+
+          if (exercise.notes) {
+            pdf.text(`Notes: ${exercise.notes}`, margin + 10, yPosition);
+            yPosition += 5;
+          }
+
+          yPosition += 3; // Add some space between exercises
+        });
+
+        yPosition += 5; // Add space between days
+      });
+
+      // Download the PDF
+      pdf.save(`${plan.templateName}_workout_plan.pdf`);
+
+      // Show success message
+      setStatusMessage({
+        text: "Workout plan PDF downloaded successfully",
+        type: "success",
+      });
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setStatusMessage({ text: "", type: "" });
+      }, 3000);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      setStatusMessage({
+        text: "Failed to generate PDF. Please try again.",
+        type: "error",
+      });
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setStatusMessage({ text: "", type: "" });
+      }, 3000);
+    } finally {
+      setGeneratingPdf(null);
+    }
+  };
+
   // Function to apply the plan to selected members
   const applyPlanToMembers = async () => {
     try {
@@ -334,12 +628,37 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
         // List of Weekly Plans
         <div className="space-y-4">
           {weeklyPlans.map((plan) => (
-            <div key={plan.planId} className="bg-[#123347] rounded-lg p-4">
+            <div
+              key={plan.planId}
+              className="bg-[#123347] rounded-lg p-4"
+              ref={(el) => (planRefs.current[plan.planId] = el)}
+            >
               <div className="flex justify-between items-center mb-3">
                 <h2 className="text-xl font-semibold">{plan.templateName}</h2>
-                <span className="text-xs text-gray-400">
-                  Updated: {formatDate(plan.updatedAt)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">
+                    Updated: {formatDate(plan.updatedAt)}
+                  </span>
+                  <div
+                    className="flex items-center justify-center gap-1 bg-[#2a9d8f] px-2 py-1 rounded text-white text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      generatePDF(plan);
+                    }}
+                    disabled={generatingPdf === plan.planId}
+                  >
+                    {generatingPdf === plan.planId ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-t-2 border-white rounded-full animate-spin"></div>
+                        PDF
+                      </>
+                    ) : (
+                      <>
+                        <FaFilePdf size={12} /> PDF
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 mb-3">
