@@ -365,4 +365,133 @@ router.delete(
   }
 );
 
+// Assign a weekly workout plan to multiple members
+router.post(
+  "/weekly-workout-plans/:planId/assign",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const gymOwnerId = req.user.gymId;
+      const planId = req.params.planId;
+      const { memberIds, startDates } = req.body;
+
+      // Validate input
+      if (!memberIds || !Array.isArray(memberIds) || memberIds.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Member IDs are required",
+        });
+      }
+
+      if (
+        !startDates ||
+        !Array.isArray(startDates) ||
+        startDates.length !== memberIds.length
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Start dates are required for each member",
+        });
+      }
+
+      // Find the weekly workout plan
+      const scanParams = {
+        TableName: WEEKLY_WORKOUT_PLANS_TABLE,
+        FilterExpression: "gymOwnerId = :gymOwnerId AND planId = :planId",
+        ExpressionAttributeValues: {
+          ":gymOwnerId": gymOwnerId,
+          ":planId": planId,
+        },
+      };
+
+      const planResult = await docClient.send(new ScanCommand(scanParams));
+
+      if (!planResult.Items || planResult.Items.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Weekly workout plan not found",
+        });
+      }
+
+      const weeklyPlan = planResult.Items[0].weeklyPlan;
+      const results = [];
+
+      // For each member, apply the workout plan starting from their start date
+      for (let i = 0; i < memberIds.length; i++) {
+        const memberId = memberIds[i];
+        const startDate = new Date(startDates[i]);
+
+        // Apply each day's workout to the appropriate date
+        const dayNames = [
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+        ];
+
+        for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+          const targetDate = new Date(startDate);
+          targetDate.setDate(targetDate.getDate() + dayOffset);
+
+          // Get day of week (0 = Sunday, 1 = Monday, etc.)
+          const dayOfWeek = targetDate.getDay();
+          const dayName = dayNames[dayOfWeek];
+
+          // Get exercises for this day
+          const dayExercises = weeklyPlan[dayName].exercises;
+
+          // Skip if no exercises for this day
+          if (!dayExercises || dayExercises.length === 0) continue;
+
+          // Format date as YYYY-MM-DD
+          const formattedDate = targetDate.toISOString().split("T")[0];
+
+          // Save workout plan for this member and date
+          await saveWorkoutPlan(memberId, formattedDate, dayExercises);
+
+          results.push({
+            memberId,
+            date: formattedDate,
+            exercisesCount: dayExercises.length,
+          });
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: "Weekly workout plan applied successfully",
+        results,
+      });
+    } catch (error) {
+      console.error("Error applying weekly workout plan:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to apply weekly workout plan",
+        error: error.message,
+      });
+    }
+  }
+);
+
+// Helper function to save a workout plan
+async function saveWorkoutPlan(memberId, date, exercises) {
+  const workoutPlanItem = {
+    memberId,
+    date,
+    exercises,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const putParams = {
+    TableName: "workout_plans",
+    Item: workoutPlanItem,
+  };
+
+  await docClient.send(new PutCommand(putParams));
+  return workoutPlanItem;
+}
+
 module.exports = router;

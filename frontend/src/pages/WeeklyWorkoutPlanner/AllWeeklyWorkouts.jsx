@@ -8,6 +8,7 @@ import {
   FaEdit,
   FaTrash,
   FaEye,
+  FaUsers,
 } from "react-icons/fa";
 import "./WeeklyWorkoutPlanner.css";
 
@@ -18,6 +19,14 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [deletingPlan, setDeletingPlan] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: "", type: "" });
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [selectedPlanName, setSelectedPlanName] = useState("");
+  const [members, setMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState({});
+  const [startDates, setStartDates] = useState({});
+  const [assigningPlan, setAssigningPlan] = useState(false);
 
   // Fetch all weekly workout plans when component mounts
   useEffect(() => {
@@ -150,6 +159,126 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
     onAddNewPlanClick();
   };
 
+  // Function to handle plan assignment
+  const handleAssignPlan = (planId) => {
+    const plan = weeklyPlans.find((p) => p.planId === planId);
+    setSelectedPlanId(planId);
+    setSelectedPlanName(plan.templateName);
+    setShowAssignModal(true);
+    fetchMembers();
+  };
+
+  // Function to fetch all members
+  const fetchMembers = async () => {
+    try {
+      setLoadingMembers(true);
+
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await axios.get(`${API_URL}/api/members`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.data && response.data.members) {
+        setMembers(response.data.members);
+
+        // Initialize start dates for all members to today
+        const today = new Date().toISOString().split("T")[0];
+        const initialStartDates = {};
+        response.data.members.forEach((member) => {
+          initialStartDates[member.id] = today;
+        });
+        setStartDates(initialStartDates);
+      }
+    } catch (error) {
+      console.error("Error fetching members:", error);
+      setStatusMessage({
+        text: "Failed to load members. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  // Function to apply the plan to selected members
+  const applyPlanToMembers = async () => {
+    try {
+      setAssigningPlan(true);
+
+      // Get selected member IDs and their start dates
+      const memberIds = [];
+      const memberStartDates = [];
+
+      Object.keys(selectedMembers).forEach((memberId) => {
+        if (selectedMembers[memberId]) {
+          memberIds.push(memberId);
+          memberStartDates.push(startDates[memberId]);
+        }
+      });
+
+      if (memberIds.length === 0) {
+        setStatusMessage({
+          text: "Please select at least one member",
+          type: "error",
+        });
+        setAssigningPlan(false);
+        return;
+      }
+
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        throw new Error("Authentication token not found");
+      }
+
+      // Call the API to assign the plan
+      const response = await axios.post(
+        `${API_URL}/api/weekly-workout-plans/${selectedPlanId}/assign`,
+        {
+          memberIds,
+          startDates: memberStartDates,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        setStatusMessage({
+          text: `Plan assigned to ${memberIds.length} members successfully`,
+          type: "success",
+        });
+
+        // Close the modal
+        setShowAssignModal(false);
+        setSelectedPlanId(null);
+        setSelectedMembers({});
+
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          setStatusMessage({ text: "", type: "" });
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error assigning plan:", error);
+      setStatusMessage({
+        text: "Failed to assign plan. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setAssigningPlan(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
       {/* Header with back button */}
@@ -255,12 +384,20 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
 
               {/* Action buttons */}
               <div className="flex justify-between mt-4">
-                <button
-                  className="flex items-center justify-center gap-2 bg-[#024a72] px-4 py-2 rounded-lg text-white"
-                  onClick={() => handleEditPlan(plan.planId)}
-                >
-                  <FaEdit size={14} /> Edit
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    className="flex items-center justify-center gap-2 bg-[#024a72] px-4 py-2 rounded-lg text-white"
+                    onClick={() => handleEditPlan(plan.planId)}
+                  >
+                    <FaEdit size={14} /> Edit
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-2 bg-[#036BA2] px-4 py-2 rounded-lg text-white"
+                    onClick={() => handleAssignPlan(plan.planId)}
+                  >
+                    <FaUsers size={14} /> Assign
+                  </button>
+                </div>
 
                 {showDeleteConfirm === plan.planId ? (
                   <div className="flex gap-2">
@@ -290,6 +427,127 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Assignment Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#123347] rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">
+              Assign "{selectedPlanName}" to Members
+            </h2>
+
+            {loadingMembers ? (
+              <div className="text-center py-8">
+                <p className="text-xl">Loading members...</p>
+              </div>
+            ) : members.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-xl">No members found</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <div className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      id="select-all"
+                      className="mr-2"
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        const newSelectedMembers = {};
+                        members.forEach((member) => {
+                          newSelectedMembers[member.id] = isChecked;
+                        });
+                        setSelectedMembers(newSelectedMembers);
+                      }}
+                    />
+                    <label htmlFor="select-all" className="font-bold">
+                      Select All
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="bg-[#0a1f2e] p-3 rounded-lg"
+                    >
+                      <div className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id={`member-${member.id}`}
+                          checked={selectedMembers[member.id] || false}
+                          onChange={(e) => {
+                            setSelectedMembers({
+                              ...selectedMembers,
+                              [member.id]: e.target.checked,
+                            });
+                          }}
+                          className="mr-2"
+                        />
+                        <label
+                          htmlFor={`member-${member.id}`}
+                          className="font-medium"
+                        >
+                          {member.fullName}
+                        </label>
+                      </div>
+
+                      {selectedMembers[member.id] && (
+                        <div className="ml-6 mt-2">
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Start Date:
+                          </label>
+                          <input
+                            type="date"
+                            value={
+                              startDates[member.id] ||
+                              new Date().toISOString().split("T")[0]
+                            }
+                            min={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => {
+                              setStartDates({
+                                ...startDates,
+                                [member.id]: e.target.value,
+                              });
+                            }}
+                            className="bg-[#1e293b] text-white p-2 rounded w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    className="bg-gray-700 text-white px-4 py-2 rounded-lg"
+                    onClick={() => setShowAssignModal(false)}
+                    disabled={assigningPlan}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="bg-[#036BA2] text-white px-4 py-2 rounded-lg flex items-center"
+                    onClick={applyPlanToMembers}
+                    disabled={assigningPlan}
+                  >
+                    {assigningPlan ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-t-2 border-white rounded-full animate-spin mr-2"></div>
+                        Assigning...
+                      </>
+                    ) : (
+                      "Apply Plan"
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
