@@ -12,6 +12,8 @@ import MemberProgress from "./pages/MemberProgress/MemberProgress";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Login from "./pages/Login/Login";
 import HomePage from "./pages/HomePage/HomePage";
+import WeeklyWorkoutPlanner from "./pages/WeeklyWorkoutPlanner/WeeklyWorkoutPlanner";
+import AllWeeklyWorkouts from "./pages/WeeklyWorkoutPlanner/AllWeeklyWorkouts";
 import { API_URL } from "./config";
 
 function App() {
@@ -90,6 +92,17 @@ function App() {
 
   const handleAdminClick = () => {
     setCurrentPage("admin");
+  };
+
+  const handleWeeklyWorkoutPlannerClick = () => {
+    setCurrentPage("allWeeklyWorkouts");
+  };
+
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+
+  const handleAddNewWeeklyPlanClick = (planId = null) => {
+    setSelectedPlanId(planId);
+    setCurrentPage("weeklyWorkoutPlanner");
   };
 
   const handleLogout = () => {
@@ -173,6 +186,7 @@ function App() {
             onTodayAttendanceClick={handleTodayAttendanceClick}
             onAttendanceDetailsClick={handleAttendanceDetailsClick}
             onAdminClick={handleAdminClick}
+            onWeeklyWorkoutPlannerClick={handleWeeklyWorkoutPlannerClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
             isAdmin={isAdmin}
@@ -235,6 +249,22 @@ function App() {
           <AdminDashboard
             onBackClick={handleBackClick}
             onLogout={handleLogout}
+          />
+        );
+
+      case "allWeeklyWorkouts":
+        return (
+          <AllWeeklyWorkouts
+            onBackClick={handleBackClick}
+            onAddNewPlanClick={handleAddNewWeeklyPlanClick}
+          />
+        );
+
+      case "weeklyWorkoutPlanner":
+        return (
+          <WeeklyWorkoutPlanner
+            onBackClick={() => setCurrentPage("allWeeklyWorkouts")}
+            planId={selectedPlanId}
           />
         );
 

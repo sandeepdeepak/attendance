@@ -1,0 +1,19 @@
+.day-tab {
+  transition: all 0.3s ease;
+}
+
+.day-tab:hover {
+  background-color: #1e293b;
+}
+
+.day-tab.active {
+  background-color: #024a72;
+  color: white;
+}
+
+.workout-plan-container {
+  width: 100%;
+}
+
+/* Fix for the unused variables in the component */
+/* These are intentionally kept for future implementation */

@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const { uploadFileToS3 } = require("./s3Service");
+const { authenticateToken, authenticateAdmin } = require("./authMiddleware");
 
 // Load environment variables from .env file
 try {
@@ -79,6 +80,7 @@ const WORKOUT_TEMPLATES_TABLE = "workout_templates";
 const GYM_OWNERS_TABLE = "gym_owners";
 const PUSH_SUBSCRIPTIONS_TABLE = "push_subscriptions";
 const WEIGHT_HISTORY_TABLE = "weight_history";
+const WEEKLY_WORKOUT_PLANS_TABLE = "weekly_workout_plans";
 
 // JWT Secret Key - should be in environment variables in production
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
@@ -109,61 +111,6 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", true);
   next();
 });
-
-// Authentication middleware
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
-
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  try {
-    const verified = jwt.verify(token, JWT_SECRET);
-    req.user = verified;
-    next();
-  } catch (error) {
-    console.error("Token verification error:", error);
-    res.status(403).json({ error: "Invalid or expired token" });
-  }
-};
-
-// Admin authentication middleware
-const authenticateAdmin = async (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN format
-
-  if (!token) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  try {
-    const verified = jwt.verify(token, JWT_SECRET);
-
-    // Check if the user is an admin
-    const params = {
-      TableName: GYM_OWNERS_TABLE,
-      Key: {
-        email: verified.email,
-      },
-    };
-
-    const result = await docClient.send(new GetCommand(params));
-
-    if (!result.Item || !result.Item.isAdmin) {
-      return res
-        .status(403)
-        .json({ error: "Access denied. Admin privileges required." });
-    }
-
-    req.user = verified;
-    next();
-  } catch (error) {
-    console.error("Admin authentication error:", error);
-    res.status(403).json({ error: "Invalid or expired token" });
-  }
-};
 
 // Initialize DynamoDB tables if they don't exist
 async function initializeDynamoDB() {
@@ -196,6 +143,9 @@ async function initializeDynamoDB() {
 
     const weightHistoryTableExists =
       listTablesResponse.TableNames.includes(WEIGHT_HISTORY_TABLE);
+
+    const weeklyWorkoutPlansTableExists =
+      listTablesResponse.TableNames.includes(WEEKLY_WORKOUT_PLANS_TABLE);
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -440,6 +390,28 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${WEIGHT_HISTORY_TABLE}`);
     } else {
       console.log(`Table ${WEIGHT_HISTORY_TABLE} already exists`);
+    }
+
+    // Create weekly workout plans table if it doesn't exist
+    if (!weeklyWorkoutPlansTableExists) {
+      const createWeeklyWorkoutPlansTableParams = {
+        TableName: WEEKLY_WORKOUT_PLANS_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createWeeklyWorkoutPlansTableParams)
+      );
+      console.log(`Created table: ${WEEKLY_WORKOUT_PLANS_TABLE}`);
+    } else {
+      console.log(`Table ${WEEKLY_WORKOUT_PLANS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -4574,6 +4546,10 @@ app.use("/api", calorieProgressDetailsRouter);
 // Import and use the weight history API
 const weightHistoryRouter = require("./api-weight-history");
 app.use("/api", weightHistoryRouter);
+
+// Import and use the weekly workout planner API
+const weeklyWorkoutPlannerRouter = require("./api-weekly-workout-plans");
+app.use("/api", weeklyWorkoutPlannerRouter);
 
 // Import the Bedrock service for meal plan generation
 const { generateMealPlan } = require("./bedrockService");
