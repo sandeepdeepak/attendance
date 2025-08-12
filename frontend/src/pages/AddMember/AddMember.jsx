@@ -189,51 +189,45 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
   }, [editMode, memberToEdit]);
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
+    <div className="add-member-container">
       {/* Header with back button and title */}
-      <div className="w-full flex items-center mb-8">
-        <button className="text-white p-2" onClick={onBackClick}>
+      <div className="add-member-header">
+        <button className="back-button" onClick={onBackClick}>
           <FaArrowLeft size={24} />
         </button>
-        <div className="text-4xl font-bold mx-auto pr-10">
+        <div className="page-title">
           {editMode ? "Edit Member" : "Add Member"}
         </div>
       </div>
 
       {/* Form fields */}
-      <div className="flex flex-col space-y-6 mb-6">
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Full Name
-          </label>
+      <div className="form-container">
+        <div className="form-group">
+          <label className="form-label">Full Name</label>
           <input
             type="text"
             name="fullName"
             value={formData.fullName}
             onChange={handleInputChange}
-            className="bg-[#111] text-white p-4 rounded-lg"
+            className="form-input"
             placeholder="Enter full name"
           />
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Phone Number
-          </label>
+        <div className="form-group">
+          <label className="form-label">Phone Number</label>
           <input
             type="text"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleInputChange}
-            className="bg-[#111] text-white p-4 rounded-lg"
+            className="form-input"
             placeholder="Enter phone number"
           />
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Gender
-          </label>
+        <div className="form-group">
+          <label className="form-label">Gender</label>
           <div className="custom-select" ref={genderDropdownRef}>
             {/* Hidden select element to maintain form state */}
             <select
@@ -287,30 +281,23 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
           </div>
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Date of Birth
-          </label>
-          <div className="relative">
+        <div className="form-group">
+          <label className="form-label">Date of Birth</label>
+          <div className="date-input-container">
             <input
               type="date"
               name="dateOfBirth"
               value={formData.dateOfBirth}
               onChange={handleInputChange}
-              className="bg-[#111] text-white p-4 rounded-lg w-full"
+              className="form-input"
               required
             />
-            <FaCalendar
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
+            <FaCalendar className="date-icon" size={20} />
           </div>
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Membership Plan
-          </label>
+        <div className="form-group">
+          <label className="form-label">Membership Plan</label>
           <div className="custom-select" ref={planDropdownRef}>
             {/* Hidden select element to maintain form state */}
             <select
@@ -396,61 +383,52 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
           </div>
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Height (cm)
-          </label>
+        <div className="form-group">
+          <label className="form-label">Height (cm)</label>
           <input
             type="number"
             name="height"
             value={formData.height}
             onChange={handleInputChange}
-            className="bg-[#111] text-white p-4 rounded-lg"
+            className="form-input"
             placeholder="Enter height in cm"
           />
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Weight (kg)
-          </label>
+        <div className="form-group">
+          <label className="form-label">Weight (kg)</label>
           <input
             type="number"
             name="weight"
             value={formData.weight}
             onChange={handleInputChange}
-            className="bg-[#111] text-white p-4 rounded-lg"
+            className="form-input"
             placeholder="Enter weight in kg"
           />
         </div>
 
-        <div className="flex flex-col">
-          <label className="text-xl mb-2 ms-2 text-gray-300 text-left">
-            Plan Start Date
-          </label>
-          <div className="relative">
+        <div className="form-group">
+          <label className="form-label">Plan Start Date</label>
+          <div className="date-input-container">
             <input
               type="date"
               name="startDate"
               value={formData.startDate}
               onChange={handleInputChange}
-              className="bg-[#111] text-white p-4 rounded-lg w-full"
+              className="form-input"
             />
-            <FaCalendar
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
+            <FaCalendar className="date-icon" size={20} />
           </div>
         </div>
       </div>
 
       {/* Capture Face Section */}
-      <div className="bg-[#111] p-6 rounded-lg mb-6">
-        <h2 className="text-xl text-center mb-4">Capture Face</h2>
+      <div className="capture-section">
+        <h2 className="capture-title">Capture Face</h2>
 
-        <div className="flex justify-center">
+        <div className="capture-content">
           {showWebcam ? (
-            <div className="relative w-48 h-48">
+            <div className="webcam-container">
               <Webcam
                 audio={false}
                 mirrored
@@ -461,38 +439,32 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
                   height: 192,
                   facingMode: "user",
                 }}
-                className="w-full h-full rounded-full"
+                className="webcam"
                 style={{ clipPath: "ellipse(50% 50% at 50% 50%)" }}
               />
               {isCapturing && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-4xl font-bold text-white bg-[#0a1f2e] bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center">
+                <div className="countdown-overlay">
+                  <div className="countdown-number">
                     {countdown === 0 ? "" : countdown}
                   </div>
                 </div>
               )}
             </div>
           ) : capturedImage ? (
-            <div className="relative w-48 h-48">
+            <div className="webcam-container">
               <img
                 src={capturedImage}
                 alt="captured face"
-                className="w-full h-full rounded-full object-cover"
+                className="webcam"
                 style={{ clipPath: "ellipse(50% 50% at 50% 50%)" }}
               />
-              <button
-                onClick={handleRetake}
-                className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-black px-3 py-1 rounded-lg text-sm"
-              >
+              <button onClick={handleRetake} className="retake-button">
                 Retake
               </button>
             </div>
           ) : (
-            <div
-              className="w-48 h-48 rounded-full border-2 border-gray-500 flex items-center justify-center cursor-pointer"
-              onClick={startCapture}
-            >
-              <div className="text-center text-gray-400">
+            <div className="capture-placeholder" onClick={startCapture}>
+              <div className="placeholder-text">
                 <p>Click to capture</p>
               </div>
             </div>
@@ -502,14 +474,14 @@ const AddMember = ({ onBackClick, editMode = false, memberToEdit = null }) => {
 
       {/* Error message */}
       {saveError && (
-        <div className="bg-red-900 text-white p-4 rounded-lg mb-4">
-          <p className="text-center">{saveError}</p>
+        <div className="error-message">
+          <p>{saveError}</p>
         </div>
       )}
 
       {/* Save Button */}
       <button
-        className="bg-white text-black py-4 rounded-lg text-xl font-semibold mt-auto"
+        className="save-button"
         onClick={handleSaveMember}
         disabled={
           !formData.fullName ||
