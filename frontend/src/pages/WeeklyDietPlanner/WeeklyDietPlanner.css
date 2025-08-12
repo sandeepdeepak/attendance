@@ -1,5 +1,10 @@
+/* Day tab styling */
 .day-tab {
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  text-align: center;
 }
 
 .day-tab:hover {
@@ -9,25 +14,52 @@
 .day-tab.active {
   background-color: #024a72;
   color: white;
+  font-weight: 500;
+}
+
+/* Add subtle animation for active tab */
+.day-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #60a5fa;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* Modal overlay styling */
 .modal-overlay {
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Meal item styling */
 .meal-item {
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .meal-item:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Search result item styling */
@@ -37,16 +69,20 @@
 
 .search-result-item:hover {
   background-color: #1e293b !important;
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Nutrition badges */
 .nutrition-badge {
   display: inline-block;
-  padding: 2px 6px;
-  margin-right: 4px;
+  padding: 3px 8px;
+  margin-right: 6px;
+  margin-bottom: 4px;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .nutrition-badge.calories {
@@ -76,27 +112,89 @@
   background-color: #1e293b;
   border-radius: 4px;
   overflow: hidden;
+  width: fit-content;
+  margin-top: 8px;
 }
 
 .quantity-control button {
   background-color: #024a72;
   color: white;
   border: none;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-weight: bold;
 }
 
 .quantity-control button:hover {
   background-color: #036ba2;
 }
 
+.quantity-control button:active {
+  transform: scale(0.95);
+}
+
 .quantity-control span {
-  padding: 0 8px;
-  min-width: 24px;
+  padding: 0 12px;
+  min-width: 30px;
   text-align: center;
+  font-weight: 500;
+}
+
+/* Remove default focus outline and add custom focus styles */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+  outline: none;
+}
+
+/* Custom focus style for day tabs */
+.day-tab:focus-visible {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+  outline: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1023px) {
+  /* For mobile and tablet */
+  .day-tab.active::after {
+    display: none; /* Hide the animation on mobile */
+  }
+
+  /* Make day tabs horizontal and scrollable on mobile */
+  .day-tab {
+    text-align: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* For desktop */
+  .modal-content {
+    max-width: 80%;
+  }
+
+  /* Enhance hover effects on desktop */
+  .meal-item:hover {
+    transform: translateY(-3px);
+  }
+
+  /* Improve nutrition progress bars */
+  .nutrition-progress {
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
 }
