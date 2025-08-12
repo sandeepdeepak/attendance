@@ -195,7 +195,7 @@ const GymDashboard = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 py-8 gap-2 relative">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center justify-around px-4 py-8 gap-2 relative">
       {/* Gym Owner Logo and Name */}
       <div className="absolute top-4 left-4 flex items-center">
         {gymOwner?.logoUrl ? (
@@ -466,7 +466,7 @@ const GymDashboard = ({
         <p className="text-gray-400 mb-6 text-lg">GYM</p>
       </div> */}
 
-      <div className="grid grid-cols-2 gap-4 mb-6 mt-20">
+      <div className="grid grid-cols-2 gap-4 mb-3 mt-10">
         {isLoading ? (
           <div className="col-span-2 text-center py-8">
             <p className="text-xl">Loading statistics...</p>
@@ -488,7 +488,7 @@ const GymDashboard = ({
         )}
       </div>
 
-      <div className="flex flex-col bg items-center gap-4 mt-5">
+      <div className="flex flex-col bg items-center gap-3">
         <button
           className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onAddMemberClick}
