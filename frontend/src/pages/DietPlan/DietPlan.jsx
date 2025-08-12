@@ -844,7 +844,7 @@ const DietPlan = ({
             disabled={!calculatedCalories?.dailyCalories}
           >
             <FaMagic className="mr-2 text-[#e8e8e8]" />
-            <span className="text-[#e8e8e8]">Generate Meal Plan</span>
+            <span className="text-[#e8e8e8]">Generate Meal</span>
           </button>
         </div>
       )}

@@ -420,13 +420,13 @@ router.post(
 
         // Apply each day's meals to the appropriate date
         const dayNames = [
-          "sunday",
           "monday",
           "tuesday",
           "wednesday",
           "thursday",
           "friday",
           "saturday",
+          "sunday",
         ];
 
         for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -435,7 +435,10 @@ router.post(
 
           // Get day of week (0 = Sunday, 1 = Monday, etc.)
           const dayOfWeek = targetDate.getDay();
-          const dayName = dayNames[dayOfWeek];
+          // Convert JavaScript day of week (0-6, starting with Sunday) to our day names array (0-6, starting with Monday)
+          // Sunday (0) should map to index 6, Monday (1) to index 0, Tuesday (2) to index 1, etc.
+          const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+          const dayName = dayNames[dayIndex];
 
           // Include all days of the week
 
@@ -477,10 +480,33 @@ router.post(
 
 // Helper function to save a diet plan
 async function saveDietPlan(memberId, date, meals) {
+  // Categorize meals by mealType
+  const breakfast = meals.filter((meal) => meal.mealType === "breakfast");
+  const lunch = meals.filter((meal) => meal.mealType === "lunch");
+  const dinner = meals.filter((meal) => meal.mealType === "dinner");
+
+  // Calculate nutrition totals
+  const nutritionTotals = meals.reduce(
+    (totals, meal) => {
+      return {
+        calories: totals.calories + (meal.totalCalories || meal.calories || 0),
+        carbs: totals.carbs + (meal.totalCarbs || meal.carbs || 0),
+        proteins: totals.proteins + (meal.totalProteins || meal.proteins || 0),
+        fats: totals.fats + (meal.totalFats || meal.fats || 0),
+        fibre: totals.fibre + (meal.totalFibre || meal.fibre || 0),
+      };
+    },
+    { calories: 0, carbs: 0, proteins: 0, fats: 0, fibre: 0 }
+  );
+
+  // Create diet plan item with the structure expected by the frontend
   const dietPlanItem = {
     memberId,
     date,
-    meals,
+    breakfast,
+    lunch,
+    dinner,
+    nutritionTotals,
     updatedAt: new Date().toISOString(),
   };
 
