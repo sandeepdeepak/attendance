@@ -1,0 +1,102 @@
+.day-tab {
+  transition: all 0.3s ease;
+}
+
+.day-tab:hover {
+  background-color: #1e293b;
+}
+
+.day-tab.active {
+  background-color: #024a72;
+  color: white;
+}
+
+/* Modal overlay styling */
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+/* Meal item styling */
+.meal-item {
+  transition: all 0.3s ease;
+}
+
+.meal-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Search result item styling */
+.search-result-item {
+  transition: all 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #1e293b !important;
+}
+
+/* Nutrition badges */
+.nutrition-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nutrition-badge.calories {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.nutrition-badge.protein {
+  background-color: #38a169;
+  color: white;
+}
+
+.nutrition-badge.carbs {
+  background-color: #d69e2e;
+  color: white;
+}
+
+.nutrition-badge.fats {
+  background-color: #3182ce;
+  color: white;
+}
+
+/* Quantity control styling */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  background-color: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.quantity-control button {
+  background-color: #024a72;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.quantity-control button:hover {
+  background-color: #036ba2;
+}
+
+.quantity-control span {
+  padding: 0 8px;
+  min-width: 24px;
+  text-align: center;
+}

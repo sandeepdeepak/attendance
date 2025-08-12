@@ -16,6 +16,7 @@ import {
   FaCalendarAlt,
   FaCog,
   FaDumbbell,
+  FaUtensils,
 } from "react-icons/fa";
 import "./GymDashboard.css";
 import { API_URL } from "../../config";
@@ -29,6 +30,7 @@ const GymDashboard = ({
   onAttendanceDetailsClick,
   onAdminClick,
   onWeeklyWorkoutPlannerClick,
+  onWeeklyDietPlannerClick,
   onLogout,
   gymOwner,
   isAdmin,
@@ -507,17 +509,23 @@ const GymDashboard = ({
         >
           <FaCalendarAlt /> Attendance Details
         </button>
-        <button
+        {/* <button
           className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onFaceRecognitionClick}
         >
           <FaRegUser /> Go to face scan
-        </button>
+        </button> */}
         <button
           className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"
           onClick={onWeeklyWorkoutPlannerClick}
         >
           <FaDumbbell /> Weekly Workouts
+        </button>
+        <button
+          className="flex items-center justify-center gap-2 bg-[#024a72] px-6 py-3 rounded-2xl text-white w-60"
+          onClick={onWeeklyDietPlannerClick}
+        >
+          <FaUtensils /> Weekly Diet Plans
         </button>
         {isAdmin && (
           <button

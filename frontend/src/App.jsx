@@ -14,6 +14,8 @@ import Login from "./pages/Login/Login";
 import HomePage from "./pages/HomePage/HomePage";
 import WeeklyWorkoutPlanner from "./pages/WeeklyWorkoutPlanner/WeeklyWorkoutPlanner";
 import AllWeeklyWorkouts from "./pages/WeeklyWorkoutPlanner/AllWeeklyWorkouts";
+import WeeklyDietPlanner from "./pages/WeeklyDietPlanner/WeeklyDietPlanner";
+import AllWeeklyDietPlans from "./pages/WeeklyDietPlanner/AllWeeklyDietPlans";
 import { API_URL } from "./config";
 
 function App() {
@@ -98,11 +100,20 @@ function App() {
     setCurrentPage("allWeeklyWorkouts");
   };
 
+  const handleWeeklyDietPlannerClick = () => {
+    setCurrentPage("allWeeklyDietPlans");
+  };
+
   const [selectedPlanId, setSelectedPlanId] = useState(null);
 
   const handleAddNewWeeklyPlanClick = (planId = null) => {
     setSelectedPlanId(planId);
     setCurrentPage("weeklyWorkoutPlanner");
+  };
+
+  const handleAddNewWeeklyDietPlanClick = (planId = null) => {
+    setSelectedPlanId(planId);
+    setCurrentPage("weeklyDietPlanner");
   };
 
   const handleLogout = () => {
@@ -187,6 +198,7 @@ function App() {
             onAttendanceDetailsClick={handleAttendanceDetailsClick}
             onAdminClick={handleAdminClick}
             onWeeklyWorkoutPlannerClick={handleWeeklyWorkoutPlannerClick}
+            onWeeklyDietPlannerClick={handleWeeklyDietPlannerClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
             isAdmin={isAdmin}
@@ -268,6 +280,22 @@ function App() {
           />
         );
 
+      case "allWeeklyDietPlans":
+        return (
+          <AllWeeklyDietPlans
+            onBackClick={handleBackClick}
+            onAddNewPlanClick={handleAddNewWeeklyDietPlanClick}
+          />
+        );
+
+      case "weeklyDietPlanner":
+        return (
+          <WeeklyDietPlanner
+            onBackClick={() => setCurrentPage("allWeeklyDietPlans")}
+            planId={selectedPlanId}
+          />
+        );
+
       default:
         return (
           <GymDashboard
@@ -277,8 +305,12 @@ function App() {
             onMemberClick={handleMemberClick}
             onTodayAttendanceClick={handleTodayAttendanceClick}
             onAttendanceDetailsClick={handleAttendanceDetailsClick}
+            onAdminClick={handleAdminClick}
+            onWeeklyWorkoutPlannerClick={handleWeeklyWorkoutPlannerClick}
+            onWeeklyDietPlannerClick={handleWeeklyDietPlannerClick}
             onLogout={handleLogout}
             gymOwner={gymOwner}
+            isAdmin={isAdmin}
           />
         );
     }

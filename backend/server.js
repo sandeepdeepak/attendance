@@ -81,6 +81,7 @@ const GYM_OWNERS_TABLE = "gym_owners";
 const PUSH_SUBSCRIPTIONS_TABLE = "push_subscriptions";
 const WEIGHT_HISTORY_TABLE = "weight_history";
 const WEEKLY_WORKOUT_PLANS_TABLE = "weekly_workout_plans";
+const WEEKLY_DIET_PLANS_TABLE = "weekly_diet_plans";
 
 // JWT Secret Key - should be in environment variables in production
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
@@ -146,6 +147,10 @@ async function initializeDynamoDB() {
 
     const weeklyWorkoutPlansTableExists =
       listTablesResponse.TableNames.includes(WEEKLY_WORKOUT_PLANS_TABLE);
+
+    const weeklyDietPlansTableExists = listTablesResponse.TableNames.includes(
+      WEEKLY_DIET_PLANS_TABLE
+    );
 
     // Create members table if it doesn't exist
     if (!memberTableExists) {
@@ -412,6 +417,28 @@ async function initializeDynamoDB() {
       console.log(`Created table: ${WEEKLY_WORKOUT_PLANS_TABLE}`);
     } else {
       console.log(`Table ${WEEKLY_WORKOUT_PLANS_TABLE} already exists`);
+    }
+
+    // Create weekly meals plans table if it doesn't exist
+    if (!weeklyDietPlansTableExists) {
+      const createWeeklyDietPlansTableParams = {
+        TableName: WEEKLY_DIET_PLANS_TABLE,
+        KeySchema: [
+          { AttributeName: "id", KeyType: "HASH" }, // Partition key
+        ],
+        AttributeDefinitions: [{ AttributeName: "id", AttributeType: "S" }],
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      };
+
+      await dynamoClient.send(
+        new CreateTableCommand(createWeeklyDietPlansTableParams)
+      );
+      console.log(`Created table: ${WEEKLY_DIET_PLANS_TABLE}`);
+    } else {
+      console.log(`Table ${WEEKLY_DIET_PLANS_TABLE} already exists`);
     }
   } catch (error) {
     console.error("Error initializing DynamoDB:", error);
@@ -4550,6 +4577,10 @@ app.use("/api", weightHistoryRouter);
 // Import and use the weekly workout planner API
 const weeklyWorkoutPlannerRouter = require("./api-weekly-workout-plans");
 app.use("/api", weeklyWorkoutPlannerRouter);
+
+// Import and use the weekly diet planner API
+const weeklyDietPlannerRouter = require("./api-weekly-diet-plans");
+app.use("/api", weeklyDietPlannerRouter);
 
 // Import the Bedrock service for meal plan generation
 const { generateMealPlan } = require("./bedrockService");
