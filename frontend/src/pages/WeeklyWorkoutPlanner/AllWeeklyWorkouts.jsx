@@ -574,14 +574,14 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col py-8 weekly-plans-container">
       {/* Header with back button */}
-      <button className="text-white p-2" onClick={onBackClick}>
-        <FaArrowLeft size={18} />
-      </button>
-
-      <div className="text-center mb-6">
+      <div className="weekly-plans-header">
+        <button className="text-white p-2" onClick={onBackClick}>
+          <FaArrowLeft size={18} />
+        </button>
         <h1 className="text-2xl font-bold">Weekly Workout Plans</h1>
+        <div className="w-8"></div> {/* Empty div for flex alignment */}
       </div>
 
       {/* Status message */}
@@ -598,7 +598,7 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
       )}
 
       {/* Add New Plan Button */}
-      <div className="mb-6">
+      <div className="mb-3 px-3">
         <button
           className="bg-[#036BA2] text-white py-3 px-4 rounded-lg w-full flex items-center justify-center"
           onClick={handleCreateNewPlan}
@@ -626,21 +626,21 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
         </div>
       ) : (
         // List of Weekly Plans
-        <div className="space-y-4">
+        <div className="weekly-plans-grid gap-2 p-3">
           {weeklyPlans.map((plan) => (
             <div
               key={plan.planId}
-              className="bg-[#123347] rounded-lg p-4"
+              className="plan-card"
               ref={(el) => (planRefs.current[plan.planId] = el)}
             >
-              <div className="flex justify-between items-center mb-3">
+              <div className="plan-card-header">
                 <h2 className="text-xl font-semibold">{plan.templateName}</h2>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400">
                     Updated: {formatDate(plan.updatedAt)}
                   </span>
                   <div
-                    className="flex items-center justify-center gap-1 bg-[#2a9d8f] px-2 py-1 rounded text-white text-xs"
+                    className="flex items-center justify-center gap-1 bg-[#2a9d8f] px-2 py-1 rounded text-white text-xs cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       generatePDF(plan);
@@ -661,14 +661,14 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-[#0a1f2e] p-3 rounded">
+              <div className="plan-stats">
+                <div className="plan-stat-item">
                   <p className="text-gray-400 text-sm">Total Exercises</p>
                   <p className="text-xl font-bold">
                     {countTotalExercises(plan.weeklyPlan)}
                   </p>
                 </div>
-                <div className="bg-[#0a1f2e] p-3 rounded">
+                <div className="plan-stat-item">
                   <p className="text-gray-400 text-sm">Days Planned</p>
                   <p className="text-xl font-bold">
                     {
@@ -702,7 +702,7 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-between mt-4">
+              <div className="plan-actions">
                 <div className="flex gap-2">
                   <button
                     className="flex items-center justify-center gap-2 bg-[#024a72] px-4 py-2 rounded-lg text-white"
@@ -716,33 +716,33 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
                   >
                     <FaUsers size={14} /> Assign
                   </button>
-                </div>
 
-                {showDeleteConfirm === plan.planId ? (
-                  <div className="flex gap-2">
+                  {showDeleteConfirm === plan.planId ? (
+                    <div className="flex gap-2">
+                      <button
+                        className="bg-gray-700 text-white px-4 py-2 rounded-lg"
+                        onClick={() => setShowDeleteConfirm(null)}
+                        disabled={deletingPlan}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                        onClick={() => handleDeletePlan(plan.planId)}
+                        disabled={deletingPlan}
+                      >
+                        {deletingPlan ? "Deleting..." : "Confirm Delete"}
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      className="bg-gray-700 text-white px-4 py-2 rounded-lg"
-                      onClick={() => setShowDeleteConfirm(null)}
-                      disabled={deletingPlan}
+                      className="flex items-center justify-center gap-2 bg-red-700 px-4 py-2 rounded-lg text-white"
+                      onClick={() => setShowDeleteConfirm(plan.planId)}
                     >
-                      Cancel
+                      <FaTrash size={14} /> Delete
                     </button>
-                    <button
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                      onClick={() => handleDeletePlan(plan.planId)}
-                      disabled={deletingPlan}
-                    >
-                      {deletingPlan ? "Deleting..." : "Confirm Delete"}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className="flex items-center justify-center gap-2 bg-red-700 px-4 py-2 rounded-lg text-white"
-                    onClick={() => setShowDeleteConfirm(plan.planId)}
-                  >
-                    <FaTrash size={14} /> Delete
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -751,8 +751,8 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
 
       {/* Assignment Modal */}
       {showAssignModal && (
-        <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#123347] rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="assign-modal">
+          <div className="assign-modal-content">
             <h2 className="text-2xl font-bold mb-4">
               Assign "{selectedPlanName}" to Members
             </h2>

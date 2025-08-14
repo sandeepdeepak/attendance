@@ -80,7 +80,13 @@ const WorkoutItem = ({ workout, isSelected, onClick }) => {
     </div>
   );
 };
-import { FaArrowLeft, FaDumbbell, FaSave, FaTrash } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaDumbbell,
+  FaSave,
+  FaTrash,
+  FaPlus,
+} from "react-icons/fa";
 import axios from "axios";
 import { API_URL } from "../../config";
 import "./WeeklyWorkoutPlanner.css";
@@ -557,16 +563,6 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
           )}
         </div>
 
-        {/* Add Workouts Button */}
-        <div className="mb-4">
-          <button
-            className="bg-[#036BA2] text-white py-3 px-4 rounded-lg w-full"
-            onClick={() => setShowWorkoutSelectionModal(true)}
-          >
-            Add Workouts
-          </button>
-        </div>
-
         {/* Workout Selection Modal */}
         {showWorkoutSelectionModal && (
           <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
@@ -806,46 +802,16 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8">
-      {/* Header with back button */}
-      <button className="text-white p-2" onClick={onBackClick}>
-        <FaArrowLeft size={18} />
-      </button>
-
-      <div className="text-center mb-6">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col px-4 py-8 text-left">
+      {/* Header with back button and title */}
+      <div className="flex justify-between items-center mb-6">
+        <button className="text-white p-2" onClick={onBackClick}>
+          <FaArrowLeft size={18} />
+        </button>
         <h1 className="text-2xl font-bold">
           {isEditing ? "Edit Workout Plan" : "Create Workout Plan"}
         </h1>
-      </div>
-
-      {/* Template Name Input */}
-      <div className="mb-6">
-        <label className="block text-gray-400 text-sm mb-2">
-          Template Name
-        </label>
-        <input
-          type="text"
-          value={templateName}
-          onChange={(e) => setTemplateName(e.target.value)}
-          placeholder="Enter a name for this workout plan"
-          className="bg-[#1e293b] text-white p-3 rounded w-full"
-          required
-        />
-      </div>
-
-      {/* Day selection tabs */}
-      <div className="flex overflow-x-auto pb-2 mb-4">
-        {days.map((day) => (
-          <button
-            key={day}
-            className={`px-4 py-2 mx-1 rounded-lg whitespace-nowrap day-tab ${
-              activeDay === day ? "active" : ""
-            }`}
-            onClick={() => handleDaySelect(day)}
-          >
-            {day.charAt(0).toUpperCase() + day.slice(1)}
-          </button>
-        ))}
+        <div className="w-8"></div> {/* Empty div for flex alignment */}
       </div>
 
       {/* Status message */}
@@ -861,27 +827,170 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
         </div>
       )}
 
-      {/* Workout plan for the selected day */}
-      <div className="flex-1">
-        {loading ? (
-          <div className="text-center py-8">
-            <p className="text-xl">Loading...</p>
+      {/* Main content area - desktop layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left sidebar - Template name and day selection */}
+        <div className="lg:w-1/4">
+          {/* Template Name Input */}
+          <div className="mb-6 bg-[#1C2937] p-4 rounded-lg">
+            <label className="block text-gray-400 text-sm mb-2 ml-2">
+              Template Name
+            </label>
+            <input
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Enter a name for this workout plan"
+              className="bg-black text-white p-3 rounded w-full"
+              required
+            />
           </div>
-        ) : (
-          <WorkoutPlanAdapter />
-        )}
-      </div>
 
-      {/* Save button */}
-      <div className="mt-4">
-        <button
-          className="bg-[#024a72] text-white py-3 px-4 rounded-lg w-full flex items-center justify-center"
-          onClick={saveWeeklyWorkoutPlan}
-          disabled={loading}
-        >
-          <FaSave className="mr-2" />
-          {loading ? "Saving..." : isEditing ? "Update Plan" : "Save Plan"}
-        </button>
+          {/* Workout stats summary for the day - hidden on mobile */}
+          <div className="hidden lg:block bg-[#1C2937] rounded-lg p-4 mb-4">
+            <h2 className="text-lg font-bold mb-3">
+              {activeDay.charAt(0).toUpperCase() + activeDay.slice(1)} Stats
+            </h2>
+
+            <div className="space-y-3">
+              <div className="bg-[#123347] p-3 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Total Exercises</span>
+                  <span className="font-bold">
+                    {weeklyPlan[activeDay]?.exercises?.length || 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Body parts summary */}
+              <div className="bg-[#123347] p-3 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-400">Body Parts</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Array.from(
+                    new Set(
+                      weeklyPlan[activeDay]?.exercises?.map(
+                        (exercise) => exercise.bodyPart
+                      ) || []
+                    )
+                  ).map((bodyPart, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#024a72] text-xs px-2 py-1 rounded"
+                    >
+                      {bodyPart}
+                    </span>
+                  ))}
+                  {(weeklyPlan[activeDay]?.exercises?.length || 0) === 0 && (
+                    <span className="text-gray-500 text-xs">
+                      No exercises added
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Equipment summary */}
+              <div className="bg-[#123347] p-3 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-400">Equipment</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {Array.from(
+                    new Set(
+                      weeklyPlan[activeDay]?.exercises?.map(
+                        (exercise) => exercise.equipment
+                      ) || []
+                    )
+                  ).map((equipment, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#036ba2] text-xs px-2 py-1 rounded"
+                    >
+                      {equipment}
+                    </span>
+                  ))}
+                  {(weeklyPlan[activeDay]?.exercises?.length || 0) === 0 && (
+                    <span className="text-gray-500 text-xs">
+                      No equipment needed
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Save button */}
+          <div className="mt-4">
+            <button
+              className="bg-[#024a72] text-white py-3 px-4 rounded-lg w-full flex items-center justify-center"
+              onClick={saveWeeklyWorkoutPlan}
+              disabled={loading}
+            >
+              <FaSave className="mr-2" />
+              {loading ? "Saving..." : isEditing ? "Update Plan" : "Save Plan"}
+            </button>
+          </div>
+        </div>
+
+        {/* Right content area - Workouts */}
+        <div className="lg:w-3/4">
+          {/* Workout list for the active day */}
+          <div className="flex-1 mb-4">
+            <div className="bg-[#1C2937] rounded-lg p-4">
+              {/* Day selection tabs - horizontal tabs */}
+              <div className="mb-4">
+                <div className="flex overflow-x-auto space-x-2 pb-2">
+                  {days.map((day) => (
+                    <button
+                      key={day}
+                      className={`px-4 py-3 rounded-lg whitespace-nowrap day-tab ${
+                        activeDay === day ? "active" : ""
+                      }`}
+                      onClick={() => handleDaySelect(day)}
+                    >
+                      {day.charAt(0).toUpperCase() + day.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center justify-start mb-4">
+                <button
+                  className="bg-[#036ba2] text-white py-2 px-4 rounded-lg flex items-center"
+                  onClick={() => setShowWorkoutSelectionModal(true)}
+                >
+                  <FaPlus className="mr-2" /> Add Workouts
+                </button>
+              </div>
+
+              {/* Workout plan for the selected day */}
+              <div className="flex-1">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <p className="text-xl">Loading...</p>
+                  </div>
+                ) : (
+                  <WorkoutPlanAdapter />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats summary on mobile */}
+        <div className="block lg:hidden bg-[#1C2937] rounded-lg p-4 mb-4">
+          <div className="space-y-3">
+            <div className="bg-[#123347] p-3 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Total Exercises</span>
+                <span className="font-bold">
+                  {weeklyPlan[activeDay]?.exercises?.length || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

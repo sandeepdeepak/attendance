@@ -167,6 +167,136 @@ textarea:focus-visible {
   outline: none;
 }
 
+/* Weekly Diet Plans Desktop Styles */
+.weekly-plans-container {
+  width: 100%;
+}
+
+.weekly-plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.weekly-plans-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.plan-card {
+  background-color: #123347;
+  border-radius: 0.75rem;
+  padding: 1.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.plan-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.plan-stat-item {
+  background-color: #0a1f2e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.plan-stat-item:hover {
+  background-color: #0c2435;
+}
+
+.plan-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button styles for plan actions */
+.plan-actions div[class*="bg-"] {
+  transition: all 0.2s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.plan-actions div[class*="bg-"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.plan-actions div[class*="bg-"]:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Edit button */
+.plan-actions div[class*="bg-[#024a72]"] {
+  background: linear-gradient(to bottom right, #036ba2, #024a72);
+}
+
+/* Assign button */
+.plan-actions div[class*="bg-[#036ba2]"] {
+  background: linear-gradient(to bottom right, #0288d1, #036ba2);
+}
+
+/* Delete button */
+.plan-actions div[class*="bg-red-700"] {
+  background: linear-gradient(to bottom right, #e53935, #c62828);
+}
+
+.assign-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(10, 31, 46, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.assign-modal-content {
+  background-color: #123347;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1023px) {
   /* For mobile and tablet */
@@ -177,6 +307,19 @@ textarea:focus-visible {
   /* Make day tabs horizontal and scrollable on mobile */
   .day-tab {
     text-align: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .weekly-plans-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .weekly-plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
   }
 }
 
@@ -196,5 +339,15 @@ textarea:focus-visible {
     height: 6px;
     border-radius: 3px;
     overflow: hidden;
+  }
+
+  .weekly-plans-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .assign-modal-content {
+    max-width: 48rem;
+    padding: 2rem;
   }
 }

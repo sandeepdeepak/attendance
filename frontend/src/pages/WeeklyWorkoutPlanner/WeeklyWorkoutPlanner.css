@@ -15,5 +15,270 @@
   width: 100%;
 }
 
+/* Weekly Workout Plans Desktop Styles */
+.weekly-plans-container {
+  width: 100%;
+}
+
+.weekly-plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.weekly-plans-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.plan-card {
+  background-color: #123347;
+  border-radius: 0.75rem;
+  padding: 1.2rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.plan-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.plan-stat-item {
+  background-color: #0a1f2e;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.plan-stat-item:hover {
+  background-color: #0c2435;
+}
+
+.plan-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button styles for plan actions */
+.plan-actions button {
+  transition: all 0.2s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.plan-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.plan-actions button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Edit button */
+.plan-actions button[class*="bg-[#024a72]"] {
+  background: linear-gradient(to bottom right, #036ba2, #024a72);
+}
+
+/* Assign button */
+.plan-actions button[class*="bg-[#036BA2]"] {
+  background: linear-gradient(to bottom right, #0288d1, #036ba2);
+}
+
+/* Delete button */
+.plan-actions button[class*="bg-red-700"] {
+  background: linear-gradient(to bottom right, #dc2c01, #dc2c01);
+}
+
+.assign-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(10, 31, 46, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.assign-modal-content {
+  background-color: #123347;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Day tabs container styling */
+.day-tabs-container {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+/* Save button styling */
+.save-button {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to bottom right, #036ba2, #024a72);
+}
+
+.save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.save-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Workout plan container styling */
+.workout-plan-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Desktop layout container */
+.desktop-layout-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Left sidebar */
+.left-sidebar {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+/* Template name container */
+.template-name-container {
+  width: 100%;
+}
+
+/* Save button container */
+.save-button-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+/* Main content area */
+.main-content-area {
+  width: 100%;
+}
+
+/* Desktop Responsive Styles */
+@media (min-width: 768px) {
+  .weekly-plans-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .weekly-plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .day-tabs-container {
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .day-tab {
+    min-width: 120px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .workout-plan-container {
+    max-width: 800px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-layout-container {
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .left-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 100px;
+  }
+
+  .main-content-area {
+    flex: 1;
+  }
+
+  .weekly-plans-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .assign-modal-content {
+    max-width: 48rem;
+    padding: 2rem;
+  }
+
+  .workout-plan-container {
+    max-width: 900px;
+  }
+
+  .template-name-container {
+    background-color: #123347;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .save-button-container {
+    margin-top: 1rem;
+  }
+}
+
 /* Fix for the unused variables in the component */
 /* These are intentionally kept for future implementation */
