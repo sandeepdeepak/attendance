@@ -62,3 +62,154 @@
   font-size: 1.875rem;
   font-weight: 600;
 }
+
+/* Plan Panel Styles */
+.plan-panel {
+  position: fixed;
+  top: 80px;
+  right: 0;
+  bottom: 0;
+  width: 40%;
+  background-color: #0a1f2e;
+  border-left: 1px solid #1e293b;
+  z-index: 40;
+  padding: 1rem;
+  overflow-y: auto;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.plan-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.plan-panel-content {
+  height: calc(100% - 60px);
+  overflow-y: auto;
+}
+
+/* Desktop Responsive Styles */
+@media (min-width: 1024px) {
+  .member-details-container {
+    max-width: 1200px !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .member-details-content {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .member-info-section {
+    flex: 1;
+    max-width: 50%;
+  }
+
+  .member-info-section.with-plan {
+    max-width: 35%;
+  }
+
+  .calendar-section {
+    flex: 1;
+    max-width: 45%;
+  }
+
+  .member-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .calendar-container {
+    max-width: 100%;
+  }
+
+  .calendar-days {
+    gap: 0.5rem;
+  }
+
+  .calendar-day {
+    font-size: 1.25rem;
+  }
+
+  .membership-history-section {
+    max-width: 100%;
+  }
+
+  .legend-container {
+    justify-content: flex-start;
+    gap: 2rem;
+  }
+}
+
+/* Custom Select Styles */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.select-selected {
+  background-color: #1e293b;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.select-selected:after {
+  position: absolute;
+  content: "";
+  top: 50%;
+  right: 1rem;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: white transparent transparent transparent;
+  transform: translateY(-25%);
+}
+
+.select-selected.select-arrow-active:after {
+  border-color: transparent transparent white transparent;
+  transform: translateY(-75%);
+}
+
+.select-items {
+  position: absolute;
+  background-color: #1e293b;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  border-radius: 0.5rem;
+  margin-top: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.select-hide {
+  display: none;
+}
+
+.select-items div {
+  color: white;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-items div:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.same-as-selected {
+  background-color: rgba(255, 255, 255, 0.2);
+}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaArrowLeft, FaCalendar, FaChartBar } from "react-icons/fa";
+import { FaArrowLeft, FaCalendar, FaChartBar, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import "./MemberDetails.css";
 import { API_URL } from "../../config";
+import MemberPlan from "../MemberPlan/MemberPlan";
 
 const MemberDetails = ({
   memberId,
@@ -24,6 +25,8 @@ const MemberDetails = ({
   const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false);
   const [isExtending, setIsExtending] = useState(false);
   const [membershipHistory, setMembershipHistory] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showPlan, setShowPlan] = useState(false);
   const planDropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -305,7 +308,6 @@ const MemberDetails = ({
 
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    const date = new Date(year, month, day);
 
     // Format date as YYYY-MM-DD for API
     const formattedDate = `${year}-${String(month + 1).padStart(
@@ -313,10 +315,22 @@ const MemberDetails = ({
       "0"
     )}-${String(day).padStart(2, "0")}`;
 
-    // Navigate to member plan page
-    if (onMemberPlanClick) {
-      onMemberPlanClick(memberId, formattedDate);
+    // Check if we're on desktop view
+    if (window.innerWidth >= 1024) {
+      // For desktop, show the plan on the right side
+      setSelectedDate(formattedDate);
+      setShowPlan(true);
+    } else {
+      // For mobile, navigate to member plan page
+      if (onMemberPlanClick) {
+        onMemberPlanClick(memberId, formattedDate);
+      }
     }
+  };
+
+  // Close the plan panel
+  const handleClosePlan = () => {
+    setShowPlan(false);
   };
 
   // Get the appropriate class for a calendar day
@@ -392,7 +406,8 @@ const MemberDetails = ({
     };
   };
 
-  const stats = calculateAttendanceStats();
+  // Calculate attendance stats if needed
+  calculateAttendanceStats();
 
   if (loading) {
     return (
@@ -502,7 +517,7 @@ const MemberDetails = ({
   const isExpired = membershipEndDate ? new Date() > membershipEndDate : false;
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 pt-20 pb-8">
+    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center px-4 pt-20 pb-8 member-details-container">
       {/* Fixed Header with back button, member name, and progress icon */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-[#0a1f2e] flex items-center p-4 shadow-md fixed-header">
         <button className="text-white p-2" onClick={onBackClick}>
@@ -654,161 +669,208 @@ const MemberDetails = ({
         </div>
       )}
 
-      {/* Member details */}
-      <div className="grid grid-cols-2 gap-2 mb-6 ms-2 w-full max-w-md">
-        <div>
-          <p className="text-gray-400 text-left">Age</p>
-          <p className="text-left">{calculateAge(member.dateOfBirth)}</p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Date of Birth</p>
-          <p className="text-left">{formatDate(member.dateOfBirth)}</p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Gender</p>
-          <p className="text-left">
-            {member.gender
-              ? member.gender.charAt(0).toUpperCase() + member.gender.slice(1)
-              : "N/A"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Mobile number</p>
-          <p className="text-left">{member.phoneNumber}</p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Height</p>
-          <p className="text-left">
-            {member.height ? `${member.height} cm` : "N/A"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Weight</p>
-          <p className="text-left">
-            {member.weight ? `${member.weight} kg` : "N/A"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Membership Start</p>
-          <p className="text-left">
-            {getActiveMembership()
-              ? `${formatDate(getActiveMembership().startDate)} (${
-                  getActiveMembership().planType
-                })`
-              : "No active membership"}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-400 text-left">Membership Ends In</p>
-          <p className={`text-left ${isExpired ? "text-red-500" : ""}`}>
-            {calculateDaysRemaining()}
-            {isExpired && (
-              <button
-                className="ml-2 bg-[#024a72] text-white text-xs px-2 py-1 rounded"
-                onClick={() => setShowExtendModal(true)}
-              >
-                Extend
-              </button>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Calendar header with navigation */}
-      <div className="flex items-center justify-between mb-4 w-full max-w-md">
-        <button
-          onClick={goToPreviousMonth}
-          className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
-        >
-          &lt; Prev
-        </button>
-        <h2 className="text-xl font-bold">{getMonthYearString()}</h2>
-        <button
-          onClick={goToNextMonth}
-          className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
-        >
-          Next &gt;
-        </button>
-      </div>
-
-      {/* Calendar weekday headers */}
-      <div className="grid grid-cols-7 gap-2 mb-2 text-center w-full max-w-md">
-        <div className="text-xl">S</div>
-        <div className="text-xl">M</div>
-        <div className="text-xl">T</div>
-        <div className="text-xl">W</div>
-        <div className="text-xl">T</div>
-        <div className="text-xl">F</div>
-        <div className="text-xl">S</div>
-      </div>
-
-      {/* Calendar days */}
-      <div className="grid grid-cols-7 gap-2 mb-8 w-full max-w-md">
-        {generateCalendarDays().map((day, index) => {
-          if (day === null) {
-            // Empty cell for days before the 1st of the month
-            return <div key={index} className="aspect-square"></div>;
-          }
-
-          return (
-            <div
-              key={index}
-              className={`aspect-square flex items-center justify-center text-xl rounded-lg ${getDayClass(
-                day
-              )}`}
-              onClick={() => handleDayClick(day)}
-            >
-              {day}
+      <div
+        className={`member-details-content w-full ${
+          showPlan ? "with-plan-panel" : ""
+        }`}
+      >
+        {/* Left Column - Member Info Section */}
+        <div className={`member-info-section ${showPlan ? "with-plan" : ""}`}>
+          {/* Member details */}
+          <div className="grid grid-cols-2 gap-2 mb-6 ms-2 w-full max-w-md member-details-grid">
+            <div>
+              <p className="text-gray-400 text-left">Age</p>
+              <p className="text-left">{calculateAge(member.dateOfBirth)}</p>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap justify-between gap-2 mb-8 text-sm w-full max-w-md">
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
-          <span>Attended</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-red-800 rounded mr-1"></div>
-          <span>Not Attended</span>
-        </div>
-        <div className="flex items-center">
-          <div className="w-4 h-4 bg-[#024a72] rounded mr-1"></div>
-          <span>Membership</span>
-        </div>
-      </div>
-
-      {/* Membership History */}
-      {membershipHistory.length > 0 && (
-        <div className="mb-8 w-full max-w-md">
-          <h2 className="text-xl font-bold mb-3">Membership History</h2>
-          <div className="bg-[#123347] rounded-lg p-4">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700 text-left">
-                  <th className="text-left py-2">Start Date</th>
-                  <th className="text-left py-2">End Date</th>
-                  <th className="text-left py-2">Plan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {membershipHistory.map((membership) => (
-                  <tr
-                    key={membership.id}
-                    className="border-b border-gray-700 text-left"
+            <div>
+              <p className="text-gray-400 text-left">Date of Birth</p>
+              <p className="text-left">{formatDate(member.dateOfBirth)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Gender</p>
+              <p className="text-left">
+                {member.gender
+                  ? member.gender.charAt(0).toUpperCase() +
+                    member.gender.slice(1)
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Mobile number</p>
+              <p className="text-left">{member.phoneNumber}</p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Height</p>
+              <p className="text-left">
+                {member.height ? `${member.height} cm` : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Weight</p>
+              <p className="text-left">
+                {member.weight ? `${member.weight} kg` : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Membership Start</p>
+              <p className="text-left">
+                {getActiveMembership()
+                  ? `${formatDate(getActiveMembership().startDate)} (${
+                      getActiveMembership().planType
+                    })`
+                  : "No active membership"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-400 text-left">Membership Ends In</p>
+              <p className={`text-left ${isExpired ? "text-red-500" : ""}`}>
+                {calculateDaysRemaining()}
+                {isExpired && (
+                  <button
+                    className="ml-2 bg-[#024a72] text-white text-xs px-2 py-1 rounded"
+                    onClick={() => setShowExtendModal(true)}
                   >
-                    <td className="py-2">{formatDate(membership.startDate)}</td>
-                    <td className="py-2">{formatDate(membership.endDate)}</td>
-                    <td className="py-2">{membership.planType}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    Extend
+                  </button>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Membership History */}
+          {membershipHistory.length > 0 && (
+            <div className="mb-8 w-full max-w-md membership-history-section">
+              <h2 className="text-xl font-bold mb-3">Membership History</h2>
+              <div className="bg-[#123347] rounded-lg p-4">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700 text-left">
+                      <th className="text-left py-2">Start Date</th>
+                      <th className="text-left py-2">End Date</th>
+                      <th className="text-left py-2">Plan</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {membershipHistory.map((membership) => (
+                      <tr
+                        key={membership.id}
+                        className="border-b border-gray-700 text-left"
+                      >
+                        <td className="py-2">
+                          {formatDate(membership.startDate)}
+                        </td>
+                        <td className="py-2">
+                          {formatDate(membership.endDate)}
+                        </td>
+                        <td className="py-2">{membership.planType}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Calendar Section */}
+        <div className="calendar-section">
+          {/* Calendar header with navigation */}
+          <div className="flex items-center justify-between mb-4 w-full max-w-md calendar-container">
+            <button
+              onClick={goToPreviousMonth}
+              className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
+            >
+              &lt; Prev
+            </button>
+            <h2 className="text-xl font-bold">{getMonthYearString()}</h2>
+            <button
+              onClick={goToNextMonth}
+              className="bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg"
+            >
+              Next &gt;
+            </button>
+          </div>
+
+          {/* Calendar weekday headers */}
+          <div className="grid grid-cols-7 gap-2 mb-2 text-center w-full max-w-md calendar-container">
+            <div className="text-xl">S</div>
+            <div className="text-xl">M</div>
+            <div className="text-xl">T</div>
+            <div className="text-xl">W</div>
+            <div className="text-xl">T</div>
+            <div className="text-xl">F</div>
+            <div className="text-xl">S</div>
+          </div>
+
+          {/* Calendar days */}
+          <div className="grid grid-cols-7 gap-2 mb-8 w-full max-w-md calendar-days calendar-container">
+            {generateCalendarDays().map((day, index) => {
+              if (day === null) {
+                // Empty cell for days before the 1st of the month
+                return <div key={index} className="aspect-square"></div>;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={`aspect-square flex items-center justify-center text-xl rounded-lg ${getDayClass(
+                    day
+                  )}`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap justify-between gap-2 mb-8 text-sm w-full max-w-md legend-container">
+            <div className="flex items-center">
+              <div className="w-4 h-4 bg-green-800 rounded mr-1"></div>
+              <span>Attended</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-4 h-4 bg-red-800 rounded mr-1"></div>
+              <span>Not Attended</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-4 h-4 bg-[#024a72] rounded mr-1"></div>
+              <span>Membership</span>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Plan Panel - Only visible on desktop when a date is selected */}
+        {showPlan && selectedDate && (
+          <div className="plan-panel">
+            <div className="plan-panel-header">
+              <h2 className="text-xl font-bold">
+                Plan for {formatDate(selectedDate)}
+              </h2>
+              <button
+                className="text-white p-2 hover:bg-[#1e293b] rounded-full"
+                onClick={handleClosePlan}
+                title="Close"
+              >
+                <FaTimes size={18} />
+              </button>
+            </div>
+
+            {/* Reusing the MemberPlan component */}
+            <div className="plan-panel-content">
+              <MemberPlan
+                memberId={memberId}
+                selectedDate={selectedDate}
+                onBackClick={handleClosePlan}
+                fromFaceRecognition={fromFaceRecognition}
+                hideHeader={true}
+                embeddedMode={true}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

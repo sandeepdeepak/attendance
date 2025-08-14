@@ -11,6 +11,8 @@ const MemberPlan = ({
   selectedDate,
   onBackClick,
   fromFaceRecognition = false,
+  hideHeader = false,
+  embeddedMode = false,
 }) => {
   const [activeTab, setActiveTab] = useState("diet"); // "diet" or "workout"
   const [showWeightTracker, setShowWeightTracker] = useState(false);
@@ -116,39 +118,53 @@ const MemberPlan = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1f2e] text-white flex flex-col items-center">
+    <div
+      className={`${
+        embeddedMode ? "" : "min-h-screen"
+      } bg-[#0a1f2e] text-white flex flex-col items-center`}
+    >
       {/* Fixed header section */}
-      <div className="fixed-header px-4 py-4">
-        {/* Header with back button and member name */}
-        <button className="text-white p-2" onClick={onBackClick}>
-          <FaArrowLeft size={18} />
-        </button>
-        <div className="flex items-start space-x-2">
-          <div className="items-center w-full">
-            <div className="text-xl font-bold flex-grow">{member.fullName}</div>
+      <div
+        className={`${
+          hideHeader ? "embedded-header" : "fixed-header"
+        } px-4 py-4`}
+      >
+        {/* Header with back button and member name - only show if hideHeader is false */}
+        {!hideHeader && (
+          <>
+            <button className="text-white p-2" onClick={onBackClick}>
+              <FaArrowLeft size={18} />
+            </button>
+            <div className="flex items-start space-x-2">
+              <div className="items-center w-full">
+                <div className="text-xl font-bold flex-grow">
+                  {member.fullName}
+                </div>
 
-            <div className="text-center mb-4">
-              <h2 className="text-xl text-gray-400">
-                {formatDate(selectedDate)}
-              </h2>
+                <div className="text-center mb-4">
+                  <h2 className="text-xl text-gray-400">
+                    {formatDate(selectedDate)}
+                  </h2>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Weight Tracker Button */}
-        <div className="flex justify-center mb-4">
-          <button
-            className={`bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg flex items-center ${
-              showWeightTracker ? "bg-[#024a72]" : ""
-            }`}
-            onClick={() => setShowWeightTracker(!showWeightTracker)}
-          >
-            <FaWeight className="mr-2" />
-            Track Weight
-          </button>
-        </div>
+            {/* Weight Tracker Button */}
+            <div className="flex justify-center mb-4">
+              <button
+                className={`bg-[#123347] hover:bg-[#1e293b] text-white px-4 py-2 rounded-lg flex items-center ${
+                  showWeightTracker ? "bg-[#024a72]" : ""
+                }`}
+                onClick={() => setShowWeightTracker(!showWeightTracker)}
+              >
+                <FaWeight className="mr-2" />
+                Track Weight
+              </button>
+            </div>
+          </>
+        )}
 
-        {/* Toggle between Diet and Workout */}
+        {/* Toggle between Diet and Workout - always show this */}
         <div className="toggle-container">
           <div className="toggle-wrapper">
             <button
