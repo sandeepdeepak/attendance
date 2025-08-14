@@ -541,7 +541,7 @@ const MemberDetails = ({
       {showExtendModal && (
         <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-[#123347] p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Extend Membership</h2>
+            <h2 className="text-md font-bold mb-4">Extend Membership</h2>
 
             <div className="mb-4">
               <label className="block text-gray-400 mb-2">Start Date</label>

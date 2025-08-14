@@ -1371,7 +1371,7 @@ const DietPlan = ({
         <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-md text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <h2 className="text-2xl font-bold mb-2">Generating Meal Plan</h2>
+            <h2 className="text-md font-bold mb-2">Generating Meal Plan</h2>
             <p className="text-gray-400">
               Our AI is creating a personalized meal plan based on your
               nutritional needs...

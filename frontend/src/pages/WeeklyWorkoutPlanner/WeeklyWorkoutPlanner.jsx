@@ -388,9 +388,9 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
     return (
       <div className="workout-plan-container">
         <div className="bg-[#1C2937] rounded-lg p-4 mb-4">
-          <h2 className="text-xl font-bold mb-4">
+          {/* <h2 className="text-xl font-bold mb-4">
             {activeDay.charAt(0).toUpperCase() + activeDay.slice(1)} Workouts
-          </h2>
+          </h2> */}
 
           {exercises.length === 0 ? (
             <div className="text-center py-8 text-gray-400">
@@ -808,7 +808,7 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={18} />
         </button>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-md font-bold">
           {isEditing ? "Edit Workout Plan" : "Create Workout Plan"}
         </h1>
         <div className="w-8"></div> {/* Empty div for flex alignment */}
@@ -955,13 +955,17 @@ const WeeklyWorkoutPlanner = ({ onBackClick, planId }) => {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center justify-start mb-4">
-                <button
+              <div className="flex justify-between items-center justify-between mb-4">
+                <h2 className="text-md font-bold">
+                  {activeDay.charAt(0).toUpperCase() + activeDay.slice(1)}{" "}
+                  Workouts
+                </h2>
+                <div
                   className="bg-[#036ba2] text-white py-2 px-4 rounded-lg flex items-center"
                   onClick={() => setShowWorkoutSelectionModal(true)}
                 >
                   <FaPlus className="mr-2" /> Add Workouts
-                </button>
+                </div>
               </div>
 
               {/* Workout plan for the selected day */}

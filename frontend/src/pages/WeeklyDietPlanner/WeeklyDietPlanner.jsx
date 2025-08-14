@@ -496,7 +496,7 @@ const WeeklyDietPlanner = ({ onBackClick, planId }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={18} />
         </button>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-md font-bold">
           {isEditing ? "Edit Diet Plan" : "Create Diet Plan"}
         </h1>
         <div className="w-8"></div> {/* Empty div for flex alignment */}
@@ -794,7 +794,7 @@ const WeeklyDietPlanner = ({ onBackClick, planId }) => {
         <div className="fixed inset-0 bg-[#0a1f2e] bg-opacity-80 flex items-center justify-center z-50 modal-overlay">
           <div className="bg-[#1C2937] p-6 rounded-lg w-full max-w-5xl modal-content">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Select Meals</h2>
+              <h2 className="text-md font-bold">Select Meals</h2>
               <button
                 className="text-gray-400 hover:text-white"
                 onClick={() => setShowMealSelectionModal(false)}

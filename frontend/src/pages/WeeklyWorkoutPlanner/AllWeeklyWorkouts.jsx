@@ -580,7 +580,7 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
         <button className="text-white p-2" onClick={onBackClick}>
           <FaArrowLeft size={18} />
         </button>
-        <h1 className="text-2xl font-bold">Weekly Workout Plans</h1>
+        <h1 className="text-md font-bold">Weekly Workout Plans</h1>
         <div className="w-8"></div> {/* Empty div for flex alignment */}
       </div>
 
@@ -634,11 +634,13 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
               ref={(el) => (planRefs.current[plan.planId] = el)}
             >
               <div className="plan-card-header">
-                <h2 className="text-xl font-semibold">{plan.templateName}</h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col">
+                  <h2 className="text-lg font-semibold">{plan.templateName}</h2>
                   <span className="text-xs text-gray-400">
                     Updated: {formatDate(plan.updatedAt)}
                   </span>
+                </div>
+                <div className="flex items-center gap-2">
                   <div
                     className="flex items-center justify-center gap-1 bg-[#2a9d8f] px-2 py-1 rounded text-white text-xs cursor-pointer"
                     onClick={(e) => {
@@ -753,7 +755,7 @@ const AllWeeklyWorkouts = ({ onBackClick, onAddNewPlanClick }) => {
       {showAssignModal && (
         <div className="assign-modal">
           <div className="assign-modal-content">
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-md font-bold mb-4">
               Assign "{selectedPlanName}" to Members
             </h2>
 

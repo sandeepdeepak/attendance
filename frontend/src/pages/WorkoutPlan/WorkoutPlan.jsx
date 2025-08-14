@@ -915,7 +915,7 @@ const WorkoutPlan = ({
       {/* Workout Plan */}
       <div className="bg-[#1C2937] rounded-lg p-4 mb-2">
         {/* <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Workout Plan</h2>
+          <h2 className="text-md font-bold">Workout Plan</h2>
         </div> */}
 
         {workoutPlan.exercises.length === 0 ? (

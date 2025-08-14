@@ -176,7 +176,6 @@ textarea:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
 }
 
 .weekly-plans-grid {
@@ -315,6 +314,7 @@ textarea:focus-visible {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
+    padding-top: 1rem;
   }
 
   .weekly-plans-grid {
