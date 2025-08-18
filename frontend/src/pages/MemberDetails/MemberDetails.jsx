@@ -258,10 +258,6 @@ const MemberDetails = ({
       // Extract date part from timestamp (YYYY-MM-DD)
       const recordDateStr = record.timestamp.split("T")[0];
 
-      console.log(
-        `Comparing record date ${recordDateStr} with ${dateToCheckStr}`
-      );
-
       // Compare just the date strings (YYYY-MM-DD)
       const match = recordDateStr === dateToCheckStr;
 
@@ -272,7 +268,6 @@ const MemberDetails = ({
       return match;
     });
 
-    console.log(`Day ${day} has attendance: ${hasAttendance}`);
     return hasAttendance;
   };
 

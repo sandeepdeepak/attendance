@@ -303,6 +303,27 @@ const MemberPlan = ({
           </>
         )}
 
+        {/* Download PDF Button - Top Right Corner */}
+        {hideHeader && (
+          <div
+            className={`bg-[#4d3a1f] hover:bg-[#4d3a1f] text-[#e6a84b] p-3 rounded-full flex items-center justify-center ${
+              isDownloading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={handleDownloadPlan}
+            disabled={isDownloading}
+            title="Download Complete Plan PDF"
+          >
+            {isDownloading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <FaDownload size={16} />{" "}
+                <span className="ms-2">Download Plan PDF </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Toggle between Diet and Workout - always show this */}
         <div className="toggle-container">
           <div className="toggle-wrapper">
