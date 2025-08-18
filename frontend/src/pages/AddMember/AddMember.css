@@ -121,6 +121,7 @@
 .form-group {
   display: flex;
   flex-direction: column;
+  margin-bottom: 10px !important;
 }
 
 .form-label {
@@ -314,5 +315,12 @@
 @media (min-width: 1280px) {
   .form-container {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .form-container {
+    gap: 0rem !important;
   }
 }

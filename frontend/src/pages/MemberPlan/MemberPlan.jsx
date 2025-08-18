@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { FaArrowLeft, FaWeight, FaHistory, FaSave } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaWeight,
+  FaHistory,
+  FaSave,
+  FaDownload,
+} from "react-icons/fa";
 import DietPlan from "../DietPlan/DietPlan";
 import WorkoutPlan from "../WorkoutPlan/WorkoutPlan";
 import axios from "axios";
 import { API_URL } from "../../config";
+import { generateCombinedPlanPDF } from "../../utils/pdfGenerator";
 import "./MemberPlan.css";
 
 const MemberPlan = ({
@@ -19,6 +26,7 @@ const MemberPlan = ({
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Format date for display (YYYY-MM-DD to Month DD, YYYY)
   const formatDate = (dateString) => {
@@ -29,6 +37,118 @@ const MemberPlan = ({
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  // Function to fetch diet plan data for PDF generation
+  const fetchDietPlanData = async () => {
+    try {
+      let config = {};
+      if (!fromFaceRecognition) {
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) throw new Error("Authentication token not found");
+        config = {
+          headers: { Authorization: `Bearer ${authToken}` },
+        };
+      }
+
+      const dietPlanEndpoint = fromFaceRecognition
+        ? `${API_URL}/api/diet-plans/${memberId}/${selectedDate}/public`
+        : `${API_URL}/api/diet-plans/${memberId}/${selectedDate}`;
+
+      const response = await axios.get(dietPlanEndpoint, config);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching diet plan data:", error);
+      return null;
+    }
+  };
+
+  // Function to fetch workout plan data for PDF generation
+  const fetchWorkoutPlanData = async () => {
+    try {
+      let config = {};
+      if (!fromFaceRecognition) {
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) throw new Error("Authentication token not found");
+        config = {
+          headers: { Authorization: `Bearer ${authToken}` },
+        };
+      }
+
+      const workoutPlanEndpoint = fromFaceRecognition
+        ? `${API_URL}/api/workout-plans/${memberId}/${selectedDate}/public`
+        : `${API_URL}/api/workout-plans/${memberId}/${selectedDate}`;
+
+      const response = await axios.get(workoutPlanEndpoint, config);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching workout plan data:", error);
+      return null;
+    }
+  };
+
+  // Function to handle combined download
+  const handleDownloadPlan = async () => {
+    if (!member || !selectedDate) return;
+
+    setIsDownloading(true);
+
+    try {
+      // Fetch both diet and workout data
+      const dietData = await fetchDietPlanData();
+      const workoutData = await fetchWorkoutPlanData();
+
+      // Default values for missing diet data
+      const nutritionTotals = dietData?.dietPlan?.nutritionTotals || {
+        calories: 0,
+        proteins: 0,
+        carbs: 0,
+        fats: 0,
+        fibre: 0,
+      };
+
+      const calculatedCalories = { dailyCalories: 2000 }; // Default value
+      const recommendedNutrition = {
+        proteins: 150,
+        carbs: 250,
+        fats: 67,
+        fibre: 28,
+      }; // Default values
+
+      const dietPlan = {
+        breakfast: dietData?.dietPlan?.breakfast || [],
+        lunch: dietData?.dietPlan?.lunch || [],
+        dinner: dietData?.dietPlan?.dinner || [],
+      };
+
+      // Default values for missing workout data
+      const workoutPlan = {
+        exercises: workoutData?.workoutPlan?.exercises || [],
+      };
+
+      // Extract completed status from exercises
+      const completedWorkouts = {};
+      workoutPlan.exercises.forEach((exercise) => {
+        completedWorkouts[exercise.id] = exercise.completed || false;
+      });
+
+      // Generate combined PDF
+      generateCombinedPlanPDF(
+        member,
+        selectedDate,
+        dietPlan,
+        nutritionTotals,
+        calculatedCalories,
+        recommendedNutrition,
+        workoutPlan,
+        completedWorkouts
+      );
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -132,9 +252,28 @@ const MemberPlan = ({
         {/* Header with back button and member name - only show if hideHeader is false */}
         {!hideHeader && (
           <>
-            <button className="text-white p-2" onClick={onBackClick}>
-              <FaArrowLeft size={18} />
-            </button>
+            <div className="flex justify-between items-start">
+              <button className="text-white p-2" onClick={onBackClick}>
+                <FaArrowLeft size={18} />
+              </button>
+
+              {/* Download PDF Button - Top Right Corner */}
+              <div
+                className={`bg-[#4d3a1f] hover:bg-red-700 text-[#e6a84b] p-3 rounded-full flex items-center justify-center ${
+                  isDownloading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={handleDownloadPlan}
+                disabled={isDownloading}
+                title="Download Complete Plan PDF"
+              >
+                {isDownloading ? (
+                  <div className="animate-spin rounded-full h-2 w-5 border-2 border-white border-t-transparent"></div>
+                ) : (
+                  <FaDownload size={16} />
+                )}
+              </div>
+            </div>
+
             <div className="flex items-start space-x-2">
               <div className="items-center w-full">
                 <div className="text-xl font-bold flex-grow">
