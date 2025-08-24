@@ -515,7 +515,7 @@ function checkMembershipExpired(startDate, membershipPlan) {
 app.post("/api/search", upload.single("image"), async (req, res) => {
   const img = req.file.buffer;
   const cmd = new SearchFacesByImageCommand({
-    CollectionId: "my-face-collection",
+    CollectionId: "iron-paradise-face-collection",
     Image: { Bytes: img },
     FaceMatchThreshold: 90,
     MaxFaces: 1,
@@ -1012,7 +1012,7 @@ app.get("/api/members-inside", authenticateToken, async (req, res) => {
 
 app.post("/api/create-collection", async (req, res) => {
   console.log(req.body);
-  const collectionId = req.body.collectionId; // e.g. 'my-face-collection'
+  const collectionId = req.body.collectionId; // e.g. 'iron-paradise-face-collection'
   try {
     const data = await rekClient.send(
       new CreateCollectionCommand({ CollectionId: collectionId })
@@ -1099,7 +1099,7 @@ app.post(
 
       // First, index the face in the Rekognition collection
       const indexParams = {
-        CollectionId: "my-face-collection",
+        CollectionId: "iron-paradise-face-collection",
         Image: { Bytes: faceImage },
         ExternalImageId: memberId,
         DetectionAttributes: [],
@@ -1377,7 +1377,7 @@ app.put("/api/members/:id", upload.single("faceImage"), async (req, res) => {
         if (existingMember.faceId) {
           const { DeleteFacesCommand } = require("@aws-sdk/client-rekognition");
           const deleteFacesParams = {
-            CollectionId: "my-face-collection",
+            CollectionId: "iron-paradise-face-collection",
             FaceIds: [existingMember.faceId],
           };
           await rekClient.send(new DeleteFacesCommand(deleteFacesParams));
@@ -1385,7 +1385,7 @@ app.put("/api/members/:id", upload.single("faceImage"), async (req, res) => {
 
         // Index the new face
         const indexParams = {
-          CollectionId: "my-face-collection",
+          CollectionId: "iron-paradise-face-collection",
           Image: { Bytes: faceImage },
           ExternalImageId: id,
           DetectionAttributes: [],
@@ -1538,7 +1538,7 @@ app.delete("/api/members/:id", async (req, res) => {
       const { DeleteFacesCommand } = require("@aws-sdk/client-rekognition");
 
       const deleteFacesParams = {
-        CollectionId: "my-face-collection",
+        CollectionId: "iron-paradise-face-collection",
         FaceIds: [faceId],
       };
 
@@ -1614,7 +1614,7 @@ app.delete("/api/members/:id", async (req, res) => {
 // Delete all faces from a collection (DELETE method)
 app.delete("/api/faces", async (req, res) => {
   try {
-    const { collectionId = "my-face-collection" } = req.query;
+    const { collectionId = "iron-paradise-face-collection" } = req.query;
 
     // Import the DeleteFacesCommand
     const {
@@ -4494,7 +4494,7 @@ app.post("/api/push-subscriptions", async (req, res) => {
 // Delete all faces from a collection (POST method)
 app.post("/api/delete-all-faces", async (req, res) => {
   try {
-    const { collectionId = "my-face-collection" } = req.body;
+    const { collectionId = "iron-paradise-face-collection" } = req.body;
 
     // Import the necessary commands
     const {
