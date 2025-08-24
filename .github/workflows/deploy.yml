@@ -2,7 +2,7 @@ name: Deploy to EC2 on Push
 
 on:
   push:
-    branches: [ko-fitness]
+    branches: [iron-paradise]
 
 jobs:
   deploy:
