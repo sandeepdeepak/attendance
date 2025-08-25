@@ -2029,10 +2029,35 @@ app.get("/api/members-expiring", async (req, res) => {
 });
 
 // Get today's attendance with member details
-app.get("/api/attendance-today", async (req, res) => {
+app.get("/api/attendance-today", authenticateToken, async (req, res) => {
   try {
+    // Get gymId from the authenticated user
+    const { gymId } = req.user;
+    if (!gymId) {
+      return res.status(400).json({
+        error: "Missing gym ID",
+        message: "Your account doesn't have a gym ID. Please contact support.",
+      });
+    }
+
     const todayDate = getTodayDateString();
     console.log("Today's date:", todayDate);
+
+    // Get all members for this gym first
+    const allMembersResult = await docClient.send(
+      new ScanCommand({
+        TableName: MEMBERS_TABLE,
+        FilterExpression: "gymId = :gymId",
+        ExpressionAttributeValues: {
+          ":gymId": gymId,
+        },
+      })
+    );
+
+    const allMembers = allMembersResult.Items || [];
+    const gymMemberIds = new Set(allMembers.map((member) => member.id));
+
+    console.log(`Found ${allMembers.length} members for gym ${gymId}`);
 
     // Get all attendance records for today
     const todayAttendanceParams = {
@@ -2052,39 +2077,48 @@ app.get("/api/attendance-today", async (req, res) => {
 
     console.log("Today's attendance records:", todayAttendanceResult.Items);
 
+    // Filter attendance records to only include members from this gym
+    const filteredAttendanceRecords = todayAttendanceResult.Items
+      ? todayAttendanceResult.Items.filter((record) =>
+          gymMemberIds.has(record.memberId)
+        )
+      : [];
+
+    console.log(
+      `Filtered to ${filteredAttendanceRecords.length} attendance records for this gym`
+    );
+
     // Group attendance records by memberId
     const attendanceByMember = {};
 
-    if (todayAttendanceResult.Items) {
-      for (const record of todayAttendanceResult.Items) {
-        const { memberId, timestamp, type } = record;
-        console.log(
-          `Processing record: memberId=${memberId}, type=${type}, timestamp=${timestamp}`
-        );
+    for (const record of filteredAttendanceRecords) {
+      const { memberId, timestamp, type } = record;
+      console.log(
+        `Processing record: memberId=${memberId}, type=${type}, timestamp=${timestamp}`
+      );
 
-        if (!attendanceByMember[memberId]) {
-          attendanceByMember[memberId] = {
-            entry: null,
-            exit: null,
-          };
+      if (!attendanceByMember[memberId]) {
+        attendanceByMember[memberId] = {
+          entry: null,
+          exit: null,
+        };
+      }
+
+      if (type === "ENTRY") {
+        // If multiple entries, keep the earliest one
+        if (
+          !attendanceByMember[memberId].entry ||
+          timestamp < attendanceByMember[memberId].entry
+        ) {
+          attendanceByMember[memberId].entry = timestamp;
         }
-
-        if (type === "ENTRY") {
-          // If multiple entries, keep the earliest one
-          if (
-            !attendanceByMember[memberId].entry ||
-            timestamp < attendanceByMember[memberId].entry
-          ) {
-            attendanceByMember[memberId].entry = timestamp;
-          }
-        } else if (type === "EXIT") {
-          // If multiple exits, keep the latest one
-          if (
-            !attendanceByMember[memberId].exit ||
-            timestamp > attendanceByMember[memberId].exit
-          ) {
-            attendanceByMember[memberId].exit = timestamp;
-          }
+      } else if (type === "EXIT") {
+        // If multiple exits, keep the latest one
+        if (
+          !attendanceByMember[memberId].exit ||
+          timestamp > attendanceByMember[memberId].exit
+        ) {
+          attendanceByMember[memberId].exit = timestamp;
         }
       }
     }
@@ -2094,23 +2128,15 @@ app.get("/api/attendance-today", async (req, res) => {
     // Get member details for each attendance record
     const attendanceWithMemberDetails = [];
 
+    // Create a member lookup map for efficiency
+    const memberMap = {};
+    allMembers.forEach((member) => {
+      memberMap[member.id] = member;
+    });
+
     for (const memberId in attendanceByMember) {
-      // Get member details
-      const memberScanParams = {
-        TableName: MEMBERS_TABLE,
-        FilterExpression: "id = :id",
-        ExpressionAttributeValues: {
-          ":id": memberId,
-        },
-      };
-
-      const memberResult = await docClient.send(
-        new ScanCommand(memberScanParams)
-      );
-
-      if (memberResult.Items && memberResult.Items.length > 0) {
-        const member = memberResult.Items[0];
-
+      const member = memberMap[memberId];
+      if (member) {
         attendanceWithMemberDetails.push({
           memberId,
           fullName: member.fullName,
