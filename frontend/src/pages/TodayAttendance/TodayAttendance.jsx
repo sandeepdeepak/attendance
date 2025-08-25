@@ -15,7 +15,19 @@ const TodayAttendance = ({ onBackClick }) => {
         setIsLoading(true);
         setError(null);
 
-        const response = await axios.get(`${API_URL}/api/attendance-today`);
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem("authToken");
+        if (!authToken) {
+          throw new Error(
+            "Authentication token not found. Please login again."
+          );
+        }
+
+        const response = await axios.get(`${API_URL}/api/attendance-today`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
         console.log("API Response:", response.data);
 
         if (response.data && response.data.attendance) {
@@ -24,7 +36,18 @@ const TodayAttendance = ({ onBackClick }) => {
         }
       } catch (error) {
         console.error("Error fetching today's attendance:", error);
-        setError("Failed to load attendance data. Please try again.");
+        if (error.response?.status === 401) {
+          setError("Authentication failed. Please login again.");
+        } else if (
+          error.response?.status === 400 &&
+          error.response?.data?.message?.includes("gym ID")
+        ) {
+          setError(
+            "Your account doesn't have a gym ID. Please contact support."
+          );
+        } else {
+          setError("Failed to load attendance data. Please try again.");
+        }
       } finally {
         setIsLoading(false);
       }
