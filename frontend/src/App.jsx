@@ -38,11 +38,14 @@ function App() {
       const token = localStorage.getItem("authToken");
       const storedGymOwner = localStorage.getItem("gymOwner");
 
-      // Check if URL path is /members and set showLogin accordingly
+      // Check if URL path is /members and bypass authentication
       const path = window.location.pathname;
       const pathSegments = path.split("/").filter((segment) => segment);
       if (pathSegments.length > 0 && pathSegments[0] === "members") {
         setShowLogin(false); // Show HomePage for /members route
+        setIsAuthenticated(true); // Bypass authentication for /members route
+        setIsVerifying(false);
+        return; // Skip token verification for /members route
       }
 
       if (token && storedGymOwner) {
