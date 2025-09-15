@@ -43,7 +43,7 @@ function App() {
       const pathSegments = path.split("/").filter((segment) => segment);
       if (pathSegments.length > 0 && pathSegments[0] === "members") {
         setShowLogin(false); // Show HomePage for /members route
-        setIsAuthenticated(true); // Bypass authentication for /members route
+        setIsAuthenticated(false); // Bypass authentication for /members route
         setIsVerifying(false);
         return; // Skip token verification for /members route
       }
