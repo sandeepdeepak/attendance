@@ -2,6 +2,8 @@
 attend.pem
 ko-fitness-new-instance.pem
 iron-paradise.pem
+iron-new.pem
+iron-paradise-t3-small.pem
 ec2_deploy_attendance
 ec2_deploy_attendance.pub
 .hai/
